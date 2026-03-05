@@ -217,40 +217,45 @@ xion treasury query <treasury-address>
   - [x] Per-network credential storage
   - [x] Callback port: 54321 (changed from 8080)
 
-### Phase 2: OAuth2 Client (Days 8-14)
-- [ ] PKCE implementation
-  - [ ] Generate verifier
-  - [ ] Generate challenge
-  - [ ] Validation logic
-- [ ] OAuth2 client
-  - [ ] Authorization URL generation
-  - [ ] Localhost callback server
-  - [ ] Code exchange
-  - [ ] Token refresh
-- [ ] Token management
-  - [ ] Secure storage (keyring)
-  - [ ] Auto-refresh
-  - [ ] Expiration checking
-- [ ] Authentication commands
-  - [ ] login - OAuth2 login
-  - [ ] status - Check auth status
-  - [ ] logout - Clear credentials
+### Phase 2: OAuth2 Client (Days 8-14) ✅ **COMPLETED**
+- [x] PKCE implementation
+  - [x] Generate verifier
+  - [x] Generate challenge
+  - [x] Validation logic
+- [x] OAuth2 client
+  - [x] Authorization URL generation
+  - [x] Localhost callback server
+  - [x] Code exchange
+  - [x] Token refresh
+- [x] Token management
+  - [x] Secure storage (keyring)
+  - [x] Auto-refresh
+  - [x] Expiration checking
+- [x] Authentication commands
+  - [x] login - OAuth2 login
+  - [x] status - Check auth status
+  - [x] logout - Clear credentials
+  - [x] refresh - Refresh access token
 
-### Phase 3: Treasury API (Days 15-21)
-- [ ] API clients
-  - [ ] OAuth2 API Service client
-  - [ ] xiond Query client
-  - [ ] Error handling
-- [ ] Treasury commands
-  - [ ] list - List Treasury contracts
-  - [ ] query - Query details
-  - [ ] create - Create Treasury
-  - [ ] fund - Fund Treasury
-  - [ ] withdraw - Withdraw from Treasury
+### Phase 3: Treasury API (Days 15-21) ✅ **PARTIALLY COMPLETED**
+- [x] API clients
+  - [x] Treasury API client (OAuth2 API Service)
+  - [ ] xiond Query client (optional)
+  - [x] Error handling
+- [x] Treasury commands
+  - [x] list - List Treasury contracts
+  - [x] query - Query details
+  - [ ] create - Create Treasury (placeholder, future)
+  - [ ] fund - Fund Treasury (placeholder, future)
+  - [ ] withdraw - Withdraw from Treasury (placeholder, future)
 - [ ] Grant configuration
-  - [ ] fee-grant configuration
-  - [ ] authz-grant configuration
-  - [ ] Verify configuration effectiveness
+  - [ ] fee-grant configuration (future)
+  - [ ] authz-grant configuration (future)
+  - [ ] Verify configuration effectiveness (future)
+- [x] Treasury manager
+  - [x] OAuth2 integration
+  - [x] Auto token refresh
+  - [x] Caching (5-minute TTL)
 
 ### Phase 4: Skills & Documentation (Days 22-28)
 - [ ] xion-oauth2 Skill
@@ -326,6 +331,17 @@ xion treasury query <treasury-address>
 | 2025-03-05 | Phase 1: Credential encryption (keyring) | ✅ |
 | 2025-03-05 | Phase 1: Per-network credentials | ✅ |
 | 2025-03-05 | Phase 1: OAuth Client IDs from env vars | ✅ |
+| 2026-03-05 | Phase 2: PKCE implementation | ✅ |
+| 2026-03-05 | Phase 2: OAuth2 callback server | ✅ |
+| 2026-03-05 | Phase 2: Token manager | ✅ |
+| 2026-03-05 | Phase 2: OAuth2 client orchestration | ✅ |
+| 2026-03-05 | Phase 2: CLI integration (auth commands) | ✅ |
+| 2026-03-05 | Phase 2: All tests passing (59 tests) | ✅ |
+| 2026-03-05 | Phase 3: Treasury API client | ✅ |
+| 2026-03-05 | Phase 3: Treasury manager | ✅ |
+| 2026-03-05 | Phase 3: Treasury cache system | ✅ |
+| 2026-03-05 | Phase 3: CLI integration (list + query) | ✅ |
+| 2026-03-05 | Phase 3: All tests passing (63 tests) | ✅ |
 
 ---
 *Created: 2025-03-05*
