@@ -57,82 +57,132 @@ pub async fn handle_command(cmd: TreasuryCommands) -> Result<()> {
 }
 
 async fn handle_list() -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
     use crate::utils::output::{print_json, print_info};
-
+    
     print_info("Listing treasury contracts...");
-
-    // TODO: Implement treasury list
-    let result = serde_json::json!({
-        "success": true,
-        "treasuries": [],
-        "count": 0,
-        "message": "Treasury list not yet implemented"
-    });
-
-    print_json(&result)
+    
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.oauth_api_url);
+    
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+    
+    // List treasuries
+    match manager.list().await {
+        Ok(treasuries) => {
+            let result = serde_json::json!({
+                "success": true,
+                "treasuries": treasuries,
+                "count": treasuries.len()
+            });
+            print_json(&result)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to list treasuries: {}", e),
+                "code": "TREASURY_LIST_FAILED"
+            });
+            print_json(&result)
+        }
+    }
 }
 
 async fn handle_query(address: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
     use crate::utils::output::{print_json, print_info};
-
+    
     print_info(&format!("Querying treasury: {}", address));
-
-    // TODO: Implement treasury query
-    let result = serde_json::json!({
-        "success": true,
-        "treasury": {
-            "address": address,
-            "message": "Treasury query not yet implemented"
+    
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.oauth_api_url);
+    
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+    
+    // Query treasury
+    match manager.query(address).await {
+        Ok(treasury) => {
+            let result = serde_json::json!({
+                "success": true,
+                "treasury": treasury
+            });
+            print_json(&result)
         }
-    });
-
-    print_json(&result)
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to query treasury: {}", e),
+                "code": "TREASURY_QUERY_FAILED"
+            });
+            print_json(&result)
+        }
+    }
 }
 
-async fn handle_create(fee_grant: Option<&str>, grant_config: Option<&str>) -> Result<()> {
+async fn handle_create(_fee_grant: Option<&str>, _grant_config: Option<&str>) -> Result<()> {
     use crate::utils::output::{print_json, print_info};
-
+    
     print_info("Creating treasury contract...");
-
-    // TODO: Implement treasury creation
+    
     let result = serde_json::json!({
-        "success": true,
+        "success": false,
         "message": "Treasury creation not yet implemented",
-        "fee_grant": fee_grant,
-        "grant_config": grant_config
+        "suggestion": "Use the Developer Portal to create Treasury contracts"
     });
-
+    
     print_json(&result)
 }
 
-async fn handle_fund(address: &str, amount: &str) -> Result<()> {
+async fn handle_fund(_address: &str, _amount: &str) -> Result<()> {
     use crate::utils::output::{print_json, print_info};
-
-    print_info(&format!("Funding treasury {} with {}", address, amount));
-
-    // TODO: Implement treasury funding
+    
+    print_info("Funding treasury...");
+    
     let result = serde_json::json!({
-        "success": true,
+        "success": false,
         "message": "Treasury funding not yet implemented",
-        "address": address,
-        "amount": amount
+        "suggestion": "Use xiond CLI to fund Treasury contracts"
     });
-
+    
     print_json(&result)
 }
 
-async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
+async fn handle_withdraw(_address: &str, _amount: &str) -> Result<()> {
     use crate::utils::output::{print_json, print_info};
-
-    print_info(&format!("Withdrawing {} from treasury {}", amount, address));
-
-    // TODO: Implement treasury withdrawal
+    
+    print_info("Withdrawing from treasury...");
+    
     let result = serde_json::json!({
-        "success": true,
+        "success": false,
         "message": "Treasury withdrawal not yet implemented",
-        "address": address,
-        "amount": amount
+        "suggestion": "Use xiond CLI to withdraw from Treasury contracts"
     });
-
+    
     print_json(&result)
 }

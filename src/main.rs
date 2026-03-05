@@ -2,6 +2,7 @@ mod api;
 mod cli;
 mod config;
 mod oauth;
+mod treasury;
 mod utils;
 
 use clap::Parser;
