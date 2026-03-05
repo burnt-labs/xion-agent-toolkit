@@ -143,7 +143,16 @@ impl OAuthClient {
     /// # use xion_agent_cli::config::NetworkConfig;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// let client = OAuthClient::new(NetworkConfig::default())?;
+    /// # let config = NetworkConfig {
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// let client = OAuthClient::new(config)?;
     /// let credentials = client.login().await?;
     /// println!("Logged in successfully!");
     /// println!("Xion address: {:?}", credentials.xion_address);
@@ -236,7 +245,16 @@ impl OAuthClient {
     /// # use xion_agent_cli::oauth::OAuthClient;
     /// # use xion_agent_cli::config::NetworkConfig;
     /// # fn main() -> anyhow::Result<()> {
-    /// let client = OAuthClient::new(NetworkConfig::default())?;
+    /// # let config = NetworkConfig {
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// let client = OAuthClient::new(config)?;
     /// client.logout()?;
     /// println!("Logged out successfully");
     /// # Ok(())
@@ -267,7 +285,16 @@ impl OAuthClient {
     /// # use xion_agent_cli::oauth::OAuthClient;
     /// # use xion_agent_cli::config::NetworkConfig;
     /// # fn main() -> anyhow::Result<()> {
-    /// let client = OAuthClient::new(NetworkConfig::default())?;
+    /// # let config = NetworkConfig {
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// let client = OAuthClient::new(config)?;
     /// if client.is_authenticated()? {
     ///     println!("User is authenticated");
     /// } else {
@@ -299,7 +326,16 @@ impl OAuthClient {
     /// # use xion_agent_cli::oauth::OAuthClient;
     /// # use xion_agent_cli::config::NetworkConfig;
     /// # fn main() -> anyhow::Result<()> {
-    /// let client = OAuthClient::new(NetworkConfig::default())?;
+    /// # let config = NetworkConfig {
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// let client = OAuthClient::new(config)?;
     /// if let Some(creds) = client.get_credentials()? {
     ///     println!("Xion address: {:?}", creds.xion_address);
     /// }
@@ -334,7 +370,16 @@ impl OAuthClient {
     /// # use xion_agent_cli::config::NetworkConfig;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// let client = OAuthClient::new(NetworkConfig::default())?;
+    /// # let config = NetworkConfig {
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// let client = OAuthClient::new(config)?;
     /// let token = client.get_valid_token().await?;
     /// println!("Access token: {}", token);
     /// # Ok(())
@@ -368,7 +413,16 @@ impl OAuthClient {
     /// # use xion_agent_cli::config::NetworkConfig;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// let client = OAuthClient::new(NetworkConfig::default())?;
+    /// # let config = NetworkConfig {
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// let client = OAuthClient::new(config)?;
     /// let new_creds = client.refresh_token().await?;
     /// println!("New token expires at: {}", new_creds.expires_at);
     /// # Ok(())

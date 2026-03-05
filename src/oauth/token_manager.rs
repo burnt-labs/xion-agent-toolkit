@@ -134,7 +134,13 @@ impl TokenManager {
     /// # Example
     /// ```no_run
     /// # use xion_agent_cli::oauth::TokenManager;
-    /// # let token_mgr = /* ... */;
+    /// # use xion_agent_cli::config::CredentialsManager;
+    /// # use xion_agent_cli::api::OAuth2ApiClient;
+    /// # let token_mgr = TokenManager::new(
+    /// #     CredentialsManager::new("testnet")?,
+    /// #     OAuth2ApiClient::new("https://oauth2.testnet.burnt.com".to_string()),
+    /// #     "client_id".to_string()
+    /// # );
     /// if token_mgr.is_token_expired()? {
     ///     println!("Token has expired!");
     /// }
@@ -169,7 +175,13 @@ impl TokenManager {
     /// # Example
     /// ```no_run
     /// # use xion_agent_cli::oauth::TokenManager;
-    /// # let token_mgr = /* ... */;
+    /// # use xion_agent_cli::config::CredentialsManager;
+    /// # use xion_agent_cli::api::OAuth2ApiClient;
+    /// # let token_mgr = TokenManager::new(
+    /// #     CredentialsManager::new("testnet")?,
+    /// #     OAuth2ApiClient::new("https://oauth2.testnet.burnt.com".to_string()),
+    /// #     "client_id".to_string()
+    /// # );
     /// // Check if token will expire in the next 5 minutes
     /// if token_mgr.will_expire_soon(300)? {
     ///     println!("Token will expire soon, consider refreshing");
@@ -209,9 +221,15 @@ impl TokenManager {
     /// # Example
     /// ```no_run
     /// # use xion_agent_cli::oauth::TokenManager;
+    /// # use xion_agent_cli::config::CredentialsManager;
+    /// # use xion_agent_cli::api::OAuth2ApiClient;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// # let token_mgr = /* ... */;
+    /// # let token_mgr = TokenManager::new(
+    /// #     CredentialsManager::new("testnet")?,
+    /// #     OAuth2ApiClient::new("https://oauth2.testnet.burnt.com".to_string()),
+    /// #     "client_id".to_string()
+    /// # );
     /// let new_creds = token_mgr.refresh_access_token().await?;
     /// println!("New token expires at: {}", new_creds.expires_at);
     /// # Ok(())
@@ -272,9 +290,15 @@ impl TokenManager {
     /// # Example
     /// ```no_run
     /// # use xion_agent_cli::oauth::TokenManager;
+    /// # use xion_agent_cli::config::CredentialsManager;
+    /// # use xion_agent_cli::api::OAuth2ApiClient;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// # let token_mgr = /* ... */;
+    /// # let token_mgr = TokenManager::new(
+    /// #     CredentialsManager::new("testnet")?,
+    /// #     OAuth2ApiClient::new("https://oauth2.testnet.burnt.com".to_string()),
+    /// #     "client_id".to_string()
+    /// # );
     /// let is_valid = token_mgr.validate_token("some_token").await?;
     /// if is_valid {
     ///     println!("Token is valid");
