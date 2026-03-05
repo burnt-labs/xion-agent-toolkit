@@ -382,6 +382,15 @@ async fn test_oauth_login() {
    - `treasury-guide.md` - Treasury usage guide
 3. **examples/** - Example code and scripts
 
+## Language Standards
+
+1. **Conversation Language**
+   - Interactive conversations with developers should use the same language as the incoming question (for example, Chinese questions are answered in Chinese, English questions are answered in English).
+
+2. **Documentation & Code Language**
+   - All persistent documentation (including `README.md`, files in `docs/`, `plans/`, skill `SKILL.md` files, and `AGENTS.md`) MUST be written in English.
+   - All comments written in code MUST be written in English.
+
 ## Related Resources
 
 - [Xion Documentation](https://docs.burnt.com/xion)
