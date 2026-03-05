@@ -22,7 +22,7 @@ pub enum AuthCommands {
 
 pub async fn handle_command(cmd: AuthCommands) -> Result<()> {
     match cmd {
-        AuthCommands::Login { port } => handle_login(port).await,
+        AuthCommands::Login { port } => handle_login(port).await?,
         AuthCommands::Logout => handle_logout()?,
         AuthCommands::Status => handle_status()?,
         AuthCommands::Refresh => handle_refresh().await?,

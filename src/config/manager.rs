@@ -3,7 +3,8 @@ use directories::ProjectDirs;
 use std::fs;
 use std::path::PathBuf;
 
-use super::schema::{Config, UserCredentials};
+use super::credentials::CredentialsManager;
+use super::schema::Config;
 
 pub struct ConfigManager {
     config_dir: PathBuf,
