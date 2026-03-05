@@ -33,84 +33,133 @@ pub async fn handle_command(cmd: AuthCommands) -> Result<()> {
 async fn handle_login(port: Option<u16>) -> Result<()> {
     use crate::utils::output::{print_json, print_info};
     use crate::config::ConfigManager;
-
-    print_info("Starting OAuth2 login flow...");
+    use crate::oauth::OAuthClient;
+    use tracing::info;
 
     let config_manager = ConfigManager::new()?;
-    let network_config = config_manager.get_network_config()?;
+    let mut network_config = config_manager.get_network_config()?;
     
-    let callback_port = port.unwrap_or(network_config.callback_port);
+    // Override callback port if specified
+    if let Some(p) = port {
+        network_config.callback_port = p;
+    }
 
-    print_info(&format!("Network: {}", config_manager.get_current_network()));
+    print_info(&format!("Starting OAuth2 login on network: {}...", config_manager.get_current_network()));
     print_info(&format!("OAuth API: {}", network_config.oauth_api_url));
-    print_info(&format!("Client ID: {}", network_config.oauth_client_id));
-    print_info(&format!("Callback port: {}", callback_port));
+    print_info(&format!("Callback port: {}", network_config.callback_port));
 
-    // TODO: Implement OAuth2 login with callback server
-    // For now, return a placeholder response
-    let result = serde_json::json!({
-        "success": false,
-        "message": "OAuth2 login not yet implemented",
-        "network": config_manager.get_current_network(),
-        "oauth_api_url": network_config.oauth_api_url,
-        "client_id": network_config.oauth_client_id,
-        "callback_port": callback_port
-    });
+    info!("Creating OAuth2 client");
+    
+    // Create OAuth client
+    let oauth_client = OAuthClient::new(network_config.clone())?;
 
-    print_json(&result)
+    // Execute login flow
+    info!("Starting OAuth2 login flow");
+    match oauth_client.login().await {
+        Ok(credentials) => {
+            info!("Login successful");
+            let result = serde_json::json!({
+                "success": true,
+                "network": config_manager.get_current_network(),
+                "xion_address": credentials.xion_address,
+                "expires_at": credentials.expires_at,
+            });
+            print_json(&result)
+        }
+        Err(e) => {
+            info!("Login failed: {}", e);
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Login failed: {}", e),
+                "code": "AUTH_LOGIN_FAILED",
+                "suggestion": "Please try again or check your browser for authorization"
+            });
+            print_json(&result)
+        }
+    }
 }
 
 fn handle_logout() -> Result<()> {
     use crate::utils::output::{print_json, print_info};
-    use crate::config::{ConfigManager, CredentialsManager};
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use tracing::info;
 
     print_info("Logging out...");
 
     let config_manager = ConfigManager::new()?;
-    let network = config_manager.get_current_network();
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config)?;
+
+    info!("Logging out from network: {}", config_manager.get_current_network());
     
-    let credentials_manager = CredentialsManager::new(network)?;
-    credentials_manager.clear_credentials()?;
-
-    let result = serde_json::json!({
-        "success": true,
-        "message": "Logged out successfully",
-        "network": network
-    });
-
-    print_json(&result)
+    match oauth_client.logout() {
+        Ok(()) => {
+            info!("Logout successful");
+            let result = serde_json::json!({
+                "success": true,
+                "message": "Logged out successfully",
+                "network": config_manager.get_current_network()
+            });
+            print_json(&result)
+        }
+        Err(e) => {
+            info!("Logout failed: {}", e);
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Logout failed: {}", e),
+                "code": "AUTH_LOGOUT_FAILED"
+            });
+            print_json(&result)
+        }
+    }
 }
 
 fn handle_status() -> Result<()> {
     use crate::utils::output::print_json;
-    use crate::config::{ConfigManager, CredentialsManager};
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use tracing::info;
 
     let config_manager = ConfigManager::new()?;
     let network = config_manager.get_current_network();
     let network_config = config_manager.get_network_config()?;
 
-    let credentials_manager = CredentialsManager::new(network)?;
-    let has_credentials = credentials_manager.has_credentials()?;
+    info!("Checking authentication status for network: {}", network);
+
+    // Create OAuth client
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+
+    // Check if authenticated using OAuthClient
+    let is_authenticated = oauth_client.is_authenticated()?;
 
     let mut result = serde_json::json!({
         "network": network,
         "chain_id": network_config.chain_id,
         "oauth_api_url": network_config.oauth_api_url,
-        "authenticated": has_credentials,
+        "authenticated": is_authenticated,
     });
 
-    if has_credentials {
-        match credentials_manager.load_credentials() {
-            Ok(creds) => {
+    if is_authenticated {
+        // Load credentials to show details
+        match oauth_client.get_credentials() {
+            Ok(Some(creds)) => {
                 result["xion_address"] = serde_json::json!(creds.xion_address);
                 result["expires_at"] = serde_json::json!(creds.expires_at);
+                info!("User is authenticated: {:?}", creds.xion_address);
+            }
+            Ok(None) => {
+                result["error"] = serde_json::json!("Credentials not found");
+                info!("Credentials not found despite has_credentials returning true");
             }
             Err(e) => {
                 result["error"] = serde_json::json!(format!("Failed to load credentials: {}", e));
+                info!("Failed to load credentials: {}", e);
             }
         }
     } else {
         result["message"] = serde_json::json!("Not authenticated. Please run 'xion auth login' first.");
+        info!("User is not authenticated");
     }
 
     print_json(&result)
@@ -118,30 +167,40 @@ fn handle_status() -> Result<()> {
 
 async fn handle_refresh() -> Result<()> {
     use crate::utils::output::{print_json, print_info};
-    use crate::config::{ConfigManager, CredentialsManager};
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use tracing::info;
 
     print_info("Refreshing access token...");
 
     let config_manager = ConfigManager::new()?;
-    let network = config_manager.get_current_network();
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config)?;
+
+    info!("Attempting to refresh token");
     
-    let credentials_manager = CredentialsManager::new(network)?;
-    
-    if !credentials_manager.has_credentials()? {
-        let result = serde_json::json!({
-            "success": false,
-            "error": "Not authenticated. Please run 'xion auth login' first."
-        });
-        return print_json(&result);
+    // Refresh token
+    match oauth_client.refresh_token().await {
+        Ok(credentials) => {
+            info!("Token refreshed successfully");
+            let result = serde_json::json!({
+                "success": true,
+                "message": "Token refreshed successfully",
+                "network": config_manager.get_current_network(),
+                "expires_at": credentials.expires_at
+            });
+            print_json(&result)
+        }
+        Err(e) => {
+            info!("Token refresh failed: {}", e);
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Token refresh failed: {}", e),
+                "code": "AUTH_REFRESH_FAILED",
+                "suggestion": "Your session may have expired. Please run 'xion auth login' to re-authenticate."
+            });
+            print_json(&result)
+        }
     }
-
-    // TODO: Implement token refresh
-    let result = serde_json::json!({
-        "success": false,
-        "message": "Token refresh not yet implemented",
-        "network": network
-    });
-
-    print_json(&result)
 }
 
