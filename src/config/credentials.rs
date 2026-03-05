@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use super::schema::UserCredentials;
 
+#[derive(Debug)]
 pub struct CredentialsManager {
     network: String,
     config_dir: PathBuf,
