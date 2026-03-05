@@ -204,13 +204,18 @@ xion treasury query <treasury-address>
 - [x] CLI framework setup (clap)
 - [x] Configuration management system
   - [x] Configuration file read/write
-  - [ ] Credential encryption (using keyring) - **In Progress**
+  - [x] Credential encryption (using keyring) - **Completed**
   - [x] Cache management
 - [x] Error handling framework
 - [x] Output formatting (JSON)
 - [x] Network configuration
   - [x] local/testnet/mainnet endpoints
   - [x] Network switching commands
+- [x] Configuration architecture refactor
+  - [x] Separate network config (compile-time) from user data
+  - [x] OAuth Client IDs from environment variables
+  - [x] Per-network credential storage
+  - [x] Callback port: 54321 (changed from 8080)
 
 ### Phase 2: OAuth2 Client (Days 8-14)
 - [ ] PKCE implementation
@@ -317,6 +322,10 @@ xion treasury query <treasury-address>
 | 2025-03-05 | Phase 1: Output formatting (JSON) | ✅ |
 | 2025-03-05 | Phase 1: Network configuration (local/testnet/mainnet) | ✅ |
 | 2025-03-05 | Created comprehensive README.md | ✅ |
+| 2025-03-05 | Phase 1: Config architecture refactor | ✅ |
+| 2025-03-05 | Phase 1: Credential encryption (keyring) | ✅ |
+| 2025-03-05 | Phase 1: Per-network credentials | ✅ |
+| 2025-03-05 | Phase 1: OAuth Client IDs from env vars | ✅ |
 
 ---
 *Created: 2025-03-05*
