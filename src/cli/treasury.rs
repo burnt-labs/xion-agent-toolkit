@@ -159,30 +159,120 @@ async fn handle_create(_fee_grant: Option<&str>, _grant_config: Option<&str>) ->
     print_json(&result)
 }
 
-async fn handle_fund(_address: &str, _amount: &str) -> Result<()> {
+async fn handle_fund(address: &str, amount: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
     use crate::utils::output::{print_json, print_info};
     
-    print_info("Funding treasury...");
+    print_info(&format!("Funding treasury {} with {}...", address, amount));
     
-    let result = serde_json::json!({
-        "success": false,
-        "message": "Treasury funding not yet implemented",
-        "suggestion": "Use xiond CLI to fund Treasury contracts"
-    });
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.oauth_api_url);
     
-    print_json(&result)
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+    
+    // Fund treasury
+    match manager.fund(address, amount).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": result.treasury_address,
+                "amount": result.amount,
+                "tx_hash": result.tx_hash
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let (code, suggestion) = if error_msg.contains("insufficient") || error_msg.contains("balance") {
+                ("INSUFFICIENT_BALANCE", "Check your wallet balance and try with a smaller amount")
+            } else if error_msg.contains("invalid") || error_msg.contains("format") {
+                ("INVALID_AMOUNT", "Amount should be in format like '1000000uxion'")
+            } else if error_msg.contains("not found") {
+                ("TREASURY_NOT_FOUND", "Verify the treasury address is correct")
+            } else {
+                ("FUND_FAILED", "Check the error message for details")
+            };
+            
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to fund treasury: {}", e),
+                "code": code,
+                "suggestion": suggestion
+            });
+            print_json(&result)
+        }
+    }
 }
 
-async fn handle_withdraw(_address: &str, _amount: &str) -> Result<()> {
+async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
     use crate::utils::output::{print_json, print_info};
     
-    print_info("Withdrawing from treasury...");
+    print_info(&format!("Withdrawing {} from treasury {}...", amount, address));
     
-    let result = serde_json::json!({
-        "success": false,
-        "message": "Treasury withdrawal not yet implemented",
-        "suggestion": "Use xiond CLI to withdraw from Treasury contracts"
-    });
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.oauth_api_url);
     
-    print_json(&result)
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+    
+    // Withdraw from treasury
+    match manager.withdraw(address, amount).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": result.treasury_address,
+                "amount": result.amount,
+                "tx_hash": result.tx_hash
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let (code, suggestion) = if error_msg.contains("unauthorized") || error_msg.contains("admin") {
+                ("UNAUTHORIZED", "Only the treasury admin can withdraw funds")
+            } else if error_msg.contains("insufficient") || error_msg.contains("balance") {
+                ("INSUFFICIENT_BALANCE", "The treasury doesn't have enough balance for this withdrawal")
+            } else if error_msg.contains("invalid") || error_msg.contains("format") {
+                ("INVALID_AMOUNT", "Amount should be in format like '1000000uxion'")
+            } else if error_msg.contains("not found") {
+                ("TREASURY_NOT_FOUND", "Verify the treasury address is correct")
+            } else {
+                ("WITHDRAW_FAILED", "Check the error message for details")
+            };
+            
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to withdraw from treasury: {}", e),
+                "code": code,
+                "suggestion": suggestion
+            });
+            print_json(&result)
+        }
+    }
 }

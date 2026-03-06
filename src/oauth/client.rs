@@ -25,6 +25,7 @@ use crate::oauth::{CallbackServer, PKCEChallenge, TokenManager};
 /// # #[tokio::main]
 /// # async fn main() -> anyhow::Result<()> {
 /// let config = NetworkConfig {
+///     network_name: "testnet".to_string(),
 ///     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
 ///     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
 ///     chain_id: "xion-testnet-2".to_string(),
@@ -76,7 +77,8 @@ impl OAuthClient {
     /// use xion_agent_toolkit::config::NetworkConfig;
     /// use xion_agent_toolkit::oauth::OAuthClient;
     ///
-    /// let config = NetworkConfig {
+/// let config = NetworkConfig {
+    ///     network_name: "testnet".to_string(),
     ///     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     ///     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     ///     chain_id: "xion-testnet-2".to_string(),
@@ -143,7 +145,8 @@ impl OAuthClient {
     /// # use xion_agent_toolkit::config::NetworkConfig;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// # let config = NetworkConfig {
+/// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
     /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// #     chain_id: "xion-testnet-2".to_string(),
@@ -271,7 +274,8 @@ impl OAuthClient {
     /// # use xion_agent_toolkit::oauth::OAuthClient;
     /// # use xion_agent_toolkit::config::NetworkConfig;
     /// # fn main() -> anyhow::Result<()> {
-    /// # let config = NetworkConfig {
+/// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
     /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// #     chain_id: "xion-testnet-2".to_string(),
@@ -311,7 +315,8 @@ impl OAuthClient {
     /// # use xion_agent_toolkit::oauth::OAuthClient;
     /// # use xion_agent_toolkit::config::NetworkConfig;
     /// # fn main() -> anyhow::Result<()> {
-    /// # let config = NetworkConfig {
+/// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
     /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// #     chain_id: "xion-testnet-2".to_string(),
@@ -352,7 +357,8 @@ impl OAuthClient {
     /// # use xion_agent_toolkit::oauth::OAuthClient;
     /// # use xion_agent_toolkit::config::NetworkConfig;
     /// # fn main() -> anyhow::Result<()> {
-    /// # let config = NetworkConfig {
+/// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
     /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// #     chain_id: "xion-testnet-2".to_string(),
@@ -396,7 +402,8 @@ impl OAuthClient {
     /// # use xion_agent_toolkit::config::NetworkConfig;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// # let config = NetworkConfig {
+/// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
     /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// #     chain_id: "xion-testnet-2".to_string(),
@@ -439,7 +446,8 @@ impl OAuthClient {
     /// # use xion_agent_toolkit::config::NetworkConfig;
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// # let config = NetworkConfig {
+/// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
     /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
     /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// #     chain_id: "xion-testnet-2".to_string(),

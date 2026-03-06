@@ -90,19 +90,49 @@ impl TokenResponse {
 /// User information from OAuth2 service
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserInfo {
-    /// Subject identifier (unique user ID)
-    pub sub: String,
-    /// Xion blockchain address
-    pub xion_address: String,
-    /// User email (if available)
+    /// MetaAccount address (same as xion_address)
+    pub id: String,
+    /// Authenticators associated with the account
     #[serde(default)]
-    pub email: Option<String>,
-    /// Email verification status
+    pub authenticators: Vec<AuthenticatorInfo>,
+    /// Account balances
     #[serde(default)]
-    pub email_verified: Option<bool>,
-    /// User's name
-    #[serde(default)]
-    pub name: Option<String>,
+    pub balances: Option<AccountBalances>,
+}
+
+/// Authenticator information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticatorInfo {
+    /// Authenticator ID
+    pub id: String,
+    /// Authenticator type (e.g., "secp256k1")
+    #[serde(rename = "type")]
+    pub auth_type: String,
+    /// Authenticator index
+    pub index: u32,
+    /// Authenticator data
+    pub data: serde_json::Value,
+}
+
+/// Account balances
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AccountBalances {
+    /// Xion balance
+    pub xion: Balance,
+    /// USDC balance
+    pub usdc: Balance,
+}
+
+/// Balance information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Balance {
+    /// Human-readable amount
+    pub amount: String,
+    /// Denomination
+    pub denom: String,
+    /// Micro amount (smallest unit)
+    #[serde(rename = "microAmount")]
+    pub micro_amount: String,
 }
 
 /// Error response from OAuth2 service
@@ -295,12 +325,13 @@ impl OAuth2ApiClient {
     /// Get user information
     ///
     /// Retrieves information about the authenticated user using the access token.
+    /// This calls the /api/v1/me endpoint to get the MetaAccount address and other details.
     ///
     /// # Arguments
     /// * `access_token` - Valid access token
     ///
     /// # Returns
-    /// User information including Xion address and optional email
+    /// User information including MetaAccount address (id) and balances
     ///
     /// # Errors
     /// Returns an error if:
@@ -315,15 +346,15 @@ impl OAuth2ApiClient {
     /// # async fn main() -> anyhow::Result<()> {
     /// let client = OAuth2ApiClient::new("https://oauth2.testnet.burnt.com".to_string());
     /// let user_info = client.get_user_info("access_token_123").await?;
-    /// println!("Xion address: {}", user_info.xion_address);
+    /// println!("MetaAccount address: {}", user_info.id);
     /// # Ok(())
     /// # }
     /// ```
     #[instrument(skip(self, access_token))]
     pub async fn get_user_info(&self, access_token: &str) -> Result<UserInfo> {
-        debug!("Fetching user info");
+        debug!("Fetching user info from /api/v1/me");
 
-        let url = format!("{}/oauth2/userinfo", self.base_url);
+        let url = format!("{}/api/v1/me", self.base_url);
 
         let response = self
             .http_client
@@ -350,7 +381,7 @@ impl OAuth2ApiClient {
             .await
             .context("Failed to parse user info response")?;
 
-        debug!("Successfully retrieved user info for address: {}", user_info.xion_address);
+        debug!("Successfully retrieved user info for MetaAccount: {}", user_info.id);
         Ok(user_info)
     }
 
@@ -539,34 +570,49 @@ mod tests {
     #[test]
     fn test_user_info_deserialization() {
         let json = r#"{
-            "sub": "user123",
-            "xion_address": "xion1abc123",
-            "email": "test@example.com",
-            "email_verified": true,
-            "name": "Test User"
+            "id": "xion1abc123",
+            "authenticators": [
+                {
+                    "id": "xion1abc123-0",
+                    "type": "secp256k1",
+                    "index": 0,
+                    "data": {}
+                }
+            ],
+            "balances": {
+                "xion": {
+                    "amount": "100.5",
+                    "denom": "uxion",
+                    "microAmount": "100500000"
+                },
+                "usdc": {
+                    "amount": "50.0",
+                    "denom": "uusdc",
+                    "microAmount": "50000000"
+                }
+            }
         }"#;
 
         let user_info: UserInfo = serde_json::from_str(json).unwrap();
-        assert_eq!(user_info.sub, "user123");
-        assert_eq!(user_info.xion_address, "xion1abc123");
-        assert_eq!(user_info.email, Some("test@example.com".to_string()));
-        assert_eq!(user_info.email_verified, Some(true));
-        assert_eq!(user_info.name, Some("Test User".to_string()));
+        assert_eq!(user_info.id, "xion1abc123");
+        assert_eq!(user_info.authenticators.len(), 1);
+        assert_eq!(user_info.authenticators[0].auth_type, "secp256k1");
+        assert!(user_info.balances.is_some());
+        let balances = user_info.balances.unwrap();
+        assert_eq!(balances.xion.amount, "100.5");
+        assert_eq!(balances.usdc.amount, "50.0");
     }
 
     #[test]
     fn test_user_info_minimal_deserialization() {
         let json = r#"{
-            "sub": "user123",
-            "xion_address": "xion1abc123"
+            "id": "xion1abc123"
         }"#;
 
         let user_info: UserInfo = serde_json::from_str(json).unwrap();
-        assert_eq!(user_info.sub, "user123");
-        assert_eq!(user_info.xion_address, "xion1abc123");
-        assert_eq!(user_info.email, None);
-        assert_eq!(user_info.email_verified, None);
-        assert_eq!(user_info.name, None);
+        assert_eq!(user_info.id, "xion1abc123");
+        assert!(user_info.authenticators.is_empty());
+        assert!(user_info.balances.is_none());
     }
 
     #[test]

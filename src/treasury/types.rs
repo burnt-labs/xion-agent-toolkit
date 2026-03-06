@@ -101,21 +101,93 @@ impl Default for QueryOptions {
     }
 }
 
-/// Treasury creation request (for future implementation)
+/// Treasury creation request
+///
+/// Contains all required parameters to instantiate a new treasury contract.
+/// Treasury contracts are created using CosmWasm instantiate2 for predictable addresses.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateTreasuryRequest {
-    /// Fee grant configuration
+    /// Admin address (user's MetaAccount address)
+    pub admin: String,
+
+    /// Fee grant configuration (required)
+    /// Allows the treasury to pay for user transactions
+    pub fee_config: FeeConfigMessage,
+
+    /// Grant configurations for Authz (required at least one)
+    /// Defines what permissions the treasury can grant to users
+    pub grant_configs: Vec<GrantConfigMessage>,
+
+    /// Treasury parameters
+    pub params: TreasuryParamsMessage,
+
+    /// Treasury name (optional)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fee_grant: Option<FeeGrantRequest>,
-    /// Grant configuration
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grant_config: Option<GrantConfigRequest>,
-    /// Initial funding amount
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub initial_fund: Option<String>,
+    pub name: Option<String>,
+
+    /// Is this an OAuth2 application treasury (optional)
+    #[serde(default)]
+    pub is_oauth2_app: bool,
 }
 
-/// Fee grant request (for treasury creation)
+/// Fee config for treasury instantiation message
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeeConfigMessage {
+    /// Fee allowance type URL
+    pub allowance: TypeUrlValue,
+    /// Description of the fee grant
+    pub description: String,
+}
+
+/// Grant config for treasury instantiation message
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GrantConfigMessage {
+    /// Authorization type URL
+    pub authorization: TypeUrlValue,
+    /// Description of the grant (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+/// Type URL with base64-encoded value
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TypeUrlValue {
+    /// Protobuf type URL
+    #[serde(rename = "type_url")]
+    pub type_url: String,
+    /// Base64-encoded protobuf value
+    pub value: String,
+}
+
+/// Treasury parameters for instantiation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryParamsMessage {
+    /// Redirect URL for OAuth callbacks
+    pub redirect_url: String,
+    /// Icon URL for display
+    pub icon_url: String,
+    /// Display URL (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_url: Option<String>,
+    /// Additional metadata as JSON object
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+/// Treasury creation result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateTreasuryResult {
+    /// New treasury contract address
+    pub treasury_address: String,
+    /// Transaction hash
+    pub tx_hash: String,
+    /// Admin address
+    pub admin: String,
+    /// Creation timestamp
+    pub created_at: String,
+}
+
+/// Legacy fee grant request (for backward compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeeGrantRequest {
     /// Fee grant type
@@ -125,13 +197,84 @@ pub struct FeeGrantRequest {
     pub spend_limit: String,
 }
 
-/// Grant config request (for treasury creation)
+/// Legacy grant config request (for backward compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrantConfigRequest {
     /// Message type URL
     pub type_url: String,
     /// Grant configuration
     pub config: serde_json::Value,
+}
+
+// ============================================================================
+// Transaction Types
+// ============================================================================
+
+/// Transaction message for broadcasting
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransactionMessage {
+    /// Protobuf type URL (e.g., "/cosmos.bank.v1beta1.MsgSend")
+    pub type_url: String,
+    /// Message value as JSON object
+    pub value: serde_json::Value,
+}
+
+/// Transaction broadcast request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BroadcastRequest {
+    /// List of transaction messages
+    pub messages: Vec<TransactionMessage>,
+    /// Optional memo
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memo: Option<String>,
+}
+
+/// Transaction broadcast response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BroadcastResponse {
+    /// Success status
+    pub success: bool,
+    /// Transaction hash
+    pub tx_hash: String,
+    /// Sender address
+    pub from: String,
+    /// Gas used (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_used: Option<String>,
+    /// Gas wanted (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_wanted: Option<String>,
+}
+
+/// Coin type for transactions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Coin {
+    /// Amount (as string to handle large numbers)
+    pub amount: String,
+    /// Denomination (e.g., "uxion")
+    pub denom: String,
+}
+
+/// Fund treasury result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FundResult {
+    /// Treasury address that was funded
+    pub treasury_address: String,
+    /// Amount funded
+    pub amount: String,
+    /// Transaction hash
+    pub tx_hash: String,
+}
+
+/// Withdraw from treasury result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WithdrawResult {
+    /// Treasury address withdrawn from
+    pub treasury_address: String,
+    /// Amount withdrawn
+    pub amount: String,
+    /// Transaction hash
+    pub tx_hash: String,
 }
 
 #[cfg(test)]

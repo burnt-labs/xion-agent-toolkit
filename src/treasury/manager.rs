@@ -12,7 +12,7 @@ use crate::oauth::OAuthClient;
 
 use super::api_client::TreasuryApiClient;
 use super::cache::TreasuryCache;
-use super::types::{CreateTreasuryRequest, QueryOptions, TreasuryInfo, TreasuryListItem};
+use super::types::{CreateTreasuryRequest, FundResult, QueryOptions, TreasuryInfo, TreasuryListItem, WithdrawResult};
 
 /// Treasury Manager
 ///
@@ -345,20 +345,88 @@ impl TreasuryManager {
         anyhow::bail!("Treasury creation not yet implemented. Please use the Developer Portal to create Treasury contracts.");
     }
 
-    /// Fund treasury (future implementation)
+    /// Fund treasury
     ///
-    /// This method is a placeholder for future treasury funding functionality.
+    /// Funds a treasury contract by sending tokens to it.
+    /// This creates a MsgSend transaction from the user's MetaAccount to the treasury.
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    /// * `amount` - Amount to fund (e.g., "1000000uxion")
+    ///
+    /// # Returns
+    /// Fund result with transaction hash
     #[instrument(skip(self))]
-    pub async fn fund(&self, _address: &str, _amount: &str) -> Result<()> {
-        anyhow::bail!("Treasury funding not yet implemented. Please use xiond CLI to fund Treasury contracts.");
+    pub async fn fund(&self, address: &str, amount: &str) -> Result<FundResult> {
+        debug!("Funding treasury {} with {}", address, amount);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials
+            .xion_address
+            .ok_or_else(|| anyhow::anyhow!("User address not found in credentials. Please login again."))?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to fund treasury
+        let broadcast_response = self
+            .api_client
+            .fund_treasury(&access_token, address, amount, &from_address)
+            .await?;
+
+        // Convert BroadcastResponse to FundResult
+        Ok(FundResult {
+            treasury_address: address.to_string(),
+            amount: amount.to_string(),
+            tx_hash: broadcast_response.tx_hash,
+        })
     }
 
-    /// Withdraw from treasury (future implementation)
+    /// Withdraw from treasury
     ///
-    /// This method is a placeholder for future treasury withdrawal functionality.
+    /// Withdraws tokens from a treasury contract to the admin's wallet.
+    /// This creates a MsgExecuteContract transaction calling the Withdraw message.
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    /// * `amount` - Amount to withdraw (e.g., "1000000uxion")
+    ///
+    /// # Returns
+    /// Withdraw result with transaction hash
     #[instrument(skip(self))]
-    pub async fn withdraw(&self, _address: &str, _amount: &str) -> Result<()> {
-        anyhow::bail!("Treasury withdrawal not yet implemented. Please use xiond CLI to withdraw from Treasury contracts.");
+    pub async fn withdraw(&self, address: &str, amount: &str) -> Result<WithdrawResult> {
+        debug!("Withdrawing {} from treasury {}", amount, address);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials
+            .xion_address
+            .ok_or_else(|| anyhow::anyhow!("User address not found in credentials. Please login again."))?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to withdraw from treasury
+        let broadcast_response = self
+            .api_client
+            .withdraw_treasury(&access_token, address, amount, &from_address)
+            .await?;
+
+        // Convert BroadcastResponse to WithdrawResult
+        Ok(WithdrawResult {
+            treasury_address: address.to_string(),
+            amount: amount.to_string(),
+            tx_hash: broadcast_response.tx_hash,
+        })
     }
 }
 
@@ -366,6 +434,7 @@ impl TreasuryManager {
 mod tests {
     use super::*;
     use crate::config::NetworkConfig;
+    use base64::Engine;
 
     fn create_test_config() -> NetworkConfig {
         NetworkConfig {
@@ -424,9 +493,23 @@ mod tests {
         let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
 
         let request = CreateTreasuryRequest {
-            fee_grant: None,
-            grant_config: None,
-            initial_fund: None,
+            admin: "xion1test".to_string(),
+            fee_config: crate::treasury::types::FeeConfigMessage {
+                allowance: crate::treasury::types::TypeUrlValue {
+                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                    value: base64::engine::general_purpose::STANDARD.encode("{}"),
+                },
+                description: "Test fee config".to_string(),
+            },
+            grant_configs: vec![],
+            params: crate::treasury::types::TreasuryParamsMessage {
+                redirect_url: "https://example.com/callback".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+                display_url: None,
+                metadata: None,
+            },
+            name: None,
+            is_oauth2_app: false,
         };
 
         let result = manager.create(request).await;
@@ -435,24 +518,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_fund_not_implemented() {
+    async fn test_fund_requires_auth() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
         let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
 
         let result = manager.fund("xion1abc", "1000uxion").await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("Not authenticated"));
     }
 
     #[tokio::test]
-    async fn test_withdraw_not_implemented() {
+    async fn test_withdraw_requires_auth() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
         let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
 
         let result = manager.withdraw("xion1abc", "1000uxion").await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("Not authenticated"));
     }
 }

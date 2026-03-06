@@ -16,6 +16,7 @@ pub use api_client::TreasuryApiClient;
 pub use cache::TreasuryCache;
 pub use manager::TreasuryManager;
 pub use types::{
-    CreateTreasuryRequest, FeeConfig, FeeGrantRequest, GrantConfig, GrantConfigRequest,
-    QueryOptions, TreasuryInfo, TreasuryListItem, TreasuryParams,
+    BroadcastRequest, BroadcastResponse, CreateTreasuryRequest, FeeConfig, FeeGrantRequest,
+    FundResult, GrantConfig, GrantConfigRequest, QueryOptions, TransactionMessage,
+    TreasuryInfo, TreasuryListItem, TreasuryParams, WithdrawResult,
 };
