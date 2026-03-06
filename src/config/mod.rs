@@ -8,7 +8,5 @@ pub mod schema;
 pub use constants::NetworkConfig;
 pub use credentials::CredentialsManager;
 pub use manager::ConfigManager;
-pub use oauth_discovery::{
-    get_oauth2_endpoints, fetch_oauth2_metadata, OAuth2ServerMetadata, OAuth2EndpointsCache,
-};
-pub use schema::{Config, UserCredentials};
+pub use oauth_discovery::get_oauth2_endpoints;
+pub use schema::UserCredentials;

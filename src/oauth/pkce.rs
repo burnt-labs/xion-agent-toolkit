@@ -8,9 +8,11 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum PKCEError {
     #[error("Failed to generate random bytes: {0}")]
+    #[allow(dead_code)]
     RandomGeneration(String),
 
     #[error("Failed to encode challenge: {0}")]
+    #[allow(dead_code)]
     Encoding(String),
 
     #[error("State mismatch")]
@@ -56,6 +58,7 @@ impl PKCEChallenge {
     ///
     /// # Returns
     /// `Ok(())` if states match, `Err(PKCEError::StateMismatch)` otherwise
+    #[allow(dead_code)]
     pub fn verify_state(&self, state: &str) -> Result<(), PKCEError> {
         if self.state == state {
             Ok(())

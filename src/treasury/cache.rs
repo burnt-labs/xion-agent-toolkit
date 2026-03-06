@@ -83,6 +83,7 @@ impl TreasuryCache {
     }
 
     /// Clear all cached data
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.treasury_list = None;
         self.treasuries.clear();
@@ -91,12 +92,14 @@ impl TreasuryCache {
     /// Set custom TTL for cache entries
     ///
     /// Only affects new entries, not existing ones
+    #[allow(dead_code)]
     pub fn with_ttl(mut self, ttl: Duration) -> Self {
         self.default_ttl = ttl;
         self
     }
 
     /// Remove expired entries
+    #[allow(dead_code)]
     pub fn cleanup_expired(&mut self) {
         // Clean up expired treasury list
         if let Some(ref entry) = self.treasury_list {
@@ -110,6 +113,7 @@ impl TreasuryCache {
     }
 
     /// Get cache statistics
+    #[allow(dead_code)]
     pub fn stats(&self) -> CacheStats {
         let total_treasuries = self.treasuries.len();
         let expired_treasuries = self
@@ -138,6 +142,7 @@ impl Default for TreasuryCache {
 }
 
 /// Cache statistics
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct CacheStats {
     /// Whether treasury list is cached

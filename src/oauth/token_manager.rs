@@ -146,6 +146,7 @@ impl TokenManager {
     /// }
     /// # Ok::<(), anyhow::Error>(())
     /// ```
+    #[allow(dead_code)]
     #[instrument(skip(self))]
     pub fn is_token_expired(&self) -> Result<bool> {
         let credentials = self
@@ -308,6 +309,7 @@ impl TokenManager {
     /// # Ok(())
     /// # }
     /// ```
+    #[allow(dead_code)]
     #[instrument(skip(self, access_token))]
     pub async fn validate_token(&self, access_token: &str) -> Result<bool> {
         debug!("Validating access token");

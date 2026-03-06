@@ -76,6 +76,7 @@ impl TokenResponse {
     /// Check if the token is expired
     ///
     /// Returns true if the token has expired or will expire within the next 60 seconds
+    #[allow(dead_code)]
     pub fn is_expired(&self) -> bool {
         if let Some(ref expires_at_str) = self.expires_at {
             if let Ok(expires_at) = DateTime::parse_from_rfc3339(expires_at_str) {
@@ -208,6 +209,7 @@ impl OAuth2ApiClient {
     /// # Ok(())
     /// # }
     /// ```
+    #[allow(dead_code)]
     #[instrument(skip(self, code, code_verifier))]
     pub async fn exchange_code(
         &self,
@@ -498,6 +500,7 @@ impl OAuth2ApiClient {
     }
 
     /// Get the base URL
+    #[allow(dead_code)]
     pub fn base_url(&self) -> &str {
         &self.base_url
     }

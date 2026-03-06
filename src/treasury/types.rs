@@ -188,6 +188,7 @@ pub struct CreateTreasuryResult {
 }
 
 /// Legacy fee grant request (for backward compatibility)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeeGrantRequest {
     /// Fee grant type
@@ -198,6 +199,7 @@ pub struct FeeGrantRequest {
 }
 
 /// Legacy grant config request (for backward compatibility)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrantConfigRequest {
     /// Message type URL
@@ -248,6 +250,7 @@ pub struct BroadcastResponse {
 }
 
 /// Coin type for transactions
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Coin {
     /// Amount (as string to handle large numbers)
@@ -325,6 +328,7 @@ pub struct ProtobufAny {
 }
 
 /// Create treasury response
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateTreasuryResponse {
     pub treasury_address: String,

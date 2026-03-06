@@ -157,6 +157,7 @@ pub fn decrypt(ciphertext_b64: &str) -> Result<Vec<u8>> {
 /// Generate a random key for testing purposes.
 ///
 /// Returns a 32-byte hex-encoded string suitable for XION_TOOLKIT_KEY.
+#[allow(dead_code)]
 pub fn generate_test_key() -> String {
     let mut key = [0u8; KEY_LEN];
     rand::thread_rng().fill_bytes(&mut key);

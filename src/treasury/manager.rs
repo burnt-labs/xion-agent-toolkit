@@ -13,7 +13,7 @@ use crate::config::NetworkConfig;
 
 use super::api_client::TreasuryApiClient;
 use super::cache::TreasuryCache;
-use super::types::{CreateTreasuryRequest, FundResult, QueryOptions, TreasuryInfo, TreasuryListItem, TreasuryParams, WithdrawResult};
+use super::types::{FundResult, QueryOptions, TreasuryInfo, TreasuryListItem, TreasuryParams, WithdrawResult};
 
 /// Treasury Manager
 ///
@@ -105,6 +105,7 @@ impl TreasuryManager {
     /// Create Treasury manager without caching
     ///
     /// Disables caching for all operations. Useful when you always need fresh data.
+    #[allow(dead_code)]
     pub fn without_cache(oauth_client: OAuthClient, config: NetworkConfig) -> Self {
         let api_client = TreasuryApiClient::new(config.oauth_api_url.clone());
 
@@ -293,6 +294,7 @@ impl TreasuryManager {
     /// # Ok(())
     /// # }
     /// ```
+    #[allow(dead_code)]
     #[instrument(skip(self))]
     pub async fn get_balance(&self, address: &str) -> Result<String> {
         debug!("Getting balance for treasury: {}", address);
@@ -340,6 +342,7 @@ impl TreasuryManager {
     ///
     /// Clears all cached treasury data. Useful when you need fresh data
     /// or when the user logs out.
+    #[allow(dead_code)]
     pub async fn clear_cache(&self) {
         if let Some(cache) = &self.cache {
             let mut cache_write = cache.write().await;

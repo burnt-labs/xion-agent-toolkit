@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+#[allow(dead_code)]
 #[derive(Debug, Error)]
 pub enum XionError {
     #[error("Configuration error: {0}")]
@@ -21,4 +22,5 @@ pub enum XionError {
     Serialization(#[from] serde_json::Error),
 }
 
+#[allow(dead_code)]
 pub type Result<T> = std::result::Result<T, XionError>;

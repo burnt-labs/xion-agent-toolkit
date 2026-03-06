@@ -14,11 +14,13 @@ pub fn print_info(message: &str) {
 }
 
 /// Print error message to stderr (for human consumption)
+#[allow(dead_code)]
 pub fn print_error(message: &str) {
     eprintln!("[ERROR] {}", message);
 }
 
 /// Print warning message to stderr (for human consumption)
+#[allow(dead_code)]
 pub fn print_warning(message: &str) {
     eprintln!("[WARNING] {}", message);
 }

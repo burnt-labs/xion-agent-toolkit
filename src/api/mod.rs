@@ -8,7 +8,9 @@
 
 pub mod oauth2_api;
 
+#[allow(unused_imports)]
 pub use oauth2_api::OAuth2ApiClient;
 
-// Re-export Treasury API client from treasury module for convenience
+// Re-export TreasuryApiClient for convenience in doc examples
+#[allow(unused_imports)]
 pub use crate::treasury::TreasuryApiClient;

@@ -37,6 +37,7 @@ pub struct TreasuryApiClient {
 }
 
 /// Treasury list response from API
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TreasuryListResponse {
     /// List of treasuries
@@ -44,6 +45,7 @@ struct TreasuryListResponse {
 }
 
 /// Treasury query response from API
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TreasuryQueryResponse {
     /// Treasury details
@@ -660,6 +662,7 @@ impl TreasuryApiClient {
     }
 
     /// Get the base URL
+    #[allow(dead_code)]
     pub fn base_url(&self) -> &str {
         &self.base_url
     }

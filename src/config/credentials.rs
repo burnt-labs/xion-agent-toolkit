@@ -178,6 +178,7 @@ impl CredentialsManager {
     ///
     /// This loads the existing credentials, updates the access token and expiration,
     /// then saves them back.
+    #[allow(dead_code)]
     pub fn update_access_token(&self, access_token: &str, expires_at: &str) -> Result<()> {
         // Load existing credentials
         let mut credentials = self

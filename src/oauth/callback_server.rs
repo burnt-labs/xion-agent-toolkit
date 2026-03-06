@@ -21,6 +21,7 @@ pub enum CallbackError {
     StateMismatch { expected: String, actual: String },
 
     #[error("OAuth2 error: {error}")]
+    #[allow(dead_code)]
     OAuthError {
         error: String,
         error_description: Option<String>,
@@ -47,6 +48,7 @@ struct CallbackParams {
 }
 
 /// OAuth2 error query parameters
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct ErrorParams {
     error: String,

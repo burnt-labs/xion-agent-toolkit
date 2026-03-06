@@ -13,20 +13,15 @@ pub mod encoding;
 pub mod manager;
 pub mod types;
 
-// Re-export commonly used types and manager
+// Re-export commonly used types and manager (public API)
+#[allow(unused_imports)]
 pub use api_client::TreasuryApiClient;
-pub use cache::TreasuryCache;
-pub use encoding::{
-    parse_coin_string, parse_single_denom, encode_to_base64, Coin, IbcAllocation, ContractGrant,
-    EncodingError, encode_basic_allowance, encode_periodic_allowance, encode_allowed_msg_allowance,
-    encode_generic_authorization, encode_send_authorization, encode_stake_authorization,
-    encode_ibc_transfer_authorization, encode_contract_execution_authorization,
-};
 pub use manager::TreasuryManager;
+#[allow(unused_imports)]
 pub use types::{
-    AuthorizationInput, BroadcastRequest, BroadcastResponse, CreateTreasuryRequest, FeeConfig,
-    FeeConfigInput, FeeConfigMessage, FeeGrantRequest, FundResult, GrantConfig,
-    GrantConfigInput, GrantConfigMessage, GrantConfigRequest, QueryOptions, TransactionMessage,
-    TreasuryCreateRequest, TreasuryInfo, TreasuryListItem, TreasuryParams,
-    TreasuryParamsInput, TreasuryParamsMessage, TypeUrlValue, WithdrawResult,
+    BroadcastRequest, BroadcastResponse, CreateTreasuryRequest, FeeConfig, FeeConfigInput,
+    FeeConfigMessage, FeeGrantRequest, FundResult, GrantConfig, GrantConfigInput,
+    GrantConfigMessage, GrantConfigRequest, QueryOptions, TransactionMessage,
+    TreasuryCreateRequest, TreasuryInfo, TreasuryListItem, TreasuryParams, TreasuryParamsInput,
+    TreasuryParamsMessage, TypeUrlValue, WithdrawResult,
 };

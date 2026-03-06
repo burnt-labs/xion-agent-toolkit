@@ -53,6 +53,7 @@ pub struct OAuth2ServerMetadata {
 
     /// Timestamp when this metadata was fetched (for cache validation)
     #[serde(skip)]
+    #[allow(dead_code)]
     pub fetched_at: Option<u64>,
 }
 
