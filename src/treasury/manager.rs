@@ -9,10 +9,11 @@ use tokio::sync::RwLock;
 use tracing::{debug, instrument};
 
 use crate::oauth::OAuthClient;
+use crate::config::NetworkConfig;
 
 use super::api_client::TreasuryApiClient;
 use super::cache::TreasuryCache;
-use super::types::{CreateTreasuryRequest, FundResult, QueryOptions, TreasuryInfo, TreasuryListItem, WithdrawResult};
+use super::types::{CreateTreasuryRequest, FundResult, QueryOptions, TreasuryInfo, TreasuryListItem, TreasuryParams, WithdrawResult};
 
 /// Treasury Manager
 ///
@@ -40,7 +41,7 @@ use super::types::{CreateTreasuryRequest, FundResult, QueryOptions, TreasuryInfo
 /// #     callback_port: 54321,
 /// # };
 /// let oauth_client = OAuthClient::new(config.clone())?;
-/// let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+/// let manager = TreasuryManager::new(oauth_client, config.clone());
 ///
 /// // List treasuries
 /// let treasuries = manager.list().await?;
@@ -55,6 +56,8 @@ pub struct TreasuryManager {
     oauth_client: OAuthClient,
     /// Treasury API client
     api_client: TreasuryApiClient,
+    /// Network configuration
+    config: NetworkConfig,
     /// Optional cache (wrapped in Arc<RwLock> for thread-safe async access)
     cache: Option<Arc<RwLock<TreasuryCache>>>,
 }
@@ -83,17 +86,18 @@ impl TreasuryManager {
     /// #     callback_port: 54321,
     /// # };
     /// let oauth_client = OAuthClient::new(config.clone())?;
-    /// let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
     /// # Ok(())
     /// # }
     /// ```
-    pub fn new(oauth_client: OAuthClient, api_base_url: String) -> Self {
-        let api_client = TreasuryApiClient::new(api_base_url);
+    pub fn new(oauth_client: OAuthClient, config: NetworkConfig) -> Self {
+        let api_client = TreasuryApiClient::new(config.oauth_api_url.clone());
         let cache = Some(Arc::new(RwLock::new(TreasuryCache::new())));
 
         Self {
             oauth_client,
             api_client,
+            config,
             cache,
         }
     }
@@ -101,12 +105,13 @@ impl TreasuryManager {
     /// Create Treasury manager without caching
     ///
     /// Disables caching for all operations. Useful when you always need fresh data.
-    pub fn without_cache(oauth_client: OAuthClient, api_base_url: String) -> Self {
-        let api_client = TreasuryApiClient::new(api_base_url);
+    pub fn without_cache(oauth_client: OAuthClient, config: NetworkConfig) -> Self {
+        let api_client = TreasuryApiClient::new(config.oauth_api_url.clone());
 
         Self {
             oauth_client,
             api_client,
+            config,
             cache: None,
         }
     }
@@ -143,7 +148,7 @@ impl TreasuryManager {
     /// #     callback_port: 54321,
     /// # };
     /// # let oauth_client = OAuthClient::new(config.clone())?;
-    /// let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
     /// let treasuries = manager.list().await?;
     /// for treasury in treasuries {
     ///     println!("Treasury: {} - Balance: {}", treasury.address, treasury.balance);
@@ -217,7 +222,7 @@ impl TreasuryManager {
     /// #     callback_port: 54321,
     /// # };
     /// # let oauth_client = OAuthClient::new(config.clone())?;
-    /// let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
     /// let treasury = manager.query("xion1abc...").await?;
     /// println!("Balance: {} uxion", treasury.balance);
     /// # Ok(())
@@ -282,7 +287,7 @@ impl TreasuryManager {
     /// #     callback_port: 54321,
     /// # };
     /// # let oauth_client = OAuthClient::new(config.clone())?;
-    /// let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
     /// let balance = manager.get_balance("xion1abc...").await?;
     /// println!("Balance: {} uxion", balance);
     /// # Ok(())
@@ -320,7 +325,7 @@ impl TreasuryManager {
     /// #     callback_port: 54321,
     /// # };
     /// # let oauth_client = OAuthClient::new(config.clone())?;
-    /// let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
     /// if manager.is_authenticated()? {
     ///     println!("User is authenticated");
     /// }
@@ -343,12 +348,182 @@ impl TreasuryManager {
         }
     }
 
-    /// Create new treasury (future implementation)
+    /// Create new treasury
     ///
-    /// This method is a placeholder for future treasury creation functionality.
-    #[instrument(skip(self))]
-    pub async fn create(&self, _request: CreateTreasuryRequest) -> Result<TreasuryInfo> {
-        anyhow::bail!("Treasury creation not yet implemented. Please use the Developer Portal to create Treasury contracts.");
+    /// Creates a new treasury contract with the specified parameters.
+    /// This method encodes the user input into the proper chain format
+    /// and submits a transaction to instantiate the treasury contract.
+    ///
+    /// # Arguments
+    /// * `request` - Treasury creation request with parameters, fee config, and grant configs
+    ///
+    /// # Returns
+    /// Treasury information for the newly created treasury
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Not authenticated
+    /// - Token refresh fails
+    /// - Encoding fails
+    /// - API request fails
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use xion_agent_toolkit::treasury::TreasuryManager;
+    /// # use xion_agent_toolkit::treasury::types::{TreasuryCreateRequest, TreasuryParamsInput, FeeConfigInput};
+    /// # use xion_agent_toolkit::oauth::OAuthClient;
+    /// # use xion_agent_toolkit::config::NetworkConfig;
+    /// # #[tokio::main]
+    /// # async fn main() -> anyhow::Result<()> {
+    /// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: Some(1260),
+    /// #     treasury_config: Some("xion1...".to_string()),
+    /// #     callback_port: 54321,
+    /// # };
+    /// # let oauth_client = OAuthClient::new(config.clone())?;
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
+    ///
+    /// let request = TreasuryCreateRequest {
+    ///     params: TreasuryParamsInput {
+    ///         redirect_url: "https://myapp.com/callback".to_string(),
+    ///         icon_url: "https://myapp.com/icon.png".to_string(),
+    ///         name: Some("My Treasury".to_string()),
+    ///         is_oauth2_app: Some(true),
+    ///     },
+    ///     fee_config: Some(FeeConfigInput::Basic {
+    ///         spend_limit: "1000000uxion".to_string(),
+    ///         description: "Basic fee allowance".to_string(),
+    ///     }),
+    ///     grant_configs: vec![],
+    /// };
+    ///
+    /// let treasury = manager.create(request).await?;
+    /// println!("Created treasury: {}", treasury.address);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[instrument(skip(self, request))]
+    pub async fn create(
+        &self,
+        request: super::types::TreasuryCreateRequest,
+    ) -> Result<TreasuryInfo> {
+        debug!("Creating treasury");
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let admin_address = credentials
+            .xion_address
+            .ok_or_else(|| anyhow::anyhow!("User address not found in credentials. Please login again."))?;
+
+        // Step 1: Encode params metadata
+        let metadata = serde_json::json!({
+            "name": request.params.name.clone().unwrap_or_default(),
+            "archived": false,
+            "is_oauth2_app": request.params.is_oauth2_app.unwrap_or(false),
+        });
+
+        // Step 2: Encode fee config (if provided)
+        let fee_config = if let Some(fee_input) = &request.fee_config {
+            Some(encode_fee_config_input(fee_input)?)
+        } else {
+            None
+        };
+
+        // Step 3: Encode grant configs
+        let (type_urls, grant_configs): (Vec<_>, Vec<_>) = request
+            .grant_configs
+            .iter()
+            .map(|grant_input| encode_grant_config_input(grant_input))
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .unzip();
+
+        // Step 4: Build the instantiate message
+        let instantiate_msg = super::types::TreasuryInstantiateMsg {
+            admin: admin_address.clone(),
+            params: super::types::TreasuryParamsChain {
+                redirect_url: request.params.redirect_url,
+                icon_url: request.params.icon_url,
+                metadata: metadata.to_string(),
+            },
+            fee_config,
+            grant_configs,
+            type_urls,
+        };
+
+        // Step 5: Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Step 6: Get treasury code ID from config
+        let code_id = self
+            .config
+            .treasury_code_id
+            .ok_or_else(|| anyhow::anyhow!("Treasury code ID not configured for this network"))?;
+
+        // Step 7: Generate random salt for instantiate2
+        let salt: [u8; 32] = {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            rng.gen()
+        };
+
+        // Step 8: Call API to create treasury
+        let create_request = super::types::CreateTreasuryRequest {
+            admin: admin_address.clone(),
+            fee_config: super::types::FeeConfigMessage {
+                allowance: super::types::TypeUrlValue {
+                    type_url: instantiate_msg.fee_config.as_ref().map(|f| f.allowance.type_url.clone()).unwrap_or_default(),
+                    value: instantiate_msg.fee_config.as_ref().map(|f| f.allowance.value.clone()).unwrap_or_default(),
+                },
+                description: instantiate_msg.fee_config.as_ref().map(|f| f.description.clone()).unwrap_or_default(),
+            },
+            grant_configs: instantiate_msg.grant_configs.iter().map(|gc| {
+                super::types::GrantConfigMessage {
+                    authorization: super::types::TypeUrlValue {
+                        type_url: gc.authorization.type_url.clone(),
+                        value: gc.authorization.value.clone(),
+                    },
+                    description: Some(gc.description.clone()),
+                }
+            }).collect(),
+            params: super::types::TreasuryParamsMessage {
+                redirect_url: instantiate_msg.params.redirect_url.clone(),
+                icon_url: instantiate_msg.params.icon_url.clone(),
+                display_url: None,
+                metadata: Some(serde_json::from_str(&instantiate_msg.params.metadata).unwrap_or_default()),
+            },
+            name: request.params.name.clone(),
+            is_oauth2_app: request.params.is_oauth2_app.unwrap_or(false),
+        };
+
+        let result = self
+            .api_client
+            .create_treasury(&access_token, code_id, create_request, &salt)
+            .await?;
+
+        // Step 9: Return treasury info
+        Ok(TreasuryInfo {
+            address: result.treasury_address,
+            admin: Some(result.admin),
+            balance: "0".to_string(),
+            params: TreasuryParams {
+                display_url: None,
+                redirect_url: instantiate_msg.params.redirect_url,
+                icon_url: instantiate_msg.params.icon_url,
+                metadata: Some(serde_json::from_str(&instantiate_msg.params.metadata).unwrap_or_default()),
+            },
+            fee_config: None,
+            grant_configs: None,
+        })
     }
 
     /// Fund treasury
@@ -436,6 +611,186 @@ impl TreasuryManager {
     }
 }
 
+// ============================================================================
+// Helper Functions for Encoding
+// ============================================================================
+
+/// Encode fee config input to chain format
+fn encode_fee_config_input(
+    input: &super::types::FeeConfigInput,
+) -> Result<super::types::FeeConfigChain> {
+    use super::encoding::{
+        encode_basic_allowance, encode_periodic_allowance, encode_allowed_msg_allowance,
+        parse_coin_string,
+    };
+
+    let (allowance_type_url, allowance_value) = match input {
+        super::types::FeeConfigInput::Basic {
+            spend_limit,
+            description: _,
+        } => {
+            let coins = parse_coin_string(spend_limit)?;
+            let encoded = encode_basic_allowance(coins)?;
+            (
+                "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                encoded,
+            )
+        }
+        super::types::FeeConfigInput::Periodic {
+            basic_spend_limit,
+            period_seconds,
+            period_spend_limit,
+            description: _,
+        } => {
+            let basic = if let Some(limit) = basic_spend_limit {
+                Some(parse_coin_string(limit)?)
+            } else {
+                None
+            };
+            let period_limit = parse_coin_string(period_spend_limit)?;
+            let encoded = encode_periodic_allowance(basic, *period_seconds, period_limit)?;
+            (
+                "/cosmos.feegrant.v1beta1.PeriodicAllowance".to_string(),
+                encoded,
+            )
+        }
+        super::types::FeeConfigInput::AllowedMsg {
+            allowed_messages,
+            nested_allowance,
+            description: _,
+        } => {
+            // Recursive encoding
+            let nested = encode_fee_config_input(nested_allowance)?;
+            let encoded = encode_allowed_msg_allowance(
+                allowed_messages.clone(),
+                &nested.allowance.type_url,
+                &nested.allowance.value,
+            )?;
+            (
+                "/cosmos.feegrant.v1beta1.AllowedMsgAllowance".to_string(),
+                encoded,
+            )
+        }
+    };
+
+    let description = match input {
+        super::types::FeeConfigInput::Basic { description, .. } => description.clone(),
+        super::types::FeeConfigInput::Periodic { description, .. } => description.clone(),
+        super::types::FeeConfigInput::AllowedMsg { description, .. } => description.clone(),
+    };
+
+    Ok(super::types::FeeConfigChain {
+        description,
+        allowance: super::types::ProtobufAny {
+            type_url: allowance_type_url,
+            value: allowance_value,
+        },
+    })
+}
+
+/// Encode grant config input to chain format
+fn encode_grant_config_input(
+    input: &super::types::GrantConfigInput,
+) -> Result<(String, super::types::GrantConfigChain)> {
+    use super::encoding::{
+        encode_generic_authorization, encode_send_authorization, encode_stake_authorization,
+        encode_ibc_transfer_authorization, encode_contract_execution_authorization,
+        parse_coin_string, parse_single_denom, IbcAllocation, ContractGrant,
+    };
+
+    let (auth_type_url, auth_value) = match &input.authorization {
+        super::types::AuthorizationInput::Generic => {
+            let encoded = encode_generic_authorization(&input.type_url)?;
+            (
+                "/cosmos.authz.v1beta1.GenericAuthorization".to_string(),
+                encoded,
+            )
+        }
+        super::types::AuthorizationInput::Send {
+            spend_limit,
+            allow_list,
+        } => {
+            let coins = parse_coin_string(spend_limit)?;
+            let encoded = encode_send_authorization(coins, allow_list.clone())?;
+            (
+                "/cosmos.bank.v1beta1.SendAuthorization".to_string(),
+                encoded,
+            )
+        }
+        super::types::AuthorizationInput::Stake {
+            max_tokens,
+            validators,
+            deny_validators,
+            authorization_type,
+        } => {
+            let coin = parse_single_denom(max_tokens)?;
+            let encoded = encode_stake_authorization(
+                coin,
+                validators.clone(),
+                deny_validators.clone(),
+                *authorization_type,
+            )?;
+            (
+                "/cosmos.staking.v1beta1.StakeAuthorization".to_string(),
+                encoded,
+            )
+        }
+        super::types::AuthorizationInput::IbcTransfer { allocations } => {
+            let ibc_allocations: Vec<IbcAllocation> = allocations
+                .iter()
+                .map(|a| {
+                    Ok(IbcAllocation {
+                        source_port: a.source_port.clone(),
+                        source_channel: a.source_channel.clone(),
+                        spend_limit: parse_coin_string(&a.spend_limit)?,
+                        allow_list: a.allow_list.clone(),
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let encoded = encode_ibc_transfer_authorization(ibc_allocations)?;
+            (
+                "/ibc.applications.transfer.v1.TransferAuthorization".to_string(),
+                encoded,
+            )
+        }
+        super::types::AuthorizationInput::ContractExecution { grants } => {
+            let contract_grants: Vec<ContractGrant> = grants
+                .iter()
+                .map(|g| {
+                    Ok(ContractGrant {
+                        address: g.address.clone(),
+                        max_calls: g.max_calls,
+                        max_funds: if let Some(funds) = &g.max_funds {
+                            Some(parse_coin_string(funds)?)
+                        } else {
+                            None
+                        },
+                        filter_type: g.filter_type.clone(),
+                        keys: g.keys.clone(),
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let encoded = encode_contract_execution_authorization(contract_grants)?;
+            (
+                "/cosmwasm.wasm.v1.ContractExecutionAuthorization".to_string(),
+                encoded,
+            )
+        }
+    };
+
+    Ok((
+        input.type_url.clone(),
+        super::types::GrantConfigChain {
+            description: input.description.clone(),
+            authorization: super::types::ProtobufAny {
+                type_url: auth_type_url,
+                value: auth_value,
+            },
+            optional: input.optional,
+        },
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -459,7 +814,7 @@ mod tests {
     fn test_manager_creation() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::new(oauth_client, config.clone());
         assert!(manager.cache.is_some());
     }
 
@@ -467,7 +822,7 @@ mod tests {
     fn test_manager_without_cache() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::without_cache(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::without_cache(oauth_client, config.clone());
         assert!(manager.cache.is_none());
     }
 
@@ -475,7 +830,7 @@ mod tests {
     fn test_is_authenticated_without_credentials() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::new(oauth_client, config.clone());
 
         // Should not be authenticated initially
         let is_auth = manager.is_authenticated().unwrap();
@@ -486,48 +841,44 @@ mod tests {
     async fn test_clear_cache() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::new(oauth_client, config.clone());
 
         // Should not panic when clearing cache
         manager.clear_cache().await;
     }
 
     #[tokio::test]
-    async fn test_create_not_implemented() {
+    async fn test_create_requires_auth() {
+        use crate::treasury::types::{TreasuryCreateRequest, TreasuryParamsInput, FeeConfigInput};
+        
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::new(oauth_client, config.clone());
 
-        let request = CreateTreasuryRequest {
-            admin: "xion1test".to_string(),
-            fee_config: crate::treasury::types::FeeConfigMessage {
-                allowance: crate::treasury::types::TypeUrlValue {
-                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
-                    value: base64::engine::general_purpose::STANDARD.encode("{}"),
-                },
-                description: "Test fee config".to_string(),
-            },
-            grant_configs: vec![],
-            params: crate::treasury::types::TreasuryParamsMessage {
+        let request = TreasuryCreateRequest {
+            params: TreasuryParamsInput {
                 redirect_url: "https://example.com/callback".to_string(),
                 icon_url: "https://example.com/icon.png".to_string(),
-                display_url: None,
-                metadata: None,
+                name: None,
+                is_oauth2_app: None,
             },
-            name: None,
-            is_oauth2_app: false,
+            fee_config: Some(FeeConfigInput::Basic {
+                spend_limit: "1000000uxion".to_string(),
+                description: "Test fee config".to_string(),
+            }),
+            grant_configs: vec![],
         };
 
         let result = manager.create(request).await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("Not authenticated"));
     }
 
     #[tokio::test]
     async fn test_fund_requires_auth() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::new(oauth_client, config.clone());
 
         let result = manager.fund("xion1abc", "1000uxion").await;
         assert!(result.is_err());
@@ -538,7 +889,7 @@ mod tests {
     async fn test_withdraw_requires_auth() {
         let config = create_test_config();
         let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.oauth_api_url);
+        let manager = TreasuryManager::new(oauth_client, config.clone());
 
         let result = manager.withdraw("xion1abc", "1000uxion").await;
         assert!(result.is_err());

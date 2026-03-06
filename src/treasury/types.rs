@@ -277,6 +277,170 @@ pub struct WithdrawResult {
     pub tx_hash: String,
 }
 
+// ============================================================================
+// CHAIN-READY TYPES (AFTER ENCODING)
+// ============================================================================
+
+/// Treasury instantiation message (ready for blockchain submission)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryInstantiateMsg {
+    pub admin: String,
+    pub params: TreasuryParamsChain,
+    pub fee_config: Option<FeeConfigChain>,
+    pub grant_configs: Vec<GrantConfigChain>,
+    #[serde(rename = "type_urls")]
+    pub type_urls: Vec<String>,
+}
+
+/// Treasury parameters (chain format)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryParamsChain {
+    pub redirect_url: String,
+    pub icon_url: String,
+    pub metadata: String, // JSON string
+}
+
+/// Fee configuration (chain format)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeeConfigChain {
+    pub description: String,
+    pub allowance: ProtobufAny,
+}
+
+/// Grant configuration (chain format)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GrantConfigChain {
+    pub description: String,
+    pub authorization: ProtobufAny,
+    pub optional: bool,
+}
+
+/// Protobuf Any type for blockchain messages
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtobufAny {
+    #[serde(rename = "type_url")]
+    pub type_url: String,
+    pub value: String, // base64
+}
+
+/// Create treasury response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateTreasuryResponse {
+    pub treasury_address: String,
+    pub transaction_hash: String,
+}
+
+// ============================================================================
+// INPUT TYPES FOR CREATE COMMAND
+// ============================================================================
+
+/// Input for treasury creation (from CLI or config file)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryCreateRequest {
+    pub params: TreasuryParamsInput,
+    pub fee_config: Option<FeeConfigInput>,
+    pub grant_configs: Vec<GrantConfigInput>,
+}
+
+/// Treasury parameters input
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryParamsInput {
+    pub redirect_url: String,
+    pub icon_url: String,
+    pub name: Option<String>,
+    pub is_oauth2_app: Option<bool>,
+}
+
+/// Fee configuration input
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "allowance_type")]
+pub enum FeeConfigInput {
+    #[serde(rename = "basic")]
+    Basic {
+        spend_limit: String,
+        description: String,
+    },
+    #[serde(rename = "periodic")]
+    Periodic {
+        basic_spend_limit: Option<String>,
+        period_seconds: u64,
+        period_spend_limit: String,
+        description: String,
+    },
+    #[serde(rename = "allowed_msg")]
+    AllowedMsg {
+        allowed_messages: Vec<String>,
+        nested_allowance: Box<FeeConfigInput>,
+        description: String,
+    },
+}
+
+/// Grant configuration input
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GrantConfigInput {
+    #[serde(rename = "type_url")]
+    pub type_url: String,
+    pub description: String,
+    pub authorization: AuthorizationInput,
+    #[serde(default)]
+    pub optional: bool,
+}
+
+/// Authorization input
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "auth_type")]
+pub enum AuthorizationInput {
+    #[serde(rename = "generic")]
+    Generic,
+    #[serde(rename = "send")]
+    Send {
+        spend_limit: String,
+        allow_list: Option<Vec<String>>,
+    },
+    #[serde(rename = "stake")]
+    Stake {
+        max_tokens: String,
+        validators: Option<Vec<String>>,
+        deny_validators: Option<Vec<String>>,
+        #[serde(default = "default_stake_auth_type")]
+        authorization_type: i32, // 1=DELEGATE, 2=UNDELEGATE, 3=REDELEGATE
+    },
+    #[serde(rename = "ibc_transfer")]
+    IbcTransfer {
+        allocations: Vec<IbcAllocationInput>,
+    },
+    #[serde(rename = "contract_execution")]
+    ContractExecution { grants: Vec<ContractGrantInput> },
+}
+
+fn default_stake_auth_type() -> i32 {
+    1
+}
+
+/// IBC allocation input
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IbcAllocationInput {
+    pub source_port: String,
+    pub source_channel: String,
+    pub spend_limit: String,
+    pub allow_list: Option<Vec<String>>,
+}
+
+/// Contract grant input
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContractGrantInput {
+    pub address: String,
+    pub max_calls: Option<u64>,
+    pub max_funds: Option<String>,
+    #[serde(default = "default_filter_type")]
+    pub filter_type: String, // "allow_all" or "accepted_keys"
+    pub keys: Option<Vec<String>>,
+}
+
+fn default_filter_type() -> String {
+    "allow_all".to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -362,5 +526,203 @@ mod tests {
         let json = serde_json::to_string(&config).unwrap();
         assert!(json.contains("\"type\":\"basic\""));
         assert!(json.contains("\"spend_limit\":\"1000000uxion\""));
+    }
+
+    #[test]
+    fn test_treasury_create_request_deserialization() {
+        let json = r#"{
+            "params": {
+                "redirect_url": "https://myapp.com/callback",
+                "icon_url": "https://myapp.com/icon.png",
+                "name": "My Treasury",
+                "is_oauth2_app": true
+            },
+            "fee_config": {
+                "allowance_type": "basic",
+                "spend_limit": "1000000uxion",
+                "description": "Basic fee allowance"
+            },
+            "grant_configs": [
+                {
+                    "type_url": "/cosmos.bank.v1beta1.MsgSend",
+                    "description": "Allow sending funds",
+                    "authorization": {
+                        "auth_type": "send",
+                        "spend_limit": "1000000uxion"
+                    },
+                    "optional": false
+                }
+            ]
+        }"#;
+
+        let request: TreasuryCreateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.params.redirect_url, "https://myapp.com/callback");
+        assert_eq!(request.params.icon_url, "https://myapp.com/icon.png");
+        assert_eq!(request.params.name, Some("My Treasury".to_string()));
+        assert!(request.fee_config.is_some());
+        assert_eq!(request.grant_configs.len(), 1);
+    }
+
+    #[test]
+    fn test_fee_config_input_basic() {
+        let json = r#"{
+            "allowance_type": "basic",
+            "spend_limit": "1000000uxion",
+            "description": "Test"
+        }"#;
+
+        let config: FeeConfigInput = serde_json::from_str(json).unwrap();
+        match config {
+            FeeConfigInput::Basic {
+                spend_limit,
+                description,
+            } => {
+                assert_eq!(spend_limit, "1000000uxion");
+                assert_eq!(description, "Test");
+            }
+            _ => panic!("Expected Basic variant"),
+        }
+    }
+
+    #[test]
+    fn test_fee_config_input_periodic() {
+        let json = r#"{
+            "allowance_type": "periodic",
+            "basic_spend_limit": "10000000uxion",
+            "period_seconds": 86400,
+            "period_spend_limit": "1000000uxion",
+            "description": "Daily limit"
+        }"#;
+
+        let config: FeeConfigInput = serde_json::from_str(json).unwrap();
+        match config {
+            FeeConfigInput::Periodic {
+                basic_spend_limit,
+                period_seconds,
+                period_spend_limit,
+                description,
+            } => {
+                assert_eq!(basic_spend_limit, Some("10000000uxion".to_string()));
+                assert_eq!(period_seconds, 86400);
+                assert_eq!(period_spend_limit, "1000000uxion");
+                assert_eq!(description, "Daily limit");
+            }
+            _ => panic!("Expected Periodic variant"),
+        }
+    }
+
+    #[test]
+    fn test_authorization_input_send() {
+        let json = r#"{
+            "auth_type": "send",
+            "spend_limit": "1000000uxion",
+            "allow_list": ["xion1abc...", "xion1def..."]
+        }"#;
+
+        let auth: AuthorizationInput = serde_json::from_str(json).unwrap();
+        match auth {
+            AuthorizationInput::Send {
+                spend_limit,
+                allow_list,
+            } => {
+                assert_eq!(spend_limit, "1000000uxion");
+                assert_eq!(
+                    allow_list,
+                    Some(vec!["xion1abc...".to_string(), "xion1def...".to_string()])
+                );
+            }
+            _ => panic!("Expected Send variant"),
+        }
+    }
+
+    #[test]
+    fn test_authorization_input_stake() {
+        let json = r#"{
+            "auth_type": "stake",
+            "max_tokens": "10000000uxion",
+            "validators": ["xionvaloper1abc..."],
+            "authorization_type": 1
+        }"#;
+
+        let auth: AuthorizationInput = serde_json::from_str(json).unwrap();
+        match auth {
+            AuthorizationInput::Stake {
+                max_tokens,
+                validators,
+                deny_validators,
+                authorization_type,
+            } => {
+                assert_eq!(max_tokens, "10000000uxion");
+                assert_eq!(validators, Some(vec!["xionvaloper1abc...".to_string()]));
+                assert_eq!(deny_validators, None);
+                assert_eq!(authorization_type, 1);
+            }
+            _ => panic!("Expected Stake variant"),
+        }
+    }
+}
+
+#[test]
+fn test_parse_example_config_file() {
+    // Test parsing the example config file
+    let config_content = r#"{
+            "params": {
+                "redirect_url": "https://myapp.com/callback",
+                "icon_url": "https://myapp.com/icon.png",
+                "name": "My Treasury",
+                "is_oauth2_app": true
+            },
+            "fee_config": {
+                "allowance_type": "basic",
+                "spend_limit": "1000000uxion",
+                "description": "Basic fee allowance for treasury operations"
+            },
+            "grant_configs": [
+                {
+                    "type_url": "/cosmos.bank.v1beta1.MsgSend",
+                    "description": "Allow sending funds",
+                    "authorization": {
+                        "auth_type": "send",
+                        "spend_limit": "1000000uxion"
+                    },
+                    "optional": false
+                }
+            ]
+        }"#;
+
+    let request: TreasuryCreateRequest = serde_json::from_str(config_content).unwrap();
+    assert_eq!(request.params.redirect_url, "https://myapp.com/callback");
+    assert_eq!(request.params.icon_url, "https://myapp.com/icon.png");
+    assert_eq!(request.params.name, Some("My Treasury".to_string()));
+    assert_eq!(request.params.is_oauth2_app, Some(true));
+
+    // Check fee config
+    assert!(request.fee_config.is_some());
+    match request.fee_config.unwrap() {
+        FeeConfigInput::Basic {
+            spend_limit,
+            description,
+        } => {
+            assert_eq!(spend_limit, "1000000uxion");
+            assert_eq!(description, "Basic fee allowance for treasury operations");
+        }
+        _ => panic!("Expected Basic fee config"),
+    }
+
+    // Check grant configs
+    assert_eq!(request.grant_configs.len(), 1);
+    let grant = &request.grant_configs[0];
+    assert_eq!(grant.type_url, "/cosmos.bank.v1beta1.MsgSend");
+    assert_eq!(grant.description, "Allow sending funds");
+    assert!(!grant.optional);
+    match &grant.authorization {
+        AuthorizationInput::Send {
+            spend_limit,
+            allow_list,
+        } => {
+            assert_eq!(spend_limit, "1000000uxion");
+            assert!(allow_list.is_none());
+        }
+        _ => panic!("Expected Send authorization"),
     }
 }

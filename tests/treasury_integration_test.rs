@@ -381,7 +381,7 @@ async fn test_manager_fund_requires_authentication() {
     let oauth_client = create_mock_oauth_client(&config);
     
     // Create manager without valid authentication
-    let manager = TreasuryManager::without_cache(oauth_client, server.url());
+    let manager = TreasuryManager::without_cache(oauth_client, config.clone());
     
     // Try to fund without authentication
     let result = manager.fund("xion1treasury123", "1000000uxion").await;
@@ -398,7 +398,7 @@ async fn test_manager_withdraw_requires_authentication() {
     let oauth_client = create_mock_oauth_client(&config);
     
     // Create manager without valid authentication
-    let manager = TreasuryManager::without_cache(oauth_client, server.url());
+    let manager = TreasuryManager::without_cache(oauth_client, config.clone());
     
     // Try to withdraw without authentication
     let result = manager.withdraw("xion1treasury123", "1000000uxion").await;

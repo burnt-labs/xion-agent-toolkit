@@ -1,0 +1,24 @@
+{
+  "params": {
+    "redirect_url": "https://myapp.com/callback",
+    "icon_url": "https://myapp.com/icon.png",
+    "name": "My Treasury",
+    "is_oauth2_app": true
+  },
+  "fee_config": {
+    "allowance_type": "basic",
+    "spend_limit": "1000000uxion",
+    "description": "Basic fee allowance for treasury operations"
+  },
+  "grant_configs": [
+    {
+      "type_url": "/cosmos.bank.v1beta1.MsgSend",
+      "description": "Allow sending funds",
+      "authorization": {
+        "auth_type": "send",
+        "spend_limit": "1000000uxion"
+      },
+      "optional": false
+    }
+  ]
+}
