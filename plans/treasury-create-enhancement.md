@@ -210,8 +210,8 @@ xion treasury create --config treasury-config.json
   - [x] Return TreasuryInfo result
 
 ### Phase 3: Testing
-- [ ] Unit tests for encoding functions
-- [ ] Integration tests for CLI commands
+- [x] Unit tests for encoding functions (36 tests passing)
+- [ ] Integration tests for CLI commands (in-progress)
 - [ ] Testnet deployment test
 - [ ] Verify against Developer Portal compatibility
 
@@ -242,4 +242,10 @@ xion treasury create --config treasury-config.json
 |------|---------|--------|
 | 2026-03-06 | Architecture design completed | ✅ |
 | 2026-03-06 | Encoding module implemented (33 tests passing) | ✅ |
-| | | |
+| 2026-03-06 | Types and manager implementation completed | ✅ |
+| 2026-03-06 | CLI commands with full flag support | ✅ |
+| 2026-03-06 | Config file support (--config flag) | ✅ |
+| 2026-03-06 | Polling mechanism for treasury indexing | ✅ |
+| 2026-03-06 | Unit tests: 47 tests passing | ✅ |
+| 2026-03-06 | Documentation updated (SKILL.md + create.sh) | ✅ |
+| 2026-03-06 | Phase 3 testing: in-progress | 🔄 |

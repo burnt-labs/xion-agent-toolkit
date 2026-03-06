@@ -54,8 +54,8 @@ pub struct CreateArgs {
     #[arg(short = 'i', long)]
     pub icon_url: Option<String>,
     
-    /// Treasury display name
-    #[arg(short, long)]
+/// Treasury display name
+    #[arg(short = 'N', long)]
     pub name: Option<String>,
     
     /// Mark as OAuth2 application

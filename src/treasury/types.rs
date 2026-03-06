@@ -212,6 +212,7 @@ pub struct GrantConfigRequest {
 
 /// Transaction message for broadcasting
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TransactionMessage {
     /// Protobuf type URL (e.g., "/cosmos.bank.v1beta1.MsgSend")
     pub type_url: String,

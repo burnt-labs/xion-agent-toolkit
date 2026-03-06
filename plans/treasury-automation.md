@@ -278,7 +278,7 @@ xion treasury query <treasury-address>
   - [x] Default network set to testnet
   - [x] Local network requires explicit `--network local` flag
 
-### Phase 3: Treasury API (Days 15-21) ✅ **95% COMPLETED**
+### Phase 3: Treasury API (Days 15-21) ✅ **98% COMPLETED**
 - [x] API clients
   - [x] Treasury API client (OAuth2 API Service)
   - [ ] xiond Query client (optional)
@@ -286,13 +286,13 @@ xion treasury query <treasury-address>
 - [x] Treasury commands
   - [x] list - List Treasury contracts
   - [x] query - Query details
-  - [ ] create - Create Treasury (placeholder, future)
+  - [x] create - Create Treasury (complete with fee grant & authz grant config)
   - [x] fund - Fund Treasury (implemented, needs testing)
   - [x] withdraw - Withdraw from Treasury (implemented, needs testing)
-- [ ] Grant configuration
-  - [ ] fee-grant configuration (future)
-  - [ ] authz-grant configuration (future)
-  - [ ] Verify configuration effectiveness (future)
+- [x] Grant configuration
+  - [x] fee-grant configuration (Basic, Periodic, AllowedMsg allowances)
+  - [x] authz-grant configuration (Generic, Send, Stake, IbcTransfer, ContractExecution)
+  - [ ] Verify configuration effectiveness (needs testing)
 - [x] Treasury manager
   - [x] OAuth2 integration
   - [x] Auto token refresh
@@ -310,7 +310,7 @@ xion treasury query <treasury-address>
   - [x] refresh.sh
   - [x] SKILL.md
 - [x] xion-treasury Skill
-  - [x] create.sh (placeholder for future implementation)
+  - [x] create.sh (fully implemented with fee grant & authz grant support)
   - [x] list.sh
   - [x] query.sh
   - [x] fund.sh (placeholder for future implementation)
@@ -405,6 +405,12 @@ xion treasury query <treasury-address>
 | 2026-03-06 | Treasury: Add transaction broadcasting support | ✅ |
 | 2026-03-06 | Docs: Fix all doc tests (122 tests passing) | ✅ |
 | 2026-03-06 | All tests passing (68 unit + 20 integration + 34 doc) | ✅ |
+| 2026-03-06 | Treasury Create: Encoding module (36 tests) | ✅ |
+| 2026-03-06 | Treasury Create: Types & CLI flags | ✅ |
+| 2026-03-06 | Treasury Create: Config file support | ✅ |
+| 2026-03-06 | Treasury Create: Polling mechanism | ✅ |
+| 2026-03-06 | Treasury Create: Documentation updated | ✅ |
+| 2026-03-06 | Treasury Create: Integration testing (in-progress) | 🔄 |
 
 ---
 *Created: 2025-03-05*

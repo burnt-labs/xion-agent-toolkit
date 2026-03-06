@@ -6,10 +6,10 @@
       "id": "treasury-create-enhancement",
       "title": "Treasury Create Command Enhancement",
       "file": "plans/treasury-create-enhancement.md",
-      "status": "InProgress",
-      "progress": 75,
+      "status": "Blocked",
+      "progress": 85,
       "updated_at": "2026-03-06",
-      "notes": "Encoding module + types + CLI implementation complete. TreasuryManager::create() implemented. Ready for integration testing."
+      "notes": "BLOCKED: OAuth2 API does not support MsgInstantiateContract2. CLI implementation complete (encoding + types + polling). Waiting for OAuth2 API update to add MsgInstantiateContract2 support. Workaround: Could use MsgInstantiateContract but would lose predictable address feature."
     },
     {
       "id": "treasury-automation",

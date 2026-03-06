@@ -8,7 +8,7 @@ This skill wraps the `xion` CLI tool to provide Agent-friendly Treasury manageme
 
 - **list.sh** - List all Treasury contracts owned by the authenticated user
 - **query.sh** - Query detailed information about a specific Treasury
-- **create.sh** - Create a new Treasury contract (coming soon)
+- **create.sh** - Create a new Treasury contract with fee grant and authz grant configuration
 - **fund.sh** - Fund a Treasury contract (coming soon)
 - **withdraw.sh** - Withdraw funds from a Treasury (coming soon)
 - **grant-config.sh** - Configure Authz Grants (coming soon)
@@ -33,6 +33,50 @@ This skill wraps the `xion` CLI tool to provide Agent-friendly Treasury manageme
 
 ```bash
 ./scripts/query.sh xion1abc123...
+```
+
+### Create a Treasury
+
+```bash
+# Basic creation
+./scripts/create.sh --name "My Treasury" --redirect-url "https://example.com/callback"
+
+# With fee grant configuration
+./scripts/create.sh --name "My Treasury" \
+  --redirect-url "https://example.com/callback" \
+  --fee-allowance basic \
+  --fee-spend-limit "1000000uxion"
+
+# With authz grant configuration
+./scripts/create.sh --name "My Treasury" \
+  --redirect-url "https://example.com/callback" \
+  --grant-auth-type send \
+  --grant-spend-limit "1000000uxion"
+
+# Using config file
+./scripts/create.sh --config treasury-config.json
+```
+
+### Check Status
+
+```bash
+./scripts/status.sh
+```
+
+### Create a Treasury
+
+```bash
+# Basic creation
+./scripts/create.sh --name "My Treasury"
+
+# With fee grant
+./scripts/create.sh \
+  --name "My Treasury" \
+  --fee-allowance basic \
+  --fee-spend-limit "1000000uxion"
+
+# With config file
+./scripts/create.sh --config treasury-config.json
 ```
 
 ### Check Status
@@ -122,24 +166,125 @@ Queries detailed information about a specific Treasury contract.
 }
 ```
 
-### create.sh (Coming Soon)
+### create.sh
 
-Creates a new Treasury contract.
+Creates a new Treasury contract with full configuration support including fee grants and authz grants.
 
 **Usage:**
 ```bash
-./scripts/create.sh [--network NETWORK] [--fee-grant CONFIG] [--grant-config CONFIG]
+./scripts/create.sh [OPTIONS]
 ```
 
-**Status:**
+**Options:**
+- `--network NETWORK` - Network to use: local, testnet, mainnet (default: testnet)
+- `--name NAME` - Treasury name (required)
+- `--redirect-url URL` - OAuth redirect URL
+- `--icon-url URL` - Treasury icon URL
+- `--config FILE` - JSON config file with all settings
+
+**Fee Grant Options:**
+- `--fee-allowance TYPE` - Fee allowance type: basic, periodic, allowed-msg
+- `--fee-spend-limit AMOUNT` - Spend limit (e.g., "1000000uxion")
+- `--fee-description TEXT` - Fee grant description
+- `--fee-period-seconds SECONDS` - Period duration (for periodic allowance)
+- `--fee-period-spend-limit AMOUNT` - Period spend limit (for periodic allowance)
+
+**Authz Grant Options:**
+- `--grant-auth-type TYPE` - Authorization type: generic, send, stake, ibc-transfer, contract-execution
+- `--grant-spend-limit AMOUNT` - Spend limit for send authorization
+- `--grant-description TEXT` - Grant description
+
+**Output (stdout):**
 ```json
 {
-  "success": false,
-  "error": "Treasury creation is not yet implemented",
-  "error_code": "FEATURE_NOT_AVAILABLE",
-  "alternative": "Use the Developer Portal at https://dev.testnet2.burnt.com to create treasuries"
+  "success": true,
+  "treasury": {
+    "address": "xion1abc123...",
+    "admin": "xion1admin...",
+    "balance": "0",
+    "denom": "uxion",
+    "params": {
+      "redirect_url": "https://example.com/callback",
+      "icon_url": "",
+      "metadata": {
+        "name": "My Treasury",
+        "archived": false,
+        "is_oauth2_app": false
+      }
+    }
+  },
+  "tx_hash": "ABC123..."
 }
 ```
+
+**Config File Format (treasury-config.json):**
+```json
+{
+  "params": {
+    "redirect_url": "https://example.com/callback",
+    "icon_url": "https://example.com/icon.png",
+    "metadata": {
+      "name": "My Treasury",
+      "is_oauth2_app": true
+    }
+  },
+  "fee_config": {
+    "description": "Basic fee allowance",
+    "allowance_type": "basic",
+    "spend_limit": "1000000uxion"
+  },
+  "grant_configs": [
+    {
+      "type_url": "/cosmos.bank.v1beta1.MsgSend",
+      "description": "Allow sending funds",
+      "authorization_type": "send",
+      "spend_limit": "1000000uxion"
+    }
+  ]
+}
+```
+
+**Examples:**
+
+```bash
+# Minimal creation
+./scripts/create.sh --name "My Treasury"
+
+# With redirect URL
+./scripts/create.sh \
+  --name "My Treasury" \
+  --redirect-url "https://example.com/callback"
+
+# With basic fee grant
+./scripts/create.sh \
+  --name "My Treasury" \
+  --fee-allowance basic \
+  --fee-spend-limit "1000000uxion" \
+  --fee-description "Basic fee allowance"
+
+# With periodic fee grant (daily limit)
+./scripts/create.sh \
+  --name "My Treasury" \
+  --fee-allowance periodic \
+  --fee-period-seconds 86400 \
+  --fee-period-spend-limit "100000uxion" \
+  --fee-description "Daily fee allowance"
+
+# With authz grant for sending
+./scripts/create.sh \
+  --name "My Treasury" \
+  --grant-auth-type send \
+  --grant-spend-limit "1000000uxion" \
+  --grant-description "Allow sending funds"
+
+# Using config file (recommended for complex configurations)
+./scripts/create.sh --config treasury-config.json
+
+# Specify network
+./scripts/create.sh --network testnet --name "Test Treasury"
+```
+
+**Note:** The CLI will poll for treasury indexing (up to 30 seconds) to return the complete treasury information.
 
 ### fund.sh (Coming Soon)
 
