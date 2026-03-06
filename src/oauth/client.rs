@@ -238,7 +238,17 @@ impl OAuthClient {
 
         info!("Successfully obtained tokens");
 
-// Step 8: Save credentials
+        // Step 8: Get user info to obtain xion_address
+        debug!("Fetching user info to get MetaAccount address");
+        let user_info = self
+            .api_client
+            .get_user_info(&token_response.access_token)
+            .await
+            .context("Failed to get user info")?;
+        
+        info!("Retrieved MetaAccount address: {}", user_info.id);
+
+        // Step 9: Save credentials with xion_address
         let expires_at = match token_response.expires_at {
             Some(expires_at) => expires_at,
             None => token_response.calculate_expires_at(),
@@ -248,7 +258,7 @@ impl OAuthClient {
             access_token: token_response.access_token,
             refresh_token: token_response.refresh_token,
             expires_at,
-            xion_address: token_response.xion_address,
+            xion_address: Some(user_info.id),
         };
 
         self.credentials_manager

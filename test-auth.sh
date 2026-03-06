@@ -37,7 +37,7 @@ echo ""
 
 # 2. Check authentication status
 echo "2. Checking authentication status..."
-AUTH_STATUS=$(./target/release/xion auth status --output json 2>&1)
+AUTH_STATUS=$(./target/release/xion auth status --output json 2>&1 | grep -v "^\[2m" | grep -A 100 "^{")
 if echo "$AUTH_STATUS" | grep -q '"authenticated": true'; then
     echo -e "${GREEN}✓ User is authenticated${NC}"
     echo ""
@@ -62,7 +62,7 @@ echo ""
 
 # 3. List treasuries
 echo "3. Listing treasuries..."
-TREASURY_LIST=$(./target/release/xion treasury list --output json 2>&1)
+TREASURY_LIST=$(./target/release/xion treasury list --output json 2>&1 | grep -v "^\[2m" | grep -A 100 "^{")
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Treasury list retrieved successfully${NC}"
     echo ""
@@ -84,7 +84,7 @@ if [ "$TREASURY_COUNT" -gt 0 ]; then
     echo "4. Querying first treasury..."
     FIRST_TREASURY=$(echo "$TREASURY_LIST" | jq -r '.treasuries[0].address')
     
-    TREASURY_QUERY=$(./target/release/xion treasury query "$FIRST_TREASURY" --output json 2>&1)
+    TREASURY_QUERY=$(./target/release/xion treasury query "$FIRST_TREASURY" --output json 2>&1 | grep -v "^\[2m" | grep -A 100 "^{")
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Treasury query successful${NC}"
         echo ""
