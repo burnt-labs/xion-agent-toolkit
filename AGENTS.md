@@ -460,6 +460,26 @@ cargo test -- --nocapture
 
 Current status: **330 tests passing**
 
+### Pre-commit Checklist
+
+**MUST run before every commit to ensure CI passes:**
+
+```bash
+# 1. Format code (REQUIRED - CI will fail if not formatted)
+cargo fmt
+
+# 2. Run tests
+cargo test
+
+# 3. Check for warnings (optional but recommended)
+cargo clippy
+```
+
+**CI Requirements:**
+- `cargo fmt --check` must pass (no formatting differences)
+- `cargo test` must pass (all tests green)
+- Code must compile without errors
+
 ## Security Standards
 
 1. **Token Storage**
