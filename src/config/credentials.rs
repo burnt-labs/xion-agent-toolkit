@@ -217,6 +217,7 @@ mod tests {
     }
 
     /// Helper to set up encryption key
+    #[allow(dead_code)]
     fn setup_test_key() -> Option<String> {
         let original = env::var(encryption::ENV_KEY_NAME).ok();
         let test_key = encryption::generate_test_key();

@@ -81,6 +81,10 @@ pub fn parse_coin_string(input: &str) -> Result<Vec<Coin>, EncodingError> {
         return Err(EncodingError::InvalidCoinFormat("empty input".to_string()));
     }
 
+    // Compile regex once outside the loop
+    let re = regex::Regex::new(r"^(\d+)([-a-zA-Z0-9/]+)$")
+        .map_err(|e| EncodingError::ProtobufError(e.to_string()))?;
+
     let mut coins = Vec::new();
 
     for part in input.split(',') {
@@ -93,9 +97,6 @@ pub fn parse_coin_string(input: &str) -> Result<Vec<Coin>, EncodingError> {
         let normalized = part.replace(" ", "");
 
         // Match: digits followed by denom (allowing hyphens, slashes, alphanumeric)
-        let re = regex::Regex::new(r"^(\d+)([-a-zA-Z0-9/]+)$")
-            .map_err(|e| EncodingError::ProtobufError(e.to_string()))?;
-
         if let Some(caps) = re.captures(&normalized) {
             coins.push(Coin {
                 amount: caps[1].to_string(),
@@ -201,7 +202,7 @@ fn encode_repeated_coins(field_number: u32, coins: &[Coin]) -> Vec<u8> {
 fn encode_duration(seconds: u64) -> Vec<u8> {
     let mut result = Vec::new();
     // Field 1: seconds (int64, varint)
-    let tag = ((1 << 3) | 0) as u64; // wire type 0 for varint
+    let tag = (1 << 3) as u64; // wire type 0 for varint
     result.extend(encode_varint(tag));
     result.extend(encode_varint(seconds));
     result
@@ -412,7 +413,7 @@ pub fn encode_stake_authorization(
     deny_list: Option<Vec<String>>,
     authorization_type: i32,
 ) -> Result<String, EncodingError> {
-    if authorization_type < 1 || authorization_type > 3 {
+    if !(1..=3).contains(&authorization_type) {
         return Err(EncodingError::InvalidInput(
             "authorization_type must be 1 (DELEGATE), 2 (UNDELEGATE), or 3 (REDELEGATE)".into(),
         ));
@@ -447,7 +448,7 @@ pub fn encode_stake_authorization(
     }
 
     // Field 4: authorization_type (enum, varint)
-    let tag = ((4 << 3) | 0) as u64; // wire type 0 for varint
+    let tag = (4 << 3) as u64; // wire type 0 for varint
     bytes.extend(encode_varint(tag));
     bytes.extend(encode_varint(authorization_type as u64));
 
@@ -529,7 +530,7 @@ pub fn encode_contract_execution_authorization(
                 // CombinedLimit
                 let mut combined_bytes = Vec::new();
                 // Field 1: calls_remaining (uint64, varint)
-                let tag = ((1 << 3) | 0) as u64;
+                let tag = (1 << 3) as u64;
                 combined_bytes.extend(encode_varint(tag));
                 combined_bytes.extend(encode_varint(*calls));
                 // Field 2: amounts (repeated Coin)
@@ -541,7 +542,7 @@ pub fn encode_contract_execution_authorization(
                 // MaxCallsLimit
                 let mut max_calls_bytes = Vec::new();
                 // Field 1: remaining (uint64, varint)
-                let tag = ((1 << 3) | 0) as u64;
+                let tag = (1 << 3) as u64;
                 max_calls_bytes.extend(encode_varint(tag));
                 max_calls_bytes.extend(encode_varint(*calls));
 

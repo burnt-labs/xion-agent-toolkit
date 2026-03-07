@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use super::credentials::CredentialsManager;
 use super::schema::Config;
@@ -32,7 +32,7 @@ impl ConfigManager {
         self.config_dir.join("config.json")
     }
 
-    fn load_or_create_config(config_dir: &PathBuf) -> Result<Config> {
+    fn load_or_create_config(config_dir: &Path) -> Result<Config> {
         let config_path = config_dir.join("config.json");
 
         if config_path.exists() {

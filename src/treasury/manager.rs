@@ -450,7 +450,7 @@ impl TreasuryManager {
         let (type_urls, grant_configs): (Vec<_>, Vec<_>) = request
             .grant_configs
             .iter()
-            .map(|grant_input| encode_grant_config_input(grant_input))
+            .map(encode_grant_config_input)
             .collect::<Result<Vec<_>>>()?
             .into_iter()
             .unzip();
@@ -1024,7 +1024,6 @@ fn encode_grant_config_input(
 mod tests {
     use super::*;
     use crate::config::NetworkConfig;
-    use base64::Engine;
 
     fn create_test_config() -> NetworkConfig {
         NetworkConfig {

@@ -453,6 +453,7 @@ fn default_filter_type() -> String {
 /// Grant config operation command
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "operation")]
+#[allow(dead_code)]
 pub enum GrantConfigOperation {
     #[serde(rename = "add")]
     Add {
@@ -478,6 +479,7 @@ pub struct GrantConfigResult {
 
 /// List grant configs result
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct GrantConfigListResult {
     /// Treasury address
     pub treasury_address: String,
@@ -507,6 +509,7 @@ pub struct GrantConfigInfo {
 /// Fee config operation command
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "operation")]
+#[allow(dead_code)]
 pub enum FeeConfigOperation {
     #[serde(rename = "set")]
     Set { fee_config: FeeConfigInput },

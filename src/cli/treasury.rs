@@ -19,28 +19,24 @@ pub enum TreasuryCommands {
         address: String,
     },
 
-    /// Create a new treasury contract
-    Create(CreateArgs),
-
     /// Fund a treasury contract
     Fund {
         /// Treasury contract address
         address: String,
-
         /// Amount to fund (e.g., "1000000uxion")
-        #[arg(short, long)]
         amount: String,
     },
 
-    /// Withdraw funds from a treasury contract
+    /// Withdraw from a treasury contract to your meta account
     Withdraw {
         /// Treasury contract address
         address: String,
-
         /// Amount to withdraw (e.g., "1000000uxion")
-        #[arg(short, long)]
         amount: String,
     },
+
+    /// Create a new treasury contract
+    Create(Box<CreateArgs>),
 
     /// Manage grant configurations
     #[command(subcommand)]
@@ -172,7 +168,7 @@ pub async fn handle_command(cmd: TreasuryCommands) -> Result<()> {
     match cmd {
         TreasuryCommands::List => handle_list().await,
         TreasuryCommands::Query { address } => handle_query(&address).await,
-        TreasuryCommands::Create(args) => handle_create(args).await,
+        TreasuryCommands::Create(args) => handle_create(*args).await,
         TreasuryCommands::Fund { address, amount } => handle_fund(&address, &amount).await,
         TreasuryCommands::Withdraw { address, amount } => handle_withdraw(&address, &amount).await,
         TreasuryCommands::GrantConfig(sub) => handle_grant_config(sub).await,
@@ -567,7 +563,7 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
     use crate::utils::output::{print_info, print_json};
 
     print_info(&format!(
-        "Withdrawing {} from treasury {}...",
+        "Withdrawing {} from treasury {} to your meta account...",
         amount, address
     ));
 

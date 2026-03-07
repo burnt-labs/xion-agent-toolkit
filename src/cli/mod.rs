@@ -34,7 +34,7 @@ pub enum Commands {
 
     /// Treasury management commands
     #[command(subcommand)]
-    Treasury(treasury::TreasuryCommands),
+    Treasury(Box<treasury::TreasuryCommands>),
 
     /// Configuration management commands
     #[command(subcommand)]

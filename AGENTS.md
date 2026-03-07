@@ -468,15 +468,16 @@ Current status: **330 tests passing**
 # 1. Format code (REQUIRED - CI will fail if not formatted)
 cargo fmt
 
-# 2. Run tests
-cargo test
+# 2. Run clippy with warnings as errors (REQUIRED - CI will fail on warnings)
+cargo clippy --all-targets --all-features -- -D warnings
 
-# 3. Check for warnings (optional but recommended)
-cargo clippy
+# 3. Run tests
+cargo test
 ```
 
 **CI Requirements:**
 - `cargo fmt --check` must pass (no formatting differences)
+- `cargo clippy --all-targets --all-features -- -D warnings` must pass (no warnings)
 - `cargo test` must pass (all tests green)
 - Code must compile without errors
 
