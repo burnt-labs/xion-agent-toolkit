@@ -622,16 +622,13 @@ impl TreasuryApiClient {
             }
         });
 
-        // Encode the message as base64
-        let msg_base64 = base64_encode(&withdraw_msg)?;
-
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
                 type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
                 value: serde_json::json!({
                     "sender": from_address,
                     "contract": treasury_address,
-                    "msg": msg_base64,
+                    "msg": withdraw_msg, // JSON object directly, not base64
                     "funds": []
                 }),
             }],
@@ -721,22 +718,27 @@ impl TreasuryApiClient {
         // Build the instantiation message
         let instantiate_msg = build_treasury_instantiate_msg(&request)?;
 
-        // Encode the message as base64
-        let msg_base64 = base64_encode(&instantiate_msg)?;
-
         // Convert salt to base64
         let salt_base64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, salt);
 
-        // Build the MsgInstantiateContract2 message
+        // Encode instantiate_msg as base64 (Proto format)
+        let msg_base64 = base64::Engine::encode(
+            &base64::engine::general_purpose::STANDARD,
+            &serde_json::to_vec(&instantiate_msg)?,
+        );
+
+        // Build the MsgInstantiateContract2 message (Proto format)
         let msg_value = serde_json::json!({
             "sender": request.admin,
-            "code_id": treasury_code_id,
+            "codeId": treasury_code_id,  // camelCase, number
             "label": format!("Treasury-{}", chrono::Utc::now().format("%Y%m%d-%H%M%S")),
-            "msg": msg_base64,
+            "msg": msg_base64, // base64-encoded JSON
             "salt": salt_base64,
             "funds": [],
             "admin": request.admin, // Treasury is its own admin
         });
+
+        eprintln!("[DEBUG] MsgInstantiateContract2 message:\n{}", serde_json::to_string_pretty(&msg_value)?);
 
         let broadcast_request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
@@ -745,6 +747,8 @@ impl TreasuryApiClient {
             }],
             memo: Some("Create Treasury via Xion Agent Toolkit".to_string()),
         };
+
+        eprintln!("[DEBUG] Full broadcast request:\n{}", serde_json::to_string_pretty(&broadcast_request)?);
 
         // Broadcast the transaction
         let response = self
@@ -920,15 +924,6 @@ fn parse_coin(coin: &str) -> Result<(String, String)> {
     Ok((amount, denom))
 }
 
-/// Encode a JSON value to base64
-fn base64_encode(value: &serde_json::Value) -> Result<String> {
-    let json_str = serde_json::to_string(value)?;
-    Ok(base64::Engine::encode(
-        &base64::engine::general_purpose::STANDARD,
-        json_str.as_bytes(),
-    ))
-}
-
 /// Extract user address from OAuth2 access token
 ///
 /// Token format: {userId}:{grantId}:{secret}
@@ -1005,17 +1000,13 @@ impl TreasuryApiClient {
         eprintln!("[DEBUG] Execute message JSON:\n{}", msg_json);
         debug!("Execute message JSON:\n{}", msg_json);
 
-        // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&exec_msg)?)?;
-        eprintln!("[DEBUG] Base64 encoded message: {}", msg_base64);
-
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
                 type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
                 value: serde_json::json!({
                     "sender": from_address,
                     "contract": treasury_address,
-                    "msg": msg_base64,
+                    "msg": serde_json::to_value(&exec_msg)?, // JSON object directly, not base64
                     "funds": []
                 }),
             }],
@@ -1056,16 +1047,13 @@ impl TreasuryApiClient {
             msg_type_url: type_url.to_string(),
         };
 
-        // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&remove_msg)?)?;
-
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
                 type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
                 value: serde_json::json!({
                     "sender": from_address,
                     "contract": treasury_address,
-                    "msg": msg_base64,
+                    "msg": serde_json::to_value(&remove_msg)?, // JSON object directly, not base64
                     "funds": []
                 }),
             }],
@@ -1165,16 +1153,13 @@ impl TreasuryApiClient {
             fee_config: fee_config_chain,
         };
 
-        // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&exec_msg)?)?;
-
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
                 type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
                 value: serde_json::json!({
                     "sender": from_address,
                     "contract": treasury_address,
-                    "msg": msg_base64,
+                    "msg": serde_json::to_value(&exec_msg)?, // JSON object directly, not base64
                     "funds": []
                 }),
             }],
@@ -1208,16 +1193,13 @@ impl TreasuryApiClient {
             grantee: grantee.to_string(),
         };
 
-        // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&exec_msg)?)?;
-
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
                 type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
                 value: serde_json::json!({
                     "sender": from_address,
                     "contract": treasury_address,
-                    "msg": msg_base64,
+                    "msg": serde_json::to_value(&exec_msg)?, // JSON object directly, not base64
                     "funds": []
                 }),
             }],
@@ -1364,20 +1346,6 @@ mod tests {
         assert!(parse_coin("invalid").is_err());
         assert!(parse_coin("123").is_err());
         assert!(parse_coin("abc").is_err());
-    }
-
-    #[test]
-    fn test_base64_encode() {
-        let value =
-            serde_json::json!({"withdraw": {"coins": [{"amount": "1000", "denom": "uxion"}]}});
-        let encoded = base64_encode(&value).unwrap();
-        assert!(!encoded.is_empty());
-
-        // Verify we can decode it back
-        let decoded =
-            base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded).unwrap();
-        let decoded_value: serde_json::Value = serde_json::from_slice(&decoded).unwrap();
-        assert_eq!(value, decoded_value);
     }
 
     #[tokio::test]

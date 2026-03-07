@@ -903,7 +903,9 @@ fn encode_fee_config_input(
         } => {
             // Recursive encoding
             let nested = encode_fee_config_input(nested_allowance)?;
-            let nested_allowance = nested.allowance.as_ref()
+            let nested_allowance = nested
+                .allowance
+                .as_ref()
                 .ok_or_else(|| anyhow::anyhow!("Nested allowance is required for AllowedMsg"))?;
             let encoded = encode_allowed_msg_allowance(
                 allowed_messages.clone(),

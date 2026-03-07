@@ -155,7 +155,6 @@ pub struct FeeConfigMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrantConfigMessage {
     /// Message type URL (e.g., "/cosmos.bank.v1beta1.MsgSend")
-    #[serde(rename = "type_url")]
     pub type_url: String,
     /// Authorization type URL and encoded value
     pub authorization: TypeUrlValue,
@@ -168,7 +167,6 @@ pub struct GrantConfigMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TypeUrlValue {
     /// Protobuf type URL
-    #[serde(rename = "type_url")]
     pub type_url: String,
     /// Base64-encoded protobuf value (Binary for proper serialization)
     pub value: Binary,
@@ -229,9 +227,9 @@ pub struct GrantConfigRequest {
 
 /// Transaction message for broadcasting
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct TransactionMessage {
     /// Protobuf type URL (e.g., "/cosmos.bank.v1beta1.MsgSend")
+    #[serde(rename = "typeUrl")]
     pub type_url: String,
     /// Message value as JSON object
     pub value: serde_json::Value,
@@ -346,7 +344,6 @@ pub struct GrantConfigChain {
 /// Protobuf Any type for blockchain messages
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProtobufAny {
-    #[serde(rename = "type_url")]
     pub type_url: String,
     pub value: Binary, // Binary type for base64 encoding/decoding
 }
