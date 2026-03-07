@@ -1,43 +1,13 @@
 # Contributing to Xion Agent Toolkit
 
-Thank you for your interest in contributing to Xion Agent Toolkit! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing! This guide will help you get started.
 
-## Code of Conduct
+## Quick Links
 
-By participating in this project, you agree to maintain a respectful and inclusive environment for all contributors.
-
-## How to Contribute
-
-### Reporting Bugs
-
-Before creating bug reports, please check the issue list as you might find out that you don't need to create one. When you are creating a bug report, please include as many details as possible:
-
-- **Use a clear and descriptive title**
-- **Describe the exact steps to reproduce the problem**
-- **Provide specific examples to demonstrate the steps**
-- **Describe the behavior you observed and expected**
-- **Include screenshots if helpful**
-- **Include your environment details** (OS, Rust version, etc.)
-
-### Suggesting Enhancements
-
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, include:
-
-- **Use a clear and descriptive title**
-- **Provide a detailed description of the suggested enhancement**
-- **Explain why this enhancement would be useful**
-- **List some other applications where this enhancement exists**
-
-### Pull Requests
-
-1. **Fork the repo** and create your branch from `main`
-2. **Make your changes** following our code standards
-3. **Add tests** for any new functionality
-4. **Update documentation** if needed
-5. **Ensure all tests pass**: `cargo test`
-6. **Format your code**: `cargo fmt`
-7. **Run clippy**: `cargo clippy`
-8. **Submit a pull request**
+- [Development Setup](#development-setup)
+- [Code Standards](#code-standards)
+- [Pull Request Process](#pull-request-process)
+- [Testing Guidelines](#testing-guidelines)
 
 ## Development Setup
 
@@ -47,56 +17,47 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 - OpenSSL development libraries
 - Git
 
-### Building
+### Getting Started
 
 ```bash
+# Clone the repository
 git clone https://github.com/burnt-labs/xion-agent-toolkit
 cd xion-agent-toolkit
+
+# Build
 cargo build
-```
 
-### Testing
-
-```bash
-# Run all tests
+# Run tests
 cargo test
 
-# Run specific test
-cargo test test_pkce_verifier_length
-
-# Run tests with output
-cargo test -- --nocapture
+# Configure OAuth (required for integration testing)
+cp .env.example .env
+# Edit .env with your OAuth Client IDs
 ```
 
-### Code Style
+## Code Standards
 
-We follow standard Rust conventions:
+### Formatting & Linting
 
-1. **Use `cargo fmt`** to format your code
-2. **Use `cargo clippy`** to catch common mistakes
-3. **Follow Rust API Guidelines**: https://rust-lang.github.io/api-guidelines/
+```bash
+# Format code (REQUIRED before commits)
+cargo fmt
+
+# Run clippy (REQUIRED before commits)
+cargo clippy --all-targets --all-features -- -D warnings
+```
 
 ### Commit Messages
 
-Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-<type>[optional scope]: <description>
+<type>[scope]: <description>
 
 [optional body]
-
-[optional footer(s)]
 ```
 
-**Types:**
-- `feat`: A new feature
-- `fix`: A bug fix
-- `docs`: Documentation only changes
-- `style`: Changes that do not affect the meaning of the code
-- `refactor`: A code change that neither fixes a bug nor adds a feature
-- `perf`: A code change that improves performance
-- `test`: Adding missing tests or correcting existing tests
-- `chore`: Changes to the build process or auxiliary tools
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 
 **Examples:**
 ```
@@ -105,42 +66,6 @@ fix(treasury): handle API timeout correctly
 docs(readme): update installation instructions
 test(pkce): add unit tests for verifier generation
 ```
-
-## Project Structure
-
-```
-xion-agent-toolkit/
-├── src/
-│   ├── main.rs              # CLI entry point
-│   ├── lib.rs               # Library exports
-│   ├── cli/                 # CLI command handlers
-│   ├── oauth/               # OAuth2 implementation
-│   ├── api/                 # API clients
-│   ├── treasury/            # Treasury management
-│   ├── config/              # Configuration management
-│   └── utils/               # Utilities
-├── plans/                   # Development plans
-├── docs/                    # Documentation
-└── tests/                   # Integration tests
-```
-
-## Module Guidelines
-
-### Adding a New Command
-
-1. Create command handler in `src/cli/`
-2. Add command enum variant in `src/cli/mod.rs`
-3. Update module exports
-4. Add tests
-5. Update documentation
-
-### Adding a New Module
-
-1. Create module directory in `src/`
-2. Add `mod.rs` with public API
-3. Update `src/lib.rs` or parent module
-4. Add tests in module directory
-5. Update documentation
 
 ### Error Handling
 
@@ -151,9 +76,6 @@ Use `thiserror` for custom errors:
 pub enum MyError {
     #[error("Failed to process: {0}")]
     ProcessingFailed(String),
-    
-    #[error("Invalid input: {0}")]
-    InvalidInput(String),
 }
 ```
 
@@ -163,100 +85,167 @@ Use `anyhow` for error propagation:
 use anyhow::{Context, Result};
 
 pub fn my_function() -> Result<()> {
-    let data = load_data()
-        .context("Failed to load data")?;
-    
-    process_data(&data)
-        .context("Failed to process data")?;
-    
+    let data = load_data().context("Failed to load data")?;
+    process_data(&data).context("Failed to process data")?;
     Ok(())
 }
 ```
 
-### Testing Standards
+### CLI Output
 
-Write comprehensive tests:
+All commands must output JSON:
 
 ```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_function_success() {
-        // Test successful case
-        let result = my_function("input");
-        assert!(result.is_ok());
-    }
-    
-    #[test]
-    fn test_function_failure() {
-        // Test failure case
-        let result = my_function("invalid");
-        assert!(result.is_err());
-    }
-    
-    #[tokio::test]
-    async fn test_async_function() {
-        // Test async function
-        let result = async_function().await;
-        assert!(result.is_ok());
-    }
+pub fn output_json<T: Serialize>(data: &T) -> Result<()> {
+    let json = serde_json::to_string_pretty(data)?;
+    println!("{}", json);
+    Ok(())
 }
 ```
 
-### Documentation Standards
+## Testing Guidelines
+
+### Running Tests
+
+```bash
+# Run all tests
+cargo test
+
+# Run specific test
+cargo test test_pkce_verifier_length
+
+# Run with output
+cargo test -- --nocapture
+```
+
+### Test Serialization Rules
+
+**CRITICAL**: Tests that modify `XION_CI_ENCRYPTION_KEY` environment variable 
+MUST use `#[serial(encryption_key)]` to prevent race conditions in CI.
+
+```rust
+// CORRECT
+#[test]
+#[serial(encryption_key)]
+fn test_something() {
+    let original = env::var(ENV_KEY_NAME).ok();
+    env::set_var(ENV_KEY_NAME, "test_key");
+    // ... test code ...
+    restore_key(original);
+}
+
+// WRONG - Different serial group, allows parallel execution
+#[test]
+#[serial]  // NOT the same as #[serial(encryption_key)]!
+fn test_something_bad() { ... }
+```
+
+### CI Environment
+
+In CI, `XION_CI_ENCRYPTION_KEY` is pre-configured. Local development uses 
+machine ID for key derivation automatically.
+
+## Pull Request Process
+
+1. **Fork** the repository
+2. **Create a branch** from `main`
+3. **Make changes** following code standards
+4. **Add tests** for new functionality
+5. **Run pre-commit checks**:
+   ```bash
+   cargo fmt
+   cargo clippy --all-targets --all-features -- -D warnings
+   cargo test
+   ```
+6. **Update documentation** if needed
+7. **Submit pull request**
+
+### PR Requirements
+
+- All tests pass
+- No clippy warnings
+- Code is formatted
+- Documentation updated for user-facing changes
+- Commit messages follow conventions
+
+## Project Structure
+
+```
+xion-agent-toolkit/
+├── src/
+│   ├── main.rs          # CLI entry point
+│   ├── lib.rs           # Library exports
+│   ├── cli/             # CLI commands
+│   ├── oauth/           # OAuth2 implementation
+│   ├── api/             # API clients
+│   ├── treasury/        # Treasury management
+│   ├── config/          # Configuration
+│   └── utils/           # Utilities
+├── skills/              # Agent Skills
+├── plans/               # Development plans & progress
+└── tests/               # Integration tests
+```
+
+## Adding New Features
+
+### New CLI Command
+
+1. Add command handler in `src/cli/`
+2. Add enum variant in `src/cli/mod.rs`
+3. Implement logic in appropriate module
+4. Add tests
+5. Update documentation
+
+### New Module
+
+1. Create module directory in `src/`
+2. Add `mod.rs` with public API
+3. Update `src/lib.rs` or parent module
+4. Add tests
+5. Update `AGENTS.md` if needed
+
+## Documentation Standards
 
 - **Document all public APIs** with rustdoc comments
 - **Include examples** in documentation
-- **Update README** for user-facing changes
-- **Update CHANGELOG** for all changes
+- **Update README.md** for user-facing changes
+- **Update AGENTS.md** for development guidelines
 
 ```rust
 /// Generates a PKCE challenge for OAuth2 security.
 ///
 /// # Arguments
-///
-/// * `verifier` - A string slice containing the PKCE verifier
+/// * `verifier` - PKCE verifier string
 ///
 /// # Returns
-///
-/// A `Result` containing the Base64URL-encoded challenge string
+/// Base64URL-encoded challenge string
 ///
 /// # Example
-///
 /// ```
-/// use xion_agent_toolkit::oauth::generate_pkce_challenge;
-///
-/// let verifier = "my_verifier_string";
-/// let challenge = generate_pkce_challenge(verifier)?;
-/// println!("Challenge: {}", challenge);
+/// let challenge = generate_pkce_challenge("verifier")?;
 /// ```
 pub fn generate_pkce_challenge(verifier: &str) -> Result<String> {
     // Implementation
 }
 ```
 
-## Security Considerations
+## Security Guidelines
 
-When contributing, please consider:
-
-- **Never log sensitive data** (tokens, credentials, etc.)
-- **Use secure storage** for sensitive information
-- **Validate all inputs** from external sources
-- **Use HTTPS** for all external communications
-- **Follow OWASP guidelines** for security
+- Never log sensitive data (tokens, credentials)
+- Use secure storage for sensitive information
+- Validate all external inputs
+- Use HTTPS for all external communications
 
 ## Getting Help
 
-- **GitHub Issues**: For bug reports and feature requests
-- **Code Review**: All PRs are reviewed by maintainers
-- **Documentation**: Check `plans/` directory for architecture details
+- **GitHub Issues**: Bug reports and feature requests
+- **Code Review**: All PRs reviewed by maintainers
+- **Documentation**: See `plans/` for architecture details
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License or Apache License 2.0, at the option of the project maintainers.
+By contributing, you agree that your contributions will be licensed under the Apache License 2.0.
 
 ---
 
-Thank you for contributing to Xion Agent Toolkit! 🎉
+Thank you for contributing! 🎉

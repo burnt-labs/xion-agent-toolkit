@@ -42,6 +42,8 @@ Xion Agent Toolkit is a CLI-driven, Agent-oriented toolkit designed to facilitat
 ```
 xion-agent-toolkit/
 ├── AGENTS.md                    # This file - Development Guidelines
+├── CONTRIBUTING.md              # Contributing guide for human contributors
+├── README.md                    # Product documentation for users
 ├── Cargo.toml                   # Rust project configuration
 ├── src/
 │   ├── main.rs                  # CLI entry point
@@ -85,51 +87,12 @@ xion-agent-toolkit/
 │   └── xion-treasury/           # Treasury management
 │       ├── SKILL.md
 │       └── scripts/
-└── plans/                       # Development plan documents
-    ├── status.json              # Plan status tracking (SSOT)
-    ├── treasury-automation.md
-    ├── oauth2-client-architecture.md
-    ├── oauth2-pkce-implementation.md
-    ├── treasury-api-architecture.md
-    ├── treasury-create-enhancement.md
-    └── treasury-grant-fee-config.md
+└── plans/                       # Development plans (SSOT for progress)
+    ├── status.json              # Plan status tracking
+    └── *.md                     # Individual plan documents
 ```
 
-## Development Phases
-
-### Phase 1: Foundation ✅ Complete
-
-1. CLI framework setup
-2. Configuration management system
-3. Error handling and output formatting
-
-### Phase 2: OAuth2 Authentication ✅ Complete
-
-1. OAuth2 authentication flow (PKCE)
-2. Token management and auto-refresh
-3. Callback server for OAuth2 flow
-4. Per-network credential storage
-
-### Phase 3: Treasury Management ✅ Complete
-
-1. Treasury API client implementation
-2. Treasury list and query commands
-3. Treasury fund and withdraw operations
-4. Grant configuration (Fee + Authz)
-5. Protobuf encoding for all authorization types
-
-### Phase 4: Agent Skills ✅ Complete
-
-1. xion-oauth2 skill
-2. xion-treasury skill
-3. JSON output for all commands
-
-### Phase 5: Treasury Creation 🚧 Blocked
-
-1. Treasury create command (CLI ready)
-2. Protobuf encoding for instantiate message
-3. Transaction polling mechanism
-4. **Blocked**: Waiting for OAuth2 API support for `MsgInstantiateContract2`
+**Note**: Development progress and roadmap are tracked in `plans/`. Check `plans/status.json` for current status.
 
 ## Code Standards
 
