@@ -492,12 +492,12 @@ impl TreasuryManager {
                     type_url: instantiate_msg
                         .fee_config
                         .as_ref()
-                        .map(|f| f.allowance.type_url.clone())
+                        .and_then(|f| f.allowance.as_ref().map(|a| a.type_url.clone()))
                         .unwrap_or_default(),
                     value: instantiate_msg
                         .fee_config
                         .as_ref()
-                        .map(|f| f.allowance.value.clone())
+                        .and_then(|f| f.allowance.as_ref().map(|a| a.value.clone()))
                         .unwrap_or_default(),
                 },
                 description: instantiate_msg
@@ -903,10 +903,12 @@ fn encode_fee_config_input(
         } => {
             // Recursive encoding
             let nested = encode_fee_config_input(nested_allowance)?;
+            let nested_allowance = nested.allowance.as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Nested allowance is required for AllowedMsg"))?;
             let encoded = encode_allowed_msg_allowance(
                 allowed_messages.clone(),
-                &nested.allowance.type_url,
-                &nested.allowance.value,
+                &nested_allowance.type_url,
+                &nested_allowance.value,
             )?;
             (
                 "/cosmos.feegrant.v1beta1.AllowedMsgAllowance".to_string(),
@@ -923,11 +925,12 @@ fn encode_fee_config_input(
 
     Ok(super::types::FeeConfigChain {
         description,
-        allowance: super::types::ProtobufAny {
+        allowance: Some(super::types::ProtobufAny {
             type_url: allowance_type_url,
             value: Binary::from_base64(&allowance_value)
                 .map_err(|e| anyhow::anyhow!("Invalid base64: {}", e))?,
-        },
+        }),
+        expiration: None, // TODO: Add expiration support
     })
 }
 

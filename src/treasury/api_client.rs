@@ -1152,11 +1152,12 @@ impl TreasuryApiClient {
                 super::types::FeeConfigInput::Periodic { description, .. } => description.clone(),
                 super::types::FeeConfigInput::AllowedMsg { description, .. } => description.clone(),
             },
-            allowance: super::types::ProtobufAny {
+            allowance: Some(super::types::ProtobufAny {
                 type_url: allowance_type_url,
                 value: Binary::from_base64(&allowance_value)
                     .map_err(|e| anyhow::anyhow!("Invalid base64: {}", e))?,
-            },
+            }),
+            expiration: None, // TODO: Add expiration support in FeeConfigInput
         };
 
         // Create the update_fee_config message (matches contract's ExecuteMsg)

@@ -327,10 +327,12 @@ pub struct TreasuryParamsChain {
 }
 
 /// Fee configuration (chain format)
+/// Matches official treasury::grant::FeeConfig
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeeConfigChain {
     pub description: String,
-    pub allowance: ProtobufAny,
+    pub allowance: Option<ProtobufAny>,
+    pub expiration: Option<u32>,
 }
 
 /// Grant configuration (chain format)
