@@ -2,6 +2,7 @@
 //!
 //! Data structures for Treasury contract information and operations.
 
+use cosmwasm_std::Binary;
 use serde::{Deserialize, Serialize};
 
 /// Treasury list item (simplified view)
@@ -159,8 +160,8 @@ pub struct TypeUrlValue {
     /// Protobuf type URL
     #[serde(rename = "type_url")]
     pub type_url: String,
-    /// Base64-encoded protobuf value
-    pub value: String,
+    /// Base64-encoded protobuf value (Binary for proper serialization)
+    pub value: Binary,
 }
 
 /// Treasury parameters for instantiation
@@ -263,6 +264,13 @@ pub struct Coin {
     pub denom: String,
 }
 
+/// Coin input for execute messages
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CoinInput {
+    pub amount: String,
+    pub denom: String,
+}
+
 /// Fund treasury result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FundResult {
@@ -328,7 +336,7 @@ pub struct GrantConfigChain {
 pub struct ProtobufAny {
     #[serde(rename = "type_url")]
     pub type_url: String,
-    pub value: String, // base64
+    pub value: Binary, // Binary type for base64 encoding/decoding
 }
 
 /// Create treasury response
@@ -551,31 +559,60 @@ pub struct FeeConfigInfo {
 // CONTRACT EXECUTE MESSAGE TYPES
 // ============================================================================
 
-/// Contract execute message for add_grant_config
+/// Treasury contract execute message variants
+/// Matches the contract's ExecuteMsg enum exactly
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+pub enum TreasuryExecuteMsg {
+    UpdateGrantConfig {
+        #[serde(rename = "msg_type_url")]
+        msg_type_url: String,
+        grant_config: GrantConfigChain,
+    },
+    RemoveGrantConfig {
+        #[serde(rename = "msg_type_url")]
+        msg_type_url: String,
+    },
+    UpdateFeeConfig {
+        fee_config: FeeConfigChain,
+    },
+    RevokeAllowance {
+        grantee: String,
+    },
+    Withdraw {
+        coins: Vec<CoinInput>,
+    },
+}
+
+/// Contract execute message for add_grant_config (deprecated - use TreasuryExecuteMsg)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[deprecated(note = "Use TreasuryExecuteMsg::AddGrantConfig instead")]
 pub struct AddGrantConfigMsg {
     pub type_url: String,
     pub grant_config: GrantConfigChain,
 }
 
-/// Contract execute message for remove_grant_config
+/// Contract execute message for remove_grant_config (deprecated - use TreasuryExecuteMsg)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[deprecated(note = "Use TreasuryExecuteMsg::RemoveGrantConfig instead")]
 pub struct RemoveGrantConfigMsg {
     pub type_url: String,
 }
 
-/// Contract execute message for set_fee_config
+/// Contract execute message for set_fee_config (deprecated - use TreasuryExecuteMsg)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[deprecated(note = "Use TreasuryExecuteMsg::SetFeeConfig instead")]
 pub struct SetFeeConfigMsg {
     pub fee_config: FeeConfigChain,
 }
 
-/// Contract execute message for remove_fee_config
+/// Contract execute message for remove_fee_config (deprecated - use TreasuryExecuteMsg)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[deprecated(note = "Use TreasuryExecuteMsg::RemoveFeeConfig instead")]
 pub struct RemoveFeeConfigMsg {}
 
 #[cfg(test)]
@@ -862,4 +899,41 @@ fn test_parse_example_config_file() {
         }
         _ => panic!("Expected Send authorization"),
     }
+}
+
+#[test]
+fn test_serialize_treasury_execute_msg() {
+    use cosmwasm_std::Binary;
+
+    let msg = TreasuryExecuteMsg::UpdateGrantConfig {
+        msg_type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+        grant_config: GrantConfigChain {
+            description: "Test".to_string(),
+            authorization: ProtobufAny {
+                type_url: "/cosmos.bank.v1beta1.SendAuthorization".to_string(),
+                value: Binary::from_base64("ChAKBzEwMDAwMDASBXV4aW9u").unwrap(),
+            },
+            optional: false,
+        },
+    };
+
+    let json = serde_json::to_string_pretty(&msg).unwrap();
+    println!("Serialized message:\n{}", json);
+
+    // Verify the structure matches what the contract expects
+    let expected = r#"{
+  "update_grant_config": {
+    "msg_type_url": "/cosmos.bank.v1beta1.MsgSend",
+    "grant_config": {
+      "description": "Test",
+      "authorization": {
+        "type_url": "/cosmos.bank.v1beta1.SendAuthorization",
+        "value": "ChAKBzEwMDAwMDASBXV4aW9u"
+      },
+      "optional": false
+    }
+  }
+}"#;
+
+    assert_eq!(json, expected);
 }

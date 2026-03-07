@@ -3,6 +3,20 @@
   "updated_at": "2026-03-07",
   "plans": [
     {
+      "id": "treasury-grant-fee-debug",
+      "title": "Treasury Grant/Fee Config Debug",
+      "file": "plans/treasury-grant-fee-debug.md",
+      "status": "InProgress",
+      "progress": 50,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev"],
+      "tags": ["treasury", "grant-config", "fee-config", "debug", "binary-serialization"],
+      "created_at": "2026-03-07",
+      "updated_at": "2026-03-07",
+      "done_at": null,
+      "notes": "Binary serialization fix applied but still failing. NOW INTEGRATING xion-types for official type definitions instead of manual types."
+    },
+    {
       "id": "e2e-testing",
       "title": "E2E Testing Plan",
       "file": "plans/e2e-testing.md",

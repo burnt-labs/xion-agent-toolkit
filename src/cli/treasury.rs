@@ -58,8 +58,8 @@ pub enum GrantConfigCommands {
         address: String,
 
         /// Path to JSON config file (alternative to flags)
-        #[arg(short, long)]
-        config: Option<PathBuf>,
+        #[arg(long, value_name = "FILE")]
+        grant_config: Option<PathBuf>,
 
         /// Message type URL (e.g., /cosmos.bank.v1beta1.MsgSend)
         #[arg(long, value_name = "URL")]
@@ -132,14 +132,18 @@ pub enum FeeConfigCommands {
         address: String,
 
         /// Path to JSON config file
-        #[arg(short, long)]
-        config: PathBuf,
+        #[arg(long, value_name = "FILE")]
+        fee_config: PathBuf,
     },
 
-    /// Remove fee configuration
+    /// Revoke fee allowance from a specific grantee
     Remove {
         /// Treasury contract address
         address: String,
+
+        /// Grantee address to revoke allowance from
+        #[arg(long)]
+        grantee: String,
     },
 
     /// Query fee configuration
@@ -683,7 +687,7 @@ async fn handle_grant_config(cmd: GrantConfigCommands) -> Result<()> {
     match cmd {
         GrantConfigCommands::Add {
             address,
-            config,
+            grant_config: config_path,
             type_url,
             auth_type,
             description,
@@ -698,7 +702,7 @@ async fn handle_grant_config(cmd: GrantConfigCommands) -> Result<()> {
         } => {
             handle_grant_config_add(
                 &address,
-                config.as_ref(),
+                config_path.as_ref(),
                 type_url.as_deref(),
                 auth_type.as_deref(),
                 description.as_deref(),
@@ -1073,10 +1077,13 @@ async fn handle_grant_config_list(address: &str) -> Result<()> {
 
 async fn handle_fee_config(cmd: FeeConfigCommands) -> Result<()> {
     match cmd {
-        FeeConfigCommands::Set { address, config } => {
-            handle_fee_config_set(&address, &config).await
+        FeeConfigCommands::Set {
+            address,
+            fee_config,
+        } => handle_fee_config_set(&address, &fee_config).await,
+        FeeConfigCommands::Remove { address, grantee } => {
+            handle_fee_config_remove(&address, &grantee).await
         }
-        FeeConfigCommands::Remove { address } => handle_fee_config_remove(&address).await,
         FeeConfigCommands::Query { address } => handle_fee_config_query(&address).await,
     }
 }
@@ -1133,13 +1140,16 @@ async fn handle_fee_config_set(address: &str, config_path: &PathBuf) -> Result<(
     }
 }
 
-async fn handle_fee_config_remove(address: &str) -> Result<()> {
+async fn handle_fee_config_remove(address: &str, grantee: &str) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
     use crate::utils::output::{print_info, print_json};
 
-    print_info(&format!("Removing fee config from treasury {}...", address));
+    print_info(&format!(
+        "Revoking fee allowance from grantee {} for treasury {}...",
+        grantee, address
+    ));
 
     // Create manager
     let config_manager = ConfigManager::new()?;
@@ -1157,8 +1167,8 @@ async fn handle_fee_config_remove(address: &str) -> Result<()> {
         return print_json(&result);
     }
 
-    // Remove fee config
-    match manager.remove_fee_config(address).await {
+    // Revoke allowance
+    match manager.remove_fee_config(address, grantee).await {
         Ok(result) => {
             let response = serde_json::json!({
                 "success": true,
@@ -1171,8 +1181,8 @@ async fn handle_fee_config_remove(address: &str) -> Result<()> {
         Err(e) => {
             let result = serde_json::json!({
                 "success": false,
-                "error": format!("Failed to remove fee config: {}", e),
-                "code": "FEE_CONFIG_REMOVE_FAILED"
+                "error": format!("Failed to revoke allowance: {}", e),
+                "code": "REVOKE_ALLOWANCE_FAILED"
             });
             print_json(&result)
         }

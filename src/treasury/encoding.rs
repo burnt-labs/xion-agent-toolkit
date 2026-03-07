@@ -304,16 +304,16 @@ pub fn encode_periodic_allowance(
 /// Encode AllowedMsgAllowance to protobuf base64
 ///
 /// # Arguments
-/// * `allowed_messages` - List of message type URLs that are allowed
+/// * `allowed_messages` - List of allowed message type URLs
 /// * `nested_allowance_type_url` - Type URL of the nested allowance
-/// * `nested_allowance_value` - Base64-encoded nested allowance value
+/// * `nested_allowance_value` - Binary value of the nested allowance (will be converted to base64)
 ///
 /// # Returns
 /// Base64-encoded protobuf AllowedMsgAllowance message
 pub fn encode_allowed_msg_allowance(
     allowed_messages: Vec<String>,
     nested_allowance_type_url: &str,
-    nested_allowance_value: &str,
+    nested_allowance_value: &cosmwasm_std::Binary,
 ) -> Result<String, EncodingError> {
     if allowed_messages.is_empty() {
         return Err(EncodingError::InvalidInput(
@@ -321,9 +321,12 @@ pub fn encode_allowed_msg_allowance(
         ));
     }
 
+    // Get the base64-encoded string from Binary
+    let nested_base64 = nested_allowance_value.to_base64();
+
     // Decode nested allowance from base64
     let nested_bytes = base64::engine::general_purpose::STANDARD
-        .decode(nested_allowance_value)
+        .decode(&nested_base64)
         .map_err(|e| EncodingError::Base64Error(e.to_string()))?;
 
     let mut bytes = Vec::new();
@@ -607,18 +610,21 @@ pub fn encode_contract_execution_authorization(
 ///
 /// # Arguments
 /// * `auth_input` - Authorization input from CLI
+/// * `msg_type_url` - The message type URL being authorized (for GenericAuthorization)
 ///
 /// # Returns
 /// Tuple of (type_url, base64_encoded_value)
 pub fn encode_authorization_input(
     auth_input: &super::types::AuthorizationInput,
+    msg_type_url: &str,
 ) -> Result<(String, String), EncodingError> {
     match auth_input {
         super::types::AuthorizationInput::Generic => {
-            // GenericAuthorization has empty value
+            // GenericAuthorization needs the msg field (the message type being authorized)
+            let encoded = encode_generic_authorization(msg_type_url)?;
             Ok((
                 "/cosmos.authz.v1beta1.GenericAuthorization".to_string(),
-                "".to_string(),
+                encoded,
             ))
         }
         super::types::AuthorizationInput::Send {
@@ -745,10 +751,13 @@ pub fn encode_fee_config_input(
         } => {
             // Recursively encode nested allowance
             let (nested_type_url, nested_value) = encode_fee_config_input(nested_allowance)?;
+            // Convert base64 string to Binary
+            let nested_binary = cosmwasm_std::Binary::from_base64(&nested_value)
+                .map_err(|e| EncodingError::Base64Error(e.to_string()))?;
             let encoded = encode_allowed_msg_allowance(
                 allowed_messages.clone(),
                 &nested_type_url,
-                &nested_value,
+                &nested_binary,
             )?;
             Ok((
                 "/cosmos.feegrant.v1beta1.AllowedMsgAllowance".to_string(),
@@ -904,10 +913,12 @@ mod tests {
         }])
         .unwrap();
 
+        let basic_binary = cosmwasm_std::Binary::from_base64(&basic_encoded).unwrap();
+
         let encoded = encode_allowed_msg_allowance(
             vec!["/cosmos.bank.v1beta1.MsgSend".to_string()],
             "/cosmos.feegrant.v1beta1.BasicAllowance",
-            &basic_encoded,
+            &basic_binary,
         )
         .unwrap();
 
@@ -923,7 +934,7 @@ mod tests {
         assert!(encode_allowed_msg_allowance(
             vec![],
             "/cosmos.feegrant.v1beta1.BasicAllowance",
-            "encoded"
+            &cosmwasm_std::Binary::from(vec![0u8]) // Dummy binary value
         )
         .is_err());
     }

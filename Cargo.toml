@@ -61,6 +61,12 @@ urlencoding = "2.1"
 prost = "0.12"
 prost-types = "0.12"
 
+# CosmWasm types (for Binary type)
+cosmwasm-std = { version = "2.1", features = ["stargate"] }
+
+# Xion protocol types (official protobuf types)
+xion-types = { git = "https://github.com/burnt-labs/xion-types" }
+
 # Regex for parsing
 regex = "1.10"
 

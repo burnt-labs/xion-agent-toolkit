@@ -5,6 +5,7 @@
 
 use anyhow::{Context, Result};
 use chrono::DateTime;
+use cosmwasm_std::Binary;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -677,10 +678,7 @@ impl TreasuryApiClient {
     ///     fee_config: FeeConfigMessage {
     ///         allowance: TypeUrlValue {
     ///             type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
-    ///             value: base64::Engine::encode(
-    ///                 &base64::engine::general_purpose::STANDARD,
-    ///                 b"{}"
-    ///             ),
+    ///             value: cosmwasm_std::Binary::from(vec![]),
     ///         },
     ///         description: "Fee grant for users".to_string(),
     ///     },
@@ -689,10 +687,7 @@ impl TreasuryApiClient {
     ///             type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
     ///             authorization: TypeUrlValue {
     ///                 type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
-    ///                 value: base64::Engine::encode(
-    ///                     &base64::engine::general_purpose::STANDARD,
-    ///                     b"{}"
-    ///                 ),
+    ///                 value: cosmwasm_std::Binary::from(vec![]),
     ///             },
     ///             description: Some("Allow sending tokens".to_string()),
     ///         },
@@ -984,28 +979,35 @@ impl TreasuryApiClient {
             type_url, treasury_address
         );
 
-        // Encode the authorization
+        // Encode the authorization (pass type_url for GenericAuthorization)
         let (auth_type_url, auth_value) =
-            super::encoding::encode_authorization_input(&grant_config.authorization)?;
+            super::encoding::encode_authorization_input(&grant_config.authorization, type_url)?;
 
         // Build the grant config for chain
         let grant_config_chain = super::types::GrantConfigChain {
             description: grant_config.description.clone(),
             authorization: super::types::ProtobufAny {
                 type_url: auth_type_url,
-                value: auth_value,
+                value: Binary::from_base64(&auth_value)
+                    .map_err(|e| anyhow::anyhow!("Invalid base64: {}", e))?,
             },
             optional: grant_config.optional,
         };
 
-        // Create the add_grant_config message
-        let add_msg = super::types::AddGrantConfigMsg {
-            type_url: type_url.to_string(),
+        // Create the update_grant_config message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::UpdateGrantConfig {
+            msg_type_url: type_url.to_string(),
             grant_config: grant_config_chain,
         };
 
+        // Debug: print the JSON message being sent
+        let msg_json = serde_json::to_string_pretty(&exec_msg)?;
+        eprintln!("[DEBUG] Execute message JSON:\n{}", msg_json);
+        debug!("Execute message JSON:\n{}", msg_json);
+
         // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&add_msg)?)?;
+        let msg_base64 = base64_encode(&serde_json::to_value(&exec_msg)?)?;
+        eprintln!("[DEBUG] Base64 encoded message: {}", msg_base64);
 
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
@@ -1017,15 +1019,20 @@ impl TreasuryApiClient {
                     "funds": []
                 }),
             }],
-            memo: Some(format!("Add grant config for {}", type_url)),
+            memo: Some(format!("Update grant config for {}", type_url)),
         };
+
+        eprintln!(
+            "[DEBUG] Full request to OAuth2 API:\n{}",
+            serde_json::to_string_pretty(&request)?
+        );
 
         let response = self.broadcast_transaction(access_token, request).await?;
 
         Ok(super::types::GrantConfigResult {
             treasury_address: treasury_address.to_string(),
             type_url: type_url.to_string(),
-            operation: "add".to_string(),
+            operation: "update".to_string(),
             tx_hash: response.tx_hash,
         })
     }
@@ -1044,9 +1051,9 @@ impl TreasuryApiClient {
             type_url, treasury_address
         );
 
-        // Create the remove_grant_config message
-        let remove_msg = super::types::RemoveGrantConfigMsg {
-            type_url: type_url.to_string(),
+        // Create the remove_grant_config message (matches contract's ExecuteMsg)
+        let remove_msg = super::types::TreasuryExecuteMsg::RemoveGrantConfig {
+            msg_type_url: type_url.to_string(),
         };
 
         // Encode the message as base64
@@ -1147,17 +1154,18 @@ impl TreasuryApiClient {
             },
             allowance: super::types::ProtobufAny {
                 type_url: allowance_type_url,
-                value: allowance_value,
+                value: Binary::from_base64(&allowance_value)
+                    .map_err(|e| anyhow::anyhow!("Invalid base64: {}", e))?,
             },
         };
 
-        // Create the set_fee_config message
-        let set_msg = super::types::SetFeeConfigMsg {
+        // Create the update_fee_config message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::UpdateFeeConfig {
             fee_config: fee_config_chain,
         };
 
         // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&set_msg)?)?;
+        let msg_base64 = base64_encode(&serde_json::to_value(&exec_msg)?)?;
 
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {
@@ -1169,32 +1177,38 @@ impl TreasuryApiClient {
                     "funds": []
                 }),
             }],
-            memo: Some("Set fee config".to_string()),
+            memo: Some("Update fee config".to_string()),
         };
         let response = self.broadcast_transaction(access_token, request).await?;
 
         Ok(super::types::FeeConfigResult {
             treasury_address: treasury_address.to_string(),
-            operation: "set".to_string(),
+            operation: "update".to_string(),
             tx_hash: response.tx_hash,
         })
     }
 
-    /// Remove fee configuration from a treasury
+    /// Revoke fee allowance from a treasury (revokes from grantee)
     #[instrument(skip(self, access_token))]
-    pub async fn remove_fee_config(
+    pub async fn revoke_allowance(
         &self,
         access_token: &str,
         treasury_address: &str,
+        grantee: &str,
         from_address: &str,
     ) -> Result<super::types::FeeConfigResult> {
-        debug!("Removing fee config from treasury: {}", treasury_address);
+        debug!(
+            "Revoking allowance from grantee: {} for treasury: {}",
+            grantee, treasury_address
+        );
 
-        // Create the remove_fee_config message
-        let remove_msg = super::types::RemoveFeeConfigMsg {};
+        // Create the revoke_allowance message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::RevokeAllowance {
+            grantee: grantee.to_string(),
+        };
 
         // Encode the message as base64
-        let msg_base64 = base64_encode(&serde_json::to_value(&remove_msg)?)?;
+        let msg_base64 = base64_encode(&serde_json::to_value(&exec_msg)?)?;
 
         let request = BroadcastRequest {
             messages: vec![super::types::TransactionMessage {

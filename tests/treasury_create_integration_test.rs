@@ -494,8 +494,11 @@ async fn test_create_treasury_api_success() {
         fee_config: FeeConfigMessage {
             allowance: TypeUrlValue {
                 type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
-                value: base64::engine::general_purpose::STANDARD
-                    .encode(b"{spend_limit:{amount:\"1000000\",denom:\"uxion\"}}"),
+                value: cosmwasm_std::Binary::from_base64(
+                    &base64::engine::general_purpose::STANDARD
+                        .encode(b"{spend_limit:{amount:\"1000000\",denom:\"uxion\"}}"),
+                )
+                .unwrap(),
             },
             description: "Basic fee allowance".to_string(),
         },
@@ -503,8 +506,11 @@ async fn test_create_treasury_api_success() {
             type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
             authorization: TypeUrlValue {
                 type_url: "/cosmos.bank.v1beta1.SendAuthorization".to_string(),
-                value: base64::engine::general_purpose::STANDARD
-                    .encode(b"{spend_limit:{amount:\"500000\",denom:\"uxion\"}}"),
+                value: cosmwasm_std::Binary::from_base64(
+                    &base64::engine::general_purpose::STANDARD
+                        .encode(b"{spend_limit:{amount:\"500000\",denom:\"uxion\"}}"),
+                )
+                .unwrap(),
             },
             description: Some("Send funds".to_string()),
         }],
@@ -560,7 +566,7 @@ async fn test_create_treasury_api_unauthorized() {
         fee_config: FeeConfigMessage {
             allowance: TypeUrlValue {
                 type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
-                value: "Cg=".to_string(), // Empty BasicAllowance
+                value: cosmwasm_std::Binary::from_base64("Cg=").unwrap(), // Empty BasicAllowance
             },
             description: "Fee".to_string(),
         },
@@ -789,7 +795,7 @@ async fn test_full_create_flow_with_mocks() {
         fee_config: FeeConfigMessage {
             allowance: TypeUrlValue {
                 type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
-                value: basic_allowance_encoded,
+                value: cosmwasm_std::Binary::from_base64(&basic_allowance_encoded).unwrap(),
             },
             description: "Basic fee allowance".to_string(),
         },
@@ -797,7 +803,7 @@ async fn test_full_create_flow_with_mocks() {
             type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
             authorization: TypeUrlValue {
                 type_url: "/cosmos.bank.v1beta1.SendAuthorization".to_string(),
-                value: send_auth_encoded,
+                value: cosmwasm_std::Binary::from_base64(&send_auth_encoded).unwrap(),
             },
             description: Some("Send funds".to_string()),
         }],

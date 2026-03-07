@@ -4,6 +4,7 @@
 //! and caching support.
 
 use anyhow::Result;
+use cosmwasm_std::Binary;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, instrument};
@@ -787,34 +788,45 @@ impl TreasuryManager {
             .await
     }
 
-    /// Remove fee configuration from a treasury
+    /// Remove fee configuration from a treasury by revoking the allowance
     ///
     /// # Arguments
     /// * `address` - Treasury contract address
+    /// * `grantee` - Address of the grantee to revoke allowance from
     ///
     /// # Returns
     /// Fee config result with transaction hash
     #[instrument(skip(self))]
-    pub async fn remove_fee_config(&self, address: &str) -> Result<super::types::FeeConfigResult> {
-        debug!("Removing fee config from treasury {}", address);
-
-        // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
-
-        let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
-        })?;
+    pub async fn remove_fee_config(
+        &self,
+        address: &str,
+        grantee: &str,
+    ) -> Result<super::types::FeeConfigResult> {
+        debug!(
+            "Removing fee allowance for grantee {} from treasury {}",
+            grantee, address
+        );
 
         // Get valid access token
         let access_token = self.oauth_client.get_valid_token().await?;
 
-        // Call API client to remove fee config
+        // Extract user address from OAuth2 access token
+        let from_address = Self::extract_address_from_token(&access_token)?;
+
+        // Call API client to revoke allowance
         self.api_client
-            .remove_fee_config(&access_token, address, &from_address)
+            .revoke_allowance(&access_token, address, grantee, &from_address)
             .await
+    }
+
+    /// Extract address from OAuth2 access token
+    fn extract_address_from_token(token: &str) -> Result<String> {
+        // Token format: {userId}:{grantId}:{secret}
+        let parts: Vec<&str> = token.split(':').collect();
+        if parts.len() != 3 {
+            return Err(anyhow::anyhow!("Invalid token format"));
+        }
+        Ok(parts[0].to_string())
     }
 
     /// Query fee configuration for a treasury
@@ -913,7 +925,8 @@ fn encode_fee_config_input(
         description,
         allowance: super::types::ProtobufAny {
             type_url: allowance_type_url,
-            value: allowance_value,
+            value: Binary::from_base64(&allowance_value)
+                .map_err(|e| anyhow::anyhow!("Invalid base64: {}", e))?,
         },
     })
 }
@@ -1014,7 +1027,8 @@ fn encode_grant_config_input(
             description: input.description.clone(),
             authorization: super::types::ProtobufAny {
                 type_url: auth_type_url,
-                value: auth_value,
+                value: Binary::from_base64(&auth_value)
+                    .map_err(|e| anyhow::anyhow!("Invalid base64: {}", e))?,
             },
             optional: input.optional,
         },
@@ -1045,11 +1059,13 @@ mod tests {
     fn create_isolated_client() -> (TempDir, OAuthClient) {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let config = create_test_config();
-        let creds_manager =
-            CredentialsManager::with_config_dir(&config.network_name, temp_dir.path().to_path_buf())
-                .expect("Failed to create credentials manager");
-        let client =
-            OAuthClient::with_credentials_manager(config.clone(), creds_manager).expect("Failed to create client");
+        let creds_manager = CredentialsManager::with_config_dir(
+            &config.network_name,
+            temp_dir.path().to_path_buf(),
+        )
+        .expect("Failed to create credentials manager");
+        let client = OAuthClient::with_credentials_manager(config.clone(), creds_manager)
+            .expect("Failed to create client");
         (temp_dir, client)
     }
 

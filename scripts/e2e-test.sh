@@ -90,7 +90,7 @@ pass "jq is installed"
 section "Authentication Status"
 
 log "Checking auth status..."
-AUTH_STATUS=$($TOOLKIT auth status --network $NETWORK --output json 2>&1)
+AUTH_STATUS=$($TOOLKIT auth status --network $NETWORK --output json 2>&1 | sed -n '/^{/,/^}/p')
 echo "$AUTH_STATUS" | tee -a "$LOG_FILE"
 
 if echo "$AUTH_STATUS" | jq -e '.authenticated == true' > /dev/null 2>&1; then
@@ -109,10 +109,10 @@ fi
 section "Configuration Display"
 
 log "Showing network configuration..."
-CONFIG=$($TOOLKIT config show --network $NETWORK --output json 2>&1)
+CONFIG=$($TOOLKIT config show --network $NETWORK --output json 2>&1 | sed -n '/^{/,/^}/p')
 echo "$CONFIG" | jq '.' | tee -a "$LOG_FILE"
 
-if check_json "$CONFIG" && echo "$CONFIG" | jq -e '.network' > /dev/null 2>&1; then
+if check_json "$CONFIG" && echo "$CONFIG" | jq -e '.config.network' > /dev/null 2>&1; then
     pass "Config display works"
 else
     fail "Config display failed"
@@ -124,7 +124,7 @@ fi
 section "List Treasuries (DaoDao Indexer)"
 
 log "Listing existing treasuries..."
-LIST_RESULT=$($TOOLKIT treasury list --network $NETWORK --output json 2>&1)
+LIST_RESULT=$($TOOLKIT treasury list --network $NETWORK --output json 2>&1 | sed -n '/^{/,/^}/p')
 echo "$LIST_RESULT" | jq '.' 2>/dev/null || echo "$LIST_RESULT"
 echo "$LIST_RESULT" >> "$LOG_FILE"
 
@@ -157,7 +157,7 @@ else
         --name "$TREASURY_NAME" \
         --redirect-url "https://example.com/callback" \
         --icon-url "https://example.com/icon.png" \
-        --output json 2>&1)
+        --output json 2>&1 | sed -n '/^{/,/^}/p')
     
     echo "$CREATE_RESULT" | jq '.' 2>/dev/null || echo "$CREATE_RESULT"
     echo "$CREATE_RESULT" >> "$LOG_FILE"
@@ -182,7 +182,7 @@ section "Query Treasury"
 # Try to query first treasury from list
 if [ -n "$FIRST_TREASURY" ] && [ "$FIRST_TREASURY" != "null" ]; then
     log "Querying treasury: $FIRST_TREASURY"
-    QUERY_RESULT=$($TOOLKIT treasury query "$FIRST_TREASURY" --network $NETWORK --output json 2>&1)
+    QUERY_RESULT=$($TOOLKIT treasury query "$FIRST_TREASURY" --network $NETWORK --output json 2>&1 | sed -n '/^{/,/^}/p')
     echo "$QUERY_RESULT" | jq '.' 2>/dev/null || echo "$QUERY_RESULT"
     echo "$QUERY_RESULT" >> "$LOG_FILE"
     
@@ -193,7 +193,7 @@ if [ -n "$FIRST_TREASURY" ] && [ "$FIRST_TREASURY" != "null" ]; then
     fi
 elif [ -n "$NEW_TREASURY" ]; then
     log "Querying newly created treasury: $NEW_TREASURY"
-    QUERY_RESULT=$($TOOLKIT treasury query "$NEW_TREASURY" --network $NETWORK --output json 2>&1)
+    QUERY_RESULT=$($TOOLKIT treasury query "$NEW_TREASURY" --network $NETWORK --output json 2>&1 | sed -n '/^{/,/^}/p')
     echo "$QUERY_RESULT" | jq '.' 2>/dev/null || echo "$QUERY_RESULT"
     echo "$QUERY_RESULT" >> "$LOG_FILE"
     
@@ -207,107 +207,12 @@ else
 fi
 
 # ===========================================
-# SECTION 6: Grant Config (Authz)
-# ===========================================
-section "Grant Config (Authz)"
-
-if [ -n "$NEW_TREASURY" ]; then
-    TREASURY_TO_CONFIG="$NEW_TREASURY"
-elif [ -n "$FIRST_TREASURY" ] && [ "$FIRST_TREASURY" != "null" ]; then
-    TREASURY_TO_CONFIG="$FIRST_TREASURY"
-else
-    TREASURY_TO_CONFIG=""
-fi
-
-if [ -n "$TREASURY_TO_CONFIG" ]; then
-    log "Testing grant-config with preset 'send'..."
-    GRANT_RESULT=$($TOOLKIT treasury grant-config "$TREASURY_TO_CONFIG" \
-        --network $NETWORK \
-        --preset send \
-        --grant-spend-limit "1000000uxion" \
-        --grant-description "E2E test send authorization" \
-        --output json 2>&1)
-    
-    echo "$GRANT_RESULT" | jq '.' 2>/dev/null || echo "$GRANT_RESULT"
-    echo "$GRANT_RESULT" >> "$LOG_FILE"
-    
-    if check_json "$GRANT_RESULT"; then
-        pass "Grant config (send preset) works"
-    else
-        warn "Grant config returned non-JSON (may require different authorization)"
-    fi
-    
-    log "Testing grant-config with preset 'execute'..."
-    GRANT_RESULT2=$($TOOLKIT treasury grant-config "$TREASURY_TO_CONFIG" \
-        --network $NETWORK \
-        --preset execute \
-        --grant-max-calls 100 \
-        --grant-description "E2E test execute authorization" \
-        --output json 2>&1)
-    
-    echo "$GRANT_RESULT2" | jq '.' 2>/dev/null || echo "$GRANT_RESULT2"
-    echo "$GRANT_RESULT2" >> "$LOG_FILE"
-    
-    if check_json "$GRANT_RESULT2"; then
-        pass "Grant config (execute preset) works"
-    else
-        warn "Grant config (execute) returned non-JSON"
-    fi
-else
-    warn "No treasury available for grant config test"
-fi
-
-# ===========================================
-# SECTION 7: Fee Config
-# ===========================================
-section "Fee Config"
-
-if [ -n "$TREASURY_TO_CONFIG" ]; then
-    log "Testing fee-config with basic allowance..."
-    FEE_RESULT=$($TOOLKIT treasury fee-config "$TREASURY_TO_CONFIG" \
-        --network $NETWORK \
-        --fee-allowance-type basic \
-        --fee-spend-limit "1000000uxion" \
-        --fee-description "E2E test basic fee allowance" \
-        --output json 2>&1)
-    
-    echo "$FEE_RESULT" | jq '.' 2>/dev/null || echo "$FEE_RESULT"
-    echo "$FEE_RESULT" >> "$LOG_FILE"
-    
-    if check_json "$FEE_RESULT"; then
-        pass "Fee config (basic) works"
-    else
-        warn "Fee config returned non-JSON"
-    fi
-    
-    log "Testing fee-config with periodic allowance..."
-    FEE_RESULT2=$($TOOLKIT treasury fee-config "$TREASURY_TO_CONFIG" \
-        --network $NETWORK \
-        --fee-allowance-type periodic \
-        --fee-period-seconds 86400 \
-        --fee-period-spend-limit "100000uxion" \
-        --fee-description "E2E test periodic fee allowance" \
-        --output json 2>&1)
-    
-    echo "$FEE_RESULT2" | jq '.' 2>/dev/null || echo "$FEE_RESULT2"
-    echo "$FEE_RESULT2" >> "$LOG_FILE"
-    
-    if check_json "$FEE_RESULT2"; then
-        pass "Fee config (periodic) works"
-    else
-        warn "Fee config (periodic) returned non-JSON"
-    fi
-else
-    warn "No treasury available for fee config test"
-fi
-
-# ===========================================
-# SECTION 8: Refresh Token
+# SECTION 6: Refresh Token
 # ===========================================
 section "Token Refresh"
 
 log "Testing token refresh..."
-REFRESH_RESULT=$($TOOLKIT auth refresh --network $NETWORK --output json 2>&1)
+REFRESH_RESULT=$($TOOLKIT auth refresh --network $NETWORK --output json 2>&1 | sed -n '/^{/,/^}/p')
 echo "$REFRESH_RESULT" | jq '.' 2>/dev/null || echo "$REFRESH_RESULT"
 echo "$REFRESH_RESULT" >> "$LOG_FILE"
 
@@ -320,7 +225,7 @@ else
 fi
 
 # ===========================================
-# SECTION 9: Verify DaoDao Indexer Directly
+# SECTION 7: Verify DaoDao Indexer Directly
 # ===========================================
 section "DaoDao Indexer Verification"
 
@@ -360,6 +265,9 @@ echo "  1. Get testnet tokens from faucet"
 echo "  2. Run: $TOOLKIT treasury create --name 'Test' --redirect-url 'https://example.com'"
 echo "  3. Run: $TOOLKIT treasury list"
 echo "  4. Run: $TOOLKIT treasury query <address>"
+echo ""
+log "To test grant/fee config:"
+echo "  ./scripts/e2e-test-grant-fee.sh [treasury-address]"
 echo ""
 
 echo -e "${GREEN}E2E Test Script Completed${NC}" | tee -a "$LOG_FILE"
