@@ -1,6 +1,16 @@
 //! Treasury Data Types
 //!
 //! Data structures for Treasury contract information and operations.
+//!
+//! ## Type Organization
+//!
+//! This module contains both CLI-specific types and chain-ready types.
+//!
+//! **Note on official types**: While we'd prefer to use types from the `treasury` crate,
+//! the `treasury::grant` module is private, preventing us from constructing
+//! `ExecuteMsg`, `GrantConfig`, or `FeeConfig` instances. Therefore, we maintain
+//! our own chain-ready types (`TreasuryExecuteMsg`, `GrantConfigChain`, `FeeConfigChain`)
+//! that match the contract's structure.
 
 use cosmwasm_std::Binary;
 use serde::{Deserialize, Serialize};
@@ -558,6 +568,9 @@ pub struct FeeConfigInfo {
 // ============================================================================
 // CONTRACT EXECUTE MESSAGE TYPES
 // ============================================================================
+// Note: We maintain our own TreasuryExecuteMsg instead of using treasury::msg::ExecuteMsg
+// because the treasury crate's grant module is private, preventing us from constructing
+// GrantConfig and FeeConfig instances that ExecuteMsg requires.
 
 /// Treasury contract execute message variants
 /// Matches the contract's ExecuteMsg enum exactly
@@ -583,37 +596,6 @@ pub enum TreasuryExecuteMsg {
         coins: Vec<CoinInput>,
     },
 }
-
-/// Contract execute message for add_grant_config (deprecated - use TreasuryExecuteMsg)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[deprecated(note = "Use TreasuryExecuteMsg::AddGrantConfig instead")]
-pub struct AddGrantConfigMsg {
-    pub type_url: String,
-    pub grant_config: GrantConfigChain,
-}
-
-/// Contract execute message for remove_grant_config (deprecated - use TreasuryExecuteMsg)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[deprecated(note = "Use TreasuryExecuteMsg::RemoveGrantConfig instead")]
-pub struct RemoveGrantConfigMsg {
-    pub type_url: String,
-}
-
-/// Contract execute message for set_fee_config (deprecated - use TreasuryExecuteMsg)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[deprecated(note = "Use TreasuryExecuteMsg::SetFeeConfig instead")]
-pub struct SetFeeConfigMsg {
-    pub fee_config: FeeConfigChain,
-}
-
-/// Contract execute message for remove_fee_config (deprecated - use TreasuryExecuteMsg)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[deprecated(note = "Use TreasuryExecuteMsg::RemoveFeeConfig instead")]
-pub struct RemoveFeeConfigMsg {}
 
 #[cfg(test)]
 mod tests {
