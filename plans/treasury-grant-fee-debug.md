@@ -1,7 +1,7 @@
 ---
 status: InProgress
 created_at: 2026-03-07
-updated_at: 2026-03-07
+updated_at: 2026-03-08
 ---
 # Treasury Grant/Fee Config Debug
 
@@ -262,3 +262,242 @@ This suggests:
 1. Change `ProtobufAny.value` from `String` to `Binary` (or use proper Binary serialization)
 2. Test the fix with existing treasuries
 3. Verify grant/fee config operations work correctly
+
+---
+
+## 2026-03-08 Update: OAuth2 API Format Analysis
+
+### Critical Discovery ✨
+
+**Reference**: Developer Portal implementation
+- Location: `~/workspace/xion/xion-developer-portal/src/components/Treasury/NewTreasury/`
+- File: `NewTreasuryForm.tsx` (lines 358-396)
+
+### Key Findings
+
+**1. OAuth2 API Format Requirements**
+
+OAuth2 API expects JavaScript/TypeScript format:
+- Uses camelCase for outer message fields
+- Uses snake_case for contract message fields
+- Type definitions reference: `xion-types/ts/`
+
+**2. Fixed Issues** ✅
+
+| Issue | Fix | Commit |
+|-------|-----|--------|
+| `type_url` vs `typeUrl` | Changed to `typeUrl` | `111eddb` |
+
+**3. Remaining Issues** ❌
+
+#### Issue A: `codeId` Type Mismatch
+
+```json
+// Current (WRONG):
+{
+  "codeId": "1260"    // String
+}
+
+// Expected (CORRECT):
+{
+  "codeId": 1260      // Number (u64)
+}
+```
+
+**Location**: `src/treasury/api_client.rs:733`
+
+**Fix**:
+```rust
+// Change from:
+"codeId": treasury_code_id.to_string(),
+
+// To:
+"codeId": treasury_code_id,  // Keep as number
+```
+
+#### Issue B: `msg` Encoding Mismatch
+
+```json
+// Current (WRONG):
+{
+  "msg": {                    // JSON Object
+    "admin": "...",
+    "fee_config": {...}
+  }
+}
+
+// Expected (CORRECT):
+{
+  "msg": "eyJhZG1pbiI6..."   // Base64-encoded JSON string
+}
+```
+
+**Location**: `src/treasury/api_client.rs:735`
+
+**Fix**:
+```rust
+// Change from:
+"msg": instantiate_msg,  // JSON object
+
+// To:
+"msg": msg_base64,       // Already computed at line 725-728!
+```
+
+### Working Reference Implementation
+
+From Developer Portal (`NewTreasuryForm.tsx:388-396`):
+
+```typescript
+await client.instantiate2(
+  account.bech32Address,     // sender: string
+  treasuryCodeId,            // codeId: NUMBER
+  salt,                      // salt: base64 string
+  msg,                       // msg: InstantiateMsg object
+                             //      (auto-encoded to base64 by CosmJS)
+  "Dev Portal - Treasury Instantiation",
+  "auto",
+  { admin: predictedTreasuryAddress }
+)
+```
+
+### InstantiateMsg Structure
+
+```typescript
+{
+  type_urls: string[],           // snake_case (contract expects)
+  grant_configs: GrantConfig[],  // snake_case
+  fee_config: FeeConfig,         // snake_case
+  admin: string,
+  params: {
+    redirect_url: string,
+    icon_url: string,
+    metadata: string             // JSON.stringify({...})
+  }
+}
+```
+
+### Type Definitions
+
+```typescript
+// From lib/types.ts
+interface FeeConfig {
+  description: string
+  allowance: Any              // { type_url: string, value: string (base64) }
+  expiration?: number
+}
+
+interface GrantConfig {
+  authorization: Any
+  description: string
+  optional: boolean
+}
+
+interface Any {
+  type_url: string
+  value: string               // base64-encoded protobuf
+}
+```
+
+### Root Cause Summary 🎯
+
+**Problem**: OAuth2 API expects different format than we're sending:
+
+1. ✅ **Field names**: Fixed (camelCase for API)
+2. ❌ **codeId type**: Sending string, should be number
+3. ❌ **msg encoding**: Sending JSON object, should be base64 string
+
+**Why "code id is required" error?**
+- API tries to parse `"1260"` (string) as number
+- Parsing fails → validation fails → "code id is required"
+
+## Action Plan
+
+### IMMEDIATE FIX (5 minutes)
+
+**File**: `src/treasury/api_client.rs`
+
+1. Line 733: Change `codeId` to number
+2. Line 735: Change `msg` to use `msg_base64`
+3. Build and test
+
+### Code Changes Required
+
+```rust
+// src/treasury/api_client.rs around line 731-739
+
+let msg_value = serde_json::json!({
+    "sender": request.admin,
+    "codeId": treasury_code_id,      // FIX 1: number, not string
+    "label": format!("Treasury-{}", chrono::Utc::now().format("%Y%m%d-%H%M%S")),
+    "msg": msg_base64,               // FIX 2: base64 string, not JSON object
+    "salt": salt_base64,
+    "funds": [],
+    "admin": request.admin,
+});
+```
+
+**Note**: `msg_base64` is already computed at line 725-728, we just need to use it!
+
+### Test After Fix
+
+```bash
+./target/release/xion-toolkit treasury create \
+  --network testnet \
+  --redirect-url "https://example.com/callback" \
+  --icon-url "https://example.com/icon.png" \
+  --name "Test Treasury" \
+  --fee-allowance-type basic \
+  --fee-spend-limit "1000000uxion" \
+  --fee-description "Basic fee allowance" \
+  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
+  --grant-auth-type generic \
+  --grant-description "Generic send authorization" \
+  --output json
+```
+
+### Expected Outcome
+
+After fixes:
+- ✅ Treasury create succeeds (returns new treasury address)
+- ✅ No "code id is required" error
+- ✅ Can proceed to test grant/fee config operations
+
+### Reference Files
+
+| Purpose | Location |
+|---------|----------|
+| Current Implementation | `src/treasury/api_client.rs:720-750` |
+| Working Reference | `~/workspace/xion/xion-developer-portal/src/components/Treasury/NewTreasury/NewTreasuryForm.tsx:358-396` |
+| Type Definitions | `~/workspace/xion/xion-developer-portal/src/lib/types.ts:48-52` |
+| Xion Types TS | `~/workspace/xion/xion-types/ts/types/cosmwasm/wasm/v1/tx.ts` |
+
+### Commits (2026-03-08)
+
+1. `111eddb` - fix(treasury): use camelCase for API field names
+   - Changed `type_url` to `typeUrl` in TransactionMessage
+   - Matched OAuth2 API JavaScript/TypeScript expectations
+
+### Session Summary (2026-03-08)
+
+**Time**: Evening session  
+**Duration**: ~3 hours  
+**Progress**:
+- ✅ Identified OAuth2 API format requirements
+- ✅ Found working reference implementation (Developer Portal)
+- ✅ Fixed camelCase field names
+- ✅ Identified exact fixes needed for treasury create
+
+**Blockers**:
+- ❌ `codeId` sent as string instead of number
+- ❌ `msg` sent as JSON object instead of base64 string
+
+**Next Session**:
+- Apply the two-line fix in `api_client.rs`
+- Test treasury create
+- Continue with grant/fee config operations
+
+---
+
+**Status**: Ready for quick fix next session  
+**Estimated Time to Fix**: 5-10 minutes  
+**Confidence**: HIGH (exact issue identified with working reference)

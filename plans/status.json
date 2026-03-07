@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "updated_at": "2026-03-07",
+  "updated_at": "2026-03-08",
   "plans": [
     {
       "id": "treasury-grant-fee-debug",
       "title": "Treasury Grant/Fee Config Debug",
       "file": "plans/treasury-grant-fee-debug.md",
       "status": "InProgress",
-      "progress": 50,
+      "progress": 75,
       "owner": "@project-manager",
       "agents": ["@fullstack-dev"],
-      "tags": ["treasury", "grant-config", "fee-config", "debug", "binary-serialization"],
+      "tags": ["treasury", "grant-config", "fee-config", "debug", "oauth2-api-format"],
       "created_at": "2026-03-07",
-      "updated_at": "2026-03-07",
+      "updated_at": "2026-03-08",
       "done_at": null,
-      "notes": "Type cleanup complete. Using official xion-types. Custom types necessary due to private treasury::grant module. Tests: 122/123 passing."
+      "notes": "Root cause identified: OAuth2 API expects different format. Fixed camelCase fields. Need to fix codeId (string→number) and msg (JSON→base64). Ready for 5-minute fix next session."
     },
     {
       "id": "e2e-testing",
@@ -54,9 +54,9 @@
       "agents": ["@fullstack-dev"],
       "tags": ["treasury", "create", "encoding", "cli"],
       "created_at": "2026-03-06",
-      "updated_at": "2026-03-07",
+      "updated_at": "2026-03-08",
       "done_at": null,
-      "notes": "CLI implementation complete. E2E test script created. Awaiting E2E validation."
+      "notes": "CLI implementation complete. OAuth2 API format issues identified. Fix ready: codeId as number, msg as base64."
     },
     {
       "id": "treasury-automation",
