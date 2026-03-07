@@ -1024,7 +1024,9 @@ fn encode_grant_config_input(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::credentials::CredentialsManager;
     use crate::config::NetworkConfig;
+    use tempfile::TempDir;
 
     fn create_test_config() -> NetworkConfig {
         NetworkConfig {
@@ -1039,38 +1041,50 @@ mod tests {
         }
     }
 
+    /// Create an isolated test environment with temp directory for credentials
+    fn create_isolated_client() -> (TempDir, OAuthClient) {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let config = create_test_config();
+        let creds_manager =
+            CredentialsManager::with_config_dir(&config.network_name, temp_dir.path().to_path_buf())
+                .expect("Failed to create credentials manager");
+        let client =
+            OAuthClient::with_credentials_manager(config.clone(), creds_manager).expect("Failed to create client");
+        (temp_dir, client)
+    }
+
     #[test]
     fn test_manager_creation() {
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.clone());
+        let manager = TreasuryManager::new(oauth_client, config);
         assert!(manager.cache.is_some());
     }
 
     #[test]
     fn test_manager_without_cache() {
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::without_cache(oauth_client, config.clone());
+        let manager = TreasuryManager::without_cache(oauth_client, config);
         assert!(manager.cache.is_none());
     }
 
     #[test]
     fn test_is_authenticated_without_credentials() {
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.clone());
+        let manager = TreasuryManager::new(oauth_client, config);
 
-        // Should not be authenticated initially
+        // Should not be authenticated initially (isolated dir has no credentials)
         let is_auth = manager.is_authenticated().unwrap();
         assert!(!is_auth);
     }
 
     #[tokio::test]
     async fn test_clear_cache() {
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.clone());
+        let manager = TreasuryManager::new(oauth_client, config);
 
         // Should not panic when clearing cache
         manager.clear_cache().await;
@@ -1080,9 +1094,9 @@ mod tests {
     async fn test_create_requires_auth() {
         use crate::treasury::types::{FeeConfigInput, TreasuryCreateRequest, TreasuryParamsInput};
 
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.clone());
+        let manager = TreasuryManager::new(oauth_client, config);
 
         let request = TreasuryCreateRequest {
             params: TreasuryParamsInput {
@@ -1108,9 +1122,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_fund_requires_auth() {
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.clone());
+        let manager = TreasuryManager::new(oauth_client, config);
 
         let result = manager.fund("xion1abc", "1000uxion").await;
         assert!(result.is_err());
@@ -1122,9 +1136,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_withdraw_requires_auth() {
+        let (_temp_dir, oauth_client) = create_isolated_client();
         let config = create_test_config();
-        let oauth_client = OAuthClient::new(config.clone()).unwrap();
-        let manager = TreasuryManager::new(oauth_client, config.clone());
+        let manager = TreasuryManager::new(oauth_client, config);
 
         let result = manager.withdraw("xion1abc", "1000uxion").await;
         assert!(result.is_err());

@@ -197,14 +197,23 @@ All configuration files are stored in a unified location for easy access across 
 ```
 ~/.xion-toolkit/
 ├── config.json              # Main configuration (network preference)
-└── credentials/             # Per-network credential metadata
-    ├── testnet.json         # Testnet credentials metadata
-    └── mainnet.json         # Mainnet credentials metadata
+├── oauth_endpoints.json     # OAuth2 endpoint cache (24h TTL)
+└── credentials/             # Encrypted credentials (AES-256-GCM)
+    ├── testnet.enc          # Testnet credentials (encrypted)
+    └── mainnet.enc          # Mainnet credentials (encrypted)
 ```
 
-**Note**: Sensitive tokens (access_token, refresh_token) are stored securely in the OS keyring, not in plain text files. The `credentials/*.json` files only contain non-sensitive metadata (expiration time, address).
+**Note**: Sensitive tokens (access_token, refresh_token) are stored in encrypted `.enc` files using AES-256-GCM encryption. The encryption key is derived from the machine ID. **Never delete these `.enc` files during testing** - they contain long-lived refresh tokens (30-day expiration).
 
 **Platform Support**: The toolkit uses the unified `~/.xion-toolkit/` directory on all platforms (macOS, Linux, Windows) for consistency and ease of access.
+
+### ⚠️ IMPORTANT: Do Not Delete Credentials
+
+During testing and development:
+- **NEVER delete `~/.xion-toolkit/credentials/*.enc` files** unless explicitly requested by the user
+- **NEVER run `auth logout`** unless explicitly requested by the user
+- Refresh tokens have 30-day expiration - losing them requires re-login via browser
+- If access token expires, the system will automatically refresh it using the stored refresh token
 
 ### Configuration Schema
 
@@ -226,16 +235,25 @@ Network configurations are embedded at compile time via environment variables:
 | testnet | <https://oauth2.testnet.burnt.com> | <https://rpc.xion-testnet-2.burnt.com:443> | xion-testnet-2 | 1260 |
 | mainnet | <https://oauth2.burnt.com> | <https://rpc.xion-mainnet-1.burnt.com:443> | xion-mainnet-1 | 63 |
 
-#### Credentials Metadata (`~/.xion-toolkit/credentials/{network}.json`)
+#### Credentials Metadata (`~/.xion-toolkit/credentials/{network}.enc`)
+
+Credentials are stored in encrypted files with the following structure:
 
 ```json
 {
+  "access_token": "xion1...:grantId:secret",
+  "refresh_token": "xion1...:grantId:refreshSecret",
   "expires_at": "2024-01-01T00:00:00Z",
+  "refresh_token_expires_at": "2024-02-01T00:00:00Z",
   "xion_address": "xion1..."
 }
 ```
 
-**Note**: Access tokens and refresh tokens are stored securely in the OS keyring, not in files.
+**Encryption**: Credentials are encrypted with AES-256-GCM. The encryption key is derived from:
+1. `XION_CI_ENCRYPTION_KEY` environment variable (for CI/CD only)
+2. Machine ID via `machine-uid` crate (for local development, default)
+
+**Security**: Never delete `.enc` files or run `auth logout` during testing unless explicitly requested.
 
 ## Network Configuration
 
@@ -467,9 +485,11 @@ cargo test
 ## Security Standards
 
 1. **Token Storage**
-   - Use OS-native keyring for encrypted storage
+   - Credentials are encrypted with AES-256-GCM and stored in `~/.xion-toolkit/credentials/*.enc`
+   - Encryption key derived from machine ID (or `XION_CI_ENCRYPTION_KEY` for CI/CD)
    - Never store tokens in plain text
    - Separate storage for different networks
+   - **CRITICAL**: Never delete `.enc` files during testing - refresh tokens have 30-day expiration
 
 2. **PKCE Implementation**
    - Use cryptographically secure random number generator
@@ -486,6 +506,43 @@ cargo test
    - Validate state parameter
    - Implement timeout mechanism
    - Use random port if default is occupied
+
+5. **Testing with Credentials**
+   - Never run `auth logout` during automated testing
+   - Never delete `~/.xion-toolkit/credentials/*.enc` files
+   - If access token expires, system auto-refreshes using stored refresh token
+   - Only clear credentials when explicitly requested by user
+
+## Documentation Standards
+
+1. **Token Storage**
+   - Credentials are encrypted with AES-256-GCM and stored in `~/.xion-toolkit/credentials/*.enc`
+   - Encryption key derived from machine ID (or `XION_CI_ENCRYPTION_KEY` for CI/CD)
+   - Never store tokens in plain text
+   - Separate storage for different networks
+   - **CRITICAL**: Never delete `.enc` files during testing - refresh tokens have 30-day expiration
+
+2. **PKCE Implementation**
+   - Use cryptographically secure random number generator
+   - Verifier length at least 43 characters
+   - Use SHA-256 for challenge generation
+
+3. **API Communication**
+   - Enforce HTTPS for all external communications
+   - Validate server certificates
+   - Implement request timeout
+
+4. **Callback Server**
+   - Only bind to localhost
+   - Validate state parameter
+   - Implement timeout mechanism
+   - Use random port if default is occupied
+
+5. **Testing with Credentials**
+   - Never run `auth logout` during automated testing
+   - Never delete `~/.xion-toolkit/credentials/*.enc` files
+   - If access token expires, system auto-refreshes using stored refresh token
+   - Only clear credentials when explicitly requested by user
 
 ## Documentation Standards
 

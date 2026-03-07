@@ -3,6 +3,20 @@
   "updated_at": "2026-03-07",
   "plans": [
     {
+      "id": "e2e-testing",
+      "title": "E2E Testing Plan",
+      "file": "plans/e2e-testing.md",
+      "status": "InProgress",
+      "progress": 20,
+      "owner": "@project-manager",
+      "agents": ["@qa-engineer"],
+      "tags": ["testing", "e2e", "treasury", "oauth2"],
+      "created_at": "2026-03-07",
+      "updated_at": "2026-03-07",
+      "done_at": null,
+      "notes": "E2E test plan and script created. Requires manual login to testnet."
+    },
+    {
       "id": "treasury-grant-fee-config",
       "title": "Treasury Grant Config & Fee Config Implementation",
       "file": "plans/treasury-grant-fee-config.md",
@@ -21,14 +35,14 @@
       "title": "Treasury Create Command Enhancement",
       "file": "plans/treasury-create-enhancement.md",
       "status": "InProgress",
-      "progress": 95,
+      "progress": 97,
       "owner": "@project-manager",
       "agents": ["@fullstack-dev"],
       "tags": ["treasury", "create", "encoding", "cli"],
       "created_at": "2026-03-06",
       "updated_at": "2026-03-07",
       "done_at": null,
-      "notes": "CLI implementation complete. Grant-config enhanced with presets and security rules (MsgExecuteContract requires contract-execution auth). E2E testing in progress."
+      "notes": "CLI implementation complete. E2E test script created. Awaiting E2E validation."
     },
     {
       "id": "treasury-automation",
@@ -53,7 +67,7 @@
       "created_at": "2025-03-05",
       "updated_at": "2026-03-07",
       "done_at": null,
-      "notes": "OAuth2 fully functional. All treasury commands implemented (list/query/create/fund/withdraw). Skills scripts updated. All 330 tests passing with 0 warnings. Blocked: treasury create E2E test needs OAuth2 API MsgInstantiateContract2 support."
+      "notes": "All 330+ tests passing. E2E test infrastructure ready. Awaiting manual E2E validation on testnet."
     },
     {
       "id": "oauth2-client-architecture",

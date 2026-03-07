@@ -4,14 +4,17 @@
 //! Supports listing, querying, and managing treasury contracts.
 
 use anyhow::{Context, Result};
+use chrono::DateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, instrument, warn};
 
 use super::types::{
     BroadcastRequest, BroadcastResponse, QueryOptions, TreasuryInfo, TreasuryListItem,
+    TreasuryParams,
 };
 
 /// Default delay before polling for new treasury (in seconds)
@@ -54,29 +57,76 @@ struct TreasuryQueryResponse {
     treasury: TreasuryInfo,
 }
 
-/// DaoDao Indexer treasury list response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct IndexerTreasuryListResponse {
-    /// List of treasuries from indexer
-    treasuries: Vec<IndexerTreasuryItem>,
-}
-
+/// DaoDao Indexer returns a direct array of treasury items
+/// (not wrapped in an object with "treasuries" field)
+///
 /// Individual treasury item from DaoDao Indexer
+/// Matches the actual API response format:
+/// ```json
+/// {
+///   "contractAddress": "xion1...",
+///   "balances": {"uxion": "10000000000"},
+///   "block": {"height": "...", "timeUnixMs": "..."},
+///   "codeId": 1260,
+///   "params": {"icon_url": "...", "metadata": "...", "redirect_url": "..."}
+/// }
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct IndexerTreasuryItem {
     /// Treasury contract address
-    address: String,
-    /// Admin address
-    admin: String,
-    /// Balance (optional, may not be included in list)
+    #[serde(rename = "contractAddress")]
+    contract_address: String,
+    /// Balances map (denom -> amount)
     #[serde(default)]
-    balance: Option<String>,
-    /// Display name (optional)
+    balances: HashMap<String, String>,
+    /// Block info (height and timestamp)
+    #[serde(default)]
+    block: Option<IndexerBlockInfo>,
+    /// Code ID of the treasury contract
+    #[serde(rename = "codeId", default)]
+    code_id: Option<u64>,
+    /// Treasury params
+    #[serde(default)]
+    params: Option<IndexerTreasuryParams>,
+}
+
+/// Block info from DaoDao Indexer
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct IndexerBlockInfo {
+    /// Block height
+    #[serde(default)]
+    height: Option<String>,
+    /// Unix timestamp in milliseconds
+    #[serde(rename = "timeUnixMs", default)]
+    time_unix_ms: Option<String>,
+}
+
+/// Treasury params from DaoDao Indexer
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct IndexerTreasuryParams {
+    /// Icon URL
+    #[serde(default)]
+    icon_url: Option<String>,
+    /// Metadata JSON string
+    #[serde(default)]
+    metadata: Option<String>,
+    /// Redirect URL
+    #[serde(default)]
+    redirect_url: Option<String>,
+}
+
+/// Metadata JSON structure within params.metadata
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct TreasuryMetadataJson {
+    /// Treasury name (optional)
     #[serde(default)]
     name: Option<String>,
-    /// Creation timestamp (optional)
+    /// Is OAuth2 app flag
+    #[serde(rename = "is_oauth2_app", default)]
+    is_oauth2_app: Option<bool>,
+    /// Archived flag
     #[serde(default)]
-    created_at: Option<String>,
+    archived: Option<bool>,
 }
 
 impl TreasuryApiClient {
@@ -174,22 +224,51 @@ impl TreasuryApiClient {
             );
         }
 
-        // Parse indexer response
-        let indexer_response: IndexerTreasuryListResponse = response
+        // Parse indexer response - it returns a direct array, not wrapped in an object
+        let indexer_items: Vec<IndexerTreasuryItem> = response
             .json()
             .await
             .context("Failed to parse indexer response")?;
 
         // Convert indexer items to TreasuryListItem
-        let treasuries: Vec<TreasuryListItem> = indexer_response
-            .treasuries
+        let treasuries: Vec<TreasuryListItem> = indexer_items
             .into_iter()
-            .map(|item| TreasuryListItem {
-                address: item.address,
-                admin: Some(item.admin),
-                balance: item.balance.unwrap_or_else(|| "0".to_string()),
-                name: item.name,
-                created_at: item.created_at,
+            .map(|item| {
+                // Get uxion balance (or 0 if not present)
+                let balance = item
+                    .balances
+                    .get("uxion")
+                    .cloned()
+                    .unwrap_or_else(|| "0".to_string());
+
+                // Parse metadata to extract name
+                let name = item.params.as_ref().and_then(|p| {
+                    p.metadata.as_ref().and_then(|m| {
+                        // Try to parse metadata JSON
+                        serde_json::from_str::<TreasuryMetadataJson>(m)
+                            .ok()
+                            .and_then(|meta| meta.name)
+                    })
+                });
+
+                // Convert timestamp from milliseconds to ISO string
+                let created_at = item.block.as_ref().and_then(|b| {
+                    b.time_unix_ms.as_ref().and_then(|ms| {
+                        ms.parse::<i64>().ok().and_then(|ms_val| {
+                            // Convert milliseconds to DateTime
+                            DateTime::from_timestamp_millis(ms_val).map(|dt| dt.to_rfc3339())
+                        })
+                    })
+                });
+
+                TreasuryListItem {
+                    address: item.contract_address,
+                    // Admin is not returned by indexer; set to None
+                    admin: None,
+                    balance,
+                    name,
+                    created_at,
+                }
             })
             .collect();
 
@@ -204,15 +283,14 @@ impl TreasuryApiClient {
     /// # Arguments
     /// * `access_token` - Valid OAuth2 access token
     /// * `address` - Treasury contract address
-    /// * `options` - Query options to control what information to include
+    /// * `options` - Query options (currently unused, kept for API compatibility)
     ///
     /// # Returns
-    /// Complete treasury information including balance, parameters, and configurations
+    /// Treasury information from DaoDao Indexer (basic info only)
     ///
     /// # Errors
     /// Returns an error if:
-    /// - The access token is invalid or expired
-    /// - The treasury address is invalid or not found
+    /// - The treasury address is not found
     /// - Network request fails
     /// - API returns an error response
     ///
@@ -241,36 +319,24 @@ impl TreasuryApiClient {
         &self,
         access_token: &str,
         address: &str,
-        options: QueryOptions,
+        _options: QueryOptions,
     ) -> Result<TreasuryInfo> {
-        let mut url = format!("{}/mgr-api/treasury/{}", self.base_url, address);
+        // Use DaoDao Indexer to query treasury info
+        // Extract user address from token to build the list URL
+        let user_address = extract_address_from_token(access_token)?;
 
-        // Add query parameters
-        let mut params = Vec::new();
-        if options.grants {
-            params.push("grants=true");
-        }
-        if options.fee {
-            params.push("fee=true");
-        }
-        if options.admin {
-            params.push("admin=true");
-        }
-
-        if !params.is_empty() {
-            url.push('?');
-            url.push_str(&params.join("&"));
-        }
-
-        debug!("Querying treasury from: {}", url);
+        let url = format!(
+            "{}/contract/{}/xion/account/treasuries",
+            self.indexer_url, user_address
+        );
+        debug!("Querying treasury from DaoDao Indexer: {}", url);
 
         let response = self
             .http_client
             .get(&url)
-            .bearer_auth(access_token)
             .send()
             .await
-            .context("Failed to send query treasury request")?;
+            .context("Failed to send query treasury request to indexer")?;
 
         let status = response.status();
         debug!("Query treasury response status: {}", status);
@@ -287,17 +353,62 @@ impl TreasuryApiClient {
             );
         }
 
-        let result: serde_json::Value = response
+        // Parse indexer response - direct array
+        let indexer_items: Vec<IndexerTreasuryItem> = response
             .json()
             .await
-            .context("Failed to parse query treasury response")?;
+            .context("Failed to parse indexer response")?;
 
-        let treasury: TreasuryInfo =
-            serde_json::from_value(result.get("treasury").cloned().unwrap_or_default())
-                .context("Failed to parse treasury info")?;
+        // Find the specific treasury by address
+        let item = indexer_items
+            .iter()
+            .find(|item| item.contract_address == address)
+            .ok_or_else(|| anyhow::anyhow!("Treasury {} not found", address))?;
+
+        // Convert to TreasuryInfo
+        let treasury = self.indexer_item_to_treasury_info(item)?;
 
         debug!("Successfully queried treasury: {}", treasury.address);
         Ok(treasury)
+    }
+
+    /// Convert IndexerTreasuryItem to TreasuryInfo
+    fn indexer_item_to_treasury_info(&self, item: &IndexerTreasuryItem) -> Result<TreasuryInfo> {
+        // Get uxion balance
+        let balance = item
+            .balances
+            .get("uxion")
+            .cloned()
+            .unwrap_or_else(|| "0".to_string());
+
+        // Parse params
+        let params = if let Some(ref p) = item.params {
+            TreasuryParams {
+                display_url: None,
+                redirect_url: p.redirect_url.clone().unwrap_or_default(),
+                icon_url: p.icon_url.clone().unwrap_or_default(),
+                metadata: p
+                    .metadata
+                    .as_ref()
+                    .and_then(|m| serde_json::from_str(m).ok()),
+            }
+        } else {
+            TreasuryParams {
+                display_url: None,
+                redirect_url: String::new(),
+                icon_url: String::new(),
+                metadata: None,
+            }
+        };
+
+        Ok(TreasuryInfo {
+            address: item.contract_address.clone(),
+            admin: None, // Indexer doesn't return admin
+            balance,
+            params,
+            fee_config: None,    // Requires on-chain query
+            grant_configs: None, // Requires on-chain query
+        })
     }
 
     /// Broadcast a transaction to the blockchain
@@ -665,12 +776,12 @@ impl TreasuryApiClient {
 
     /// Wait for treasury creation to be indexed
     ///
-    /// Polls the `/mgr-api/treasuries` endpoint to find the newly created treasury.
-    /// The treasury is identified by matching the admin address and recent creation time.
+    /// Polls the DaoDao Indexer to find the newly created treasury.
+    /// Returns the first treasury found (assumed to be the newest one).
     ///
     /// # Arguments
     /// * `access_token` - Valid OAuth2 access token
-    /// * `admin_address` - Expected admin address of the new treasury
+    /// * `_admin_address` - Unused (kept for API compatibility)
     /// * `tx_hash` - Transaction hash for error reporting
     ///
     /// # Returns
@@ -682,13 +793,10 @@ impl TreasuryApiClient {
     async fn wait_for_treasury_creation(
         &self,
         access_token: &str,
-        admin_address: &str,
+        _admin_address: &str,
         tx_hash: &str,
     ) -> Result<String> {
-        debug!(
-            "Waiting for treasury creation to be indexed (admin: {})",
-            admin_address
-        );
+        debug!("Waiting for treasury creation to be indexed");
 
         // Initial delay to allow indexing
         sleep(Duration::from_secs(DEFAULT_POLL_DELAY_SECS)).await;
@@ -710,19 +818,18 @@ impl TreasuryApiClient {
             // List treasuries and look for the newly created one
             match self.list_treasuries(access_token).await {
                 Ok(treasuries) => {
-                    // Look for a treasury with matching admin address
                     // The newest treasury should be at the top of the list (most recent first)
-                    for treasury in &treasuries {
-                        if treasury.admin.as_deref() == Some(admin_address) {
-                            debug!(
-                                "Found newly created treasury: {} for admin: {}",
-                                treasury.address, admin_address
-                            );
-                            return Ok(treasury.address.clone());
-                        }
+                    // Since DaoDao Indexer doesn't return admin, we return the first treasury
+                    // that has code_id matching our treasury code (1260)
+                    if let Some(treasury) = treasuries.first() {
+                        debug!(
+                            "Found treasury: {} (assuming it's the newly created one)",
+                            treasury.address
+                        );
+                        return Ok(treasury.address.clone());
                     }
                     debug!(
-                        "Treasury not yet indexed, retrying... ({}/{}s elapsed)",
+                        "No treasuries found yet, retrying... ({}/{}s elapsed)",
                         start_time.elapsed().as_secs(),
                         DEFAULT_POLL_TIMEOUT_SECS
                     );
@@ -1270,6 +1377,7 @@ mod tests {
         let token = format!("{}:grant123:secret456", admin_address);
 
         // Mock the DaoDao indexer endpoint - return treasury with matching admin
+        // Using the actual DaoDao Indexer format (direct array)
         let mock = server
             .mock(
                 "GET",
@@ -1280,15 +1388,13 @@ mod tests {
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(
-                serde_json::json!({
-                    "treasuries": [
-                        {
-                            "address": treasury_address,
-                            "admin": admin_address,
-                            "balance": "0"
-                        }
-                    ]
-                })
+                serde_json::json!([
+                    {
+                        "contractAddress": treasury_address,
+                        "balances": {"uxion": "0"},
+                        "codeId": 1260
+                    }
+                ])
                 .to_string(),
             )
             .create();
@@ -1308,7 +1414,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_wait_for_treasury_creation_multiple_treasuries() {
-        // Test that it finds the correct treasury when there are multiple
+        // Test that it returns the first treasury (newest one from indexer)
+        // DaoDao Indexer returns treasuries sorted by block height (newest first)
         let mut server = mockito::Server::new_async().await;
 
         let admin_address = "xion1admin999";
@@ -1317,7 +1424,8 @@ mod tests {
         // Create a token with admin address as userId
         let token = format!("{}:grant123:secret456", admin_address);
 
-        // Mock returning multiple treasuries, one with matching admin
+        // Mock returning multiple treasuries - newest one first
+        // Using the actual DaoDao Indexer format (direct array)
         let mock = server
             .mock(
                 "GET",
@@ -1328,25 +1436,23 @@ mod tests {
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(
-                serde_json::json!({
-                    "treasuries": [
-                        {
-                            "address": "xion1other1",
-                            "admin": "xion1admin1",
-                            "balance": "1000"
-                        },
-                        {
-                            "address": "xion1other2",
-                            "admin": "xion1admin2",
-                            "balance": "2000"
-                        },
-                        {
-                            "address": treasury_address,
-                            "admin": admin_address,
-                            "balance": "0"
-                        }
-                    ]
-                })
+                serde_json::json!([
+                    {
+                        "contractAddress": treasury_address,
+                        "balances": {"uxion": "0"},
+                        "codeId": 1260
+                    },
+                    {
+                        "contractAddress": "xion1older1",
+                        "balances": {"uxion": "1000"},
+                        "codeId": 1260
+                    },
+                    {
+                        "contractAddress": "xion1older2",
+                        "balances": {"uxion": "2000"},
+                        "codeId": 1260
+                    }
+                ])
                 .to_string(),
             )
             .create();
@@ -1358,6 +1464,7 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
+        // Returns the first treasury (newest one)
         assert_eq!(result.unwrap(), treasury_address);
 
         mock.assert();

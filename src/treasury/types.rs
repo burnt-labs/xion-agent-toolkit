@@ -82,6 +82,7 @@ pub struct GrantConfig {
 
 /// Query options for treasury details
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct QueryOptions {
     /// Include grant configurations
     pub grants: bool,

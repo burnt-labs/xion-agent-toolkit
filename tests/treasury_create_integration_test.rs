@@ -460,6 +460,7 @@ async fn test_create_treasury_api_success() {
         .create();
 
     // Mock the DaoDao indexer endpoint (for waiting for indexing)
+    // Using the actual DaoDao Indexer format (direct array)
     let _mock_list = server
         .mock(
             "GET",
@@ -471,14 +472,14 @@ async fn test_create_treasury_api_success() {
         .with_status(200)
         .with_header("content-type", "application/json")
         .with_body(
-            json!({
-                "treasuries": [{
-                    "address": treasury_address,
-                    "admin": admin_address,
-                    "balance": "0",
-                    "name": "Test Treasury"
-                }]
-            })
+            json!([{
+                "contractAddress": treasury_address,
+                "balances": {"uxion": "0"},
+                "codeId": 1260,
+                "params": {
+                    "metadata": "{\"name\":\"Test Treasury\"}"
+                }
+            }])
             .to_string(),
         )
         .create();
@@ -737,6 +738,7 @@ async fn test_full_create_flow_with_mocks() {
         .create();
 
     // Mock DaoDao indexer for wait_for_treasury_creation
+    // Using the actual DaoDao Indexer format (direct array)
     let _mock_list = server
         .mock(
             "GET",
@@ -748,14 +750,14 @@ async fn test_full_create_flow_with_mocks() {
         .with_status(200)
         .with_header("content-type", "application/json")
         .with_body(
-            json!({
-                "treasuries": [{
-                    "address": treasury_address,
-                    "admin": admin_address,
-                    "balance": "0",
-                    "name": "Full Flow Treasury"
-                }]
-            })
+            json!([{
+                "contractAddress": treasury_address,
+                "balances": {"uxion": "0"},
+                "codeId": 1260,
+                "params": {
+                    "metadata": "{\"name\":\"Full Flow Treasury\"}"
+                }
+            }])
             .to_string(),
         )
         .create();

@@ -119,6 +119,37 @@ impl OAuthClient {
         })
     }
 
+    /// Create a new OAuth2 client with a custom credentials manager (for testing).
+    ///
+    /// This allows tests to use isolated credential storage without affecting real credentials.
+    #[cfg(test)]
+    pub fn with_credentials_manager(
+        network_config: NetworkConfig,
+        credentials_manager: CredentialsManager,
+    ) -> Result<Self> {
+        debug!(
+            "Creating OAuth2 client for network: {}",
+            network_config.chain_id
+        );
+
+        // Create OAuth2 API client
+        let api_client = OAuth2ApiClient::new(network_config.oauth_api_url.clone());
+
+        // Create token manager with the provided credentials manager
+        let token_manager = TokenManager::new(
+            credentials_manager.clone(),
+            api_client.clone(),
+            network_config.oauth_client_id.clone(),
+        );
+
+        Ok(Self {
+            network_config,
+            api_client,
+            token_manager,
+            credentials_manager,
+        })
+    }
+
     /// Execute full OAuth2 login flow
     ///
     /// This method orchestrates the complete OAuth2 authorization code flow with PKCE:
@@ -542,6 +573,7 @@ impl OAuthClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::TempDir;
 
     fn create_test_config() -> NetworkConfig {
         NetworkConfig {
@@ -556,11 +588,103 @@ mod tests {
         }
     }
 
+    /// Create isolated test environment with temp directory
+    fn create_isolated_test_env() -> (TempDir, String) {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let test_key =
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string();
+        (temp_dir, test_key)
+    }
+
     #[test]
-    fn test_client_creation() {
+    fn test_is_authenticated_without_credentials() {
+        let (temp_dir, test_key) = create_isolated_test_env();
+        let original_key = std::env::var(crate::config::encryption::ENV_KEY_NAME).ok();
+        std::env::set_var(crate::config::encryption::ENV_KEY_NAME, &test_key);
+
         let config = create_test_config();
-        let client = OAuthClient::new(config);
-        assert!(client.is_ok());
+        // Use isolated credentials manager
+        let creds_manager = crate::config::CredentialsManager::with_config_dir(
+            "testnet",
+            temp_dir.path().to_path_buf(),
+        )
+        .expect("Failed to create credentials manager");
+        let client = OAuthClient::with_credentials_manager(config, creds_manager).unwrap();
+
+        // Should not be authenticated initially (no credentials in isolated dir)
+        let is_auth = client.is_authenticated().unwrap();
+        assert!(!is_auth);
+
+        // Restore env
+        if let Some(key) = original_key {
+            std::env::set_var(crate::config::encryption::ENV_KEY_NAME, key);
+        } else {
+            std::env::remove_var(crate::config::encryption::ENV_KEY_NAME);
+        }
+    }
+
+    #[test]
+    fn test_get_credentials_without_credentials() {
+        let (temp_dir, test_key) = create_isolated_test_env();
+        let original_key = std::env::var(crate::config::encryption::ENV_KEY_NAME).ok();
+        std::env::set_var(crate::config::encryption::ENV_KEY_NAME, &test_key);
+
+        let config = create_test_config();
+        // Use isolated credentials manager
+        let creds_manager = crate::config::CredentialsManager::with_config_dir(
+            "testnet",
+            temp_dir.path().to_path_buf(),
+        )
+        .expect("Failed to create credentials manager");
+        let client = OAuthClient::with_credentials_manager(config, creds_manager).unwrap();
+
+        // Should return None when no credentials (isolated dir)
+        let creds = client.get_credentials().unwrap();
+        assert!(creds.is_none());
+
+        // Restore env
+        if let Some(key) = original_key {
+            std::env::set_var(crate::config::encryption::ENV_KEY_NAME, key);
+        } else {
+            std::env::remove_var(crate::config::encryption::ENV_KEY_NAME);
+        }
+    }
+
+    #[test]
+    fn test_logout_without_credentials() {
+        let (temp_dir, test_key) = create_isolated_test_env();
+        let original_key = std::env::var(crate::config::encryption::ENV_KEY_NAME).ok();
+        std::env::set_var(crate::config::encryption::ENV_KEY_NAME, &test_key);
+
+        let config = create_test_config();
+        // Use isolated credentials manager
+        let creds_manager = crate::config::CredentialsManager::with_config_dir(
+            "testnet",
+            temp_dir.path().to_path_buf(),
+        )
+        .expect("Failed to create credentials manager");
+        let client = OAuthClient::with_credentials_manager(config, creds_manager).unwrap();
+
+        // Should succeed even without credentials (isolated dir - won't affect real credentials)
+        let result = client.logout();
+        assert!(result.is_ok());
+
+        // Restore env
+        if let Some(key) = original_key {
+            std::env::set_var(crate::config::encryption::ENV_KEY_NAME, key);
+        } else {
+            std::env::remove_var(crate::config::encryption::ENV_KEY_NAME);
+        }
+    }
+
+    #[test]
+    fn test_client_debug() {
+        let config = create_test_config();
+        let client = OAuthClient::new(config).unwrap();
+
+        // Should implement Debug
+        let debug_str = format!("{:?}", client);
+        assert!(debug_str.contains("OAuthClient"));
     }
 
     #[test]
@@ -595,45 +719,5 @@ mod tests {
 
         // Verify URL encoding
         assert!(auth_url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A54321%2Fcallback"));
-    }
-
-    #[test]
-    fn test_is_authenticated_without_credentials() {
-        let config = create_test_config();
-        let client = OAuthClient::new(config).unwrap();
-
-        // Should not be authenticated initially
-        let is_auth = client.is_authenticated().unwrap();
-        assert!(!is_auth);
-    }
-
-    #[test]
-    fn test_get_credentials_without_credentials() {
-        let config = create_test_config();
-        let client = OAuthClient::new(config).unwrap();
-
-        // Should return None when no credentials
-        let creds = client.get_credentials().unwrap();
-        assert!(creds.is_none());
-    }
-
-    #[test]
-    fn test_logout_without_credentials() {
-        let config = create_test_config();
-        let client = OAuthClient::new(config).unwrap();
-
-        // Should succeed even without credentials
-        let result = client.logout();
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_client_debug() {
-        let config = create_test_config();
-        let client = OAuthClient::new(config).unwrap();
-
-        // Should implement Debug
-        let debug_str = format!("{:?}", client);
-        assert!(debug_str.contains("OAuthClient"));
     }
 }
