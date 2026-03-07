@@ -401,15 +401,19 @@ Manages Authz Grants for a Treasury contract.
 **Authorization Types:**
 
 1. **Generic Authorization:**
-```json
-{
-  "type_url": "/cosmwasm.wasm.v1.MsgExecuteContract",
-  "description": "Generic contract execution",
-  "authorization": {
-    "auth_type": "generic"
-  }
-}
-```
+   
+   Note: Generic authorization is NOT allowed for `MsgExecuteContract` for security reasons.
+   Use `contract_execution` authorization instead.
+   
+   ```json
+   {
+     "type_url": "/cosmos.staking.v1beta1.MsgDelegate",
+     "description": "Allow delegation",
+     "authorization": {
+       "auth_type": "generic"
+     }
+   }
+   ```
 
 2. **Send Authorization:**
 ```json

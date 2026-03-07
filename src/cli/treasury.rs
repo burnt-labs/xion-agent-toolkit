@@ -8,6 +8,7 @@ use crate::treasury::types::{
     TreasuryParamsInput,
 };
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 pub enum TreasuryCommands {
     /// List all treasury contracts for the authenticated user
@@ -48,6 +49,7 @@ pub enum TreasuryCommands {
 }
 
 /// Grant configuration subcommands
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 pub enum GrantConfigCommands {
     /// Add a grant configuration
@@ -55,9 +57,53 @@ pub enum GrantConfigCommands {
         /// Treasury contract address
         address: String,
 
-        /// Path to JSON config file
+        /// Path to JSON config file (alternative to flags)
         #[arg(short, long)]
-        config: PathBuf,
+        config: Option<PathBuf>,
+
+        /// Message type URL (e.g., /cosmos.bank.v1beta1.MsgSend)
+        #[arg(long, value_name = "URL")]
+        type_url: Option<String>,
+
+        /// Authorization type: generic, send, contract-execution, stake, ibc-transfer
+        #[arg(long, value_name = "TYPE")]
+        auth_type: Option<String>,
+
+        /// Grant description
+        #[arg(long, value_name = "TEXT")]
+        description: Option<String>,
+
+        /// Spend limit for send authorization (e.g., "1000000uxion")
+        #[arg(long, value_name = "AMOUNT")]
+        spend_limit: Option<String>,
+
+        /// Allowed recipients for send authorization (comma-separated)
+        #[arg(long, value_name = "ADDRS")]
+        allow_list: Option<String>,
+
+        /// Contract address for contract-execution (can be repeated)
+        #[arg(long = "contract", value_name = "ADDRESS")]
+        contracts: Vec<String>,
+
+        /// Max calls for contract-execution (can be repeated)
+        #[arg(long = "max-calls", value_name = "NUM")]
+        max_calls: Vec<u64>,
+
+        /// Max funds for contract-execution (can be repeated)
+        #[arg(long = "max-funds", value_name = "AMOUNT")]
+        max_funds: Vec<String>,
+
+        /// Filter type for contract-execution: allow-all, accepted-keys
+        #[arg(long, value_name = "TYPE", default_value = "allow-all")]
+        filter_type: String,
+
+        /// Accepted message keys for accepted-keys filter (comma-separated)
+        #[arg(long, value_name = "KEYS")]
+        keys: Option<String>,
+
+        /// Preset shortcut: send, execute, instantiate, delegate, vote
+        #[arg(long, value_name = "TYPE")]
+        preset: Option<String>,
     },
 
     /// Remove a grant configuration
@@ -635,8 +681,37 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
 
 async fn handle_grant_config(cmd: GrantConfigCommands) -> Result<()> {
     match cmd {
-        GrantConfigCommands::Add { address, config } => {
-            handle_grant_config_add(&address, &config).await
+        GrantConfigCommands::Add {
+            address,
+            config,
+            type_url,
+            auth_type,
+            description,
+            spend_limit,
+            allow_list,
+            contracts,
+            max_calls,
+            max_funds,
+            filter_type,
+            keys,
+            preset,
+        } => {
+            handle_grant_config_add(
+                &address,
+                config.as_ref(),
+                type_url.as_deref(),
+                auth_type.as_deref(),
+                description.as_deref(),
+                spend_limit.as_deref(),
+                allow_list.as_deref(),
+                &contracts,
+                &max_calls,
+                &max_funds,
+                &filter_type,
+                keys.as_deref(),
+                preset.as_deref(),
+            )
+            .await
         }
         GrantConfigCommands::Remove { address, type_url } => {
             handle_grant_config_remove(&address, &type_url).await
@@ -645,7 +720,22 @@ async fn handle_grant_config(cmd: GrantConfigCommands) -> Result<()> {
     }
 }
 
-async fn handle_grant_config_add(address: &str, config_path: &PathBuf) -> Result<()> {
+#[allow(clippy::too_many_arguments)]
+async fn handle_grant_config_add(
+    address: &str,
+    config_path: Option<&PathBuf>,
+    type_url: Option<&str>,
+    auth_type: Option<&str>,
+    description: Option<&str>,
+    spend_limit: Option<&str>,
+    allow_list: Option<&str>,
+    contracts: &[String],
+    max_calls: &[u64],
+    max_funds: &[String],
+    filter_type: &str,
+    keys: Option<&str>,
+    preset: Option<&str>,
+) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
@@ -653,11 +743,29 @@ async fn handle_grant_config_add(address: &str, config_path: &PathBuf) -> Result
 
     print_info(&format!("Adding grant config to treasury {}...", address));
 
-    // Load config from file
-    let content = fs::read_to_string(config_path)
-        .map_err(|e| anyhow::anyhow!("Failed to read config file: {}", e))?;
-    let grant_config: crate::treasury::types::GrantConfigInput = serde_json::from_str(&content)
-        .map_err(|e| anyhow::anyhow!("Invalid config file format: {}", e))?;
+    // Load config from file or build from flags
+    let grant_config = if let Some(path) = config_path {
+        // Load from config file
+        let content = fs::read_to_string(path)
+            .map_err(|e| anyhow::anyhow!("Failed to read config file: {}", e))?;
+        serde_json::from_str(&content)
+            .map_err(|e| anyhow::anyhow!("Invalid config file format: {}", e))?
+    } else {
+        // Build from flags
+        build_grant_config_from_flags(
+            type_url,
+            auth_type,
+            description,
+            spend_limit,
+            allow_list,
+            contracts,
+            max_calls,
+            max_funds,
+            filter_type,
+            keys,
+            preset,
+        )?
+    };
 
     // Create manager
     let config_manager = ConfigManager::new()?;
@@ -682,6 +790,7 @@ async fn handle_grant_config_add(address: &str, config_path: &PathBuf) -> Result
                 "success": true,
                 "treasury_address": result.treasury_address,
                 "operation": result.operation,
+                "type_url": result.type_url,
                 "tx_hash": result.tx_hash
             });
             print_json(&response)
@@ -695,6 +804,169 @@ async fn handle_grant_config_add(address: &str, config_path: &PathBuf) -> Result
             print_json(&result)
         }
     }
+}
+
+/// Message type presets for convenience
+/// Note: MsgExecuteContract only supports contract-execution authorization (generic is too risky)
+const PRESET_TYPES: &[(&str, &str, &str)] = &[
+    ("send", "/cosmos.bank.v1beta1.MsgSend", "send"),
+    (
+        "execute",
+        "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "contract-execution",
+    ),
+    (
+        "instantiate",
+        "/cosmwasm.wasm.v1.MsgInstantiateContract",
+        "generic",
+    ),
+    (
+        "instantiate2",
+        "/cosmwasm.wasm.v1.MsgInstantiateContract2",
+        "generic",
+    ),
+    ("delegate", "/cosmos.staking.v1beta1.MsgDelegate", "generic"),
+    (
+        "undelegate",
+        "/cosmos.staking.v1beta1.MsgUndelegate",
+        "generic",
+    ),
+    (
+        "redelegate",
+        "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+        "generic",
+    ),
+    (
+        "withdraw-rewards",
+        "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+        "generic",
+    ),
+    ("vote", "/cosmos.gov.v1beta1.MsgVote", "generic"),
+    (
+        "ibc-transfer",
+        "/ibc.applications.transfer.v1.MsgTransfer",
+        "ibc_transfer",
+    ),
+];
+
+/// Build GrantConfigInput from CLI flags
+#[allow(clippy::too_many_arguments)]
+fn build_grant_config_from_flags(
+    type_url: Option<&str>,
+    auth_type: Option<&str>,
+    description: Option<&str>,
+    spend_limit: Option<&str>,
+    allow_list: Option<&str>,
+    contracts: &[String],
+    max_calls: &[u64],
+    max_funds: &[String],
+    filter_type: &str,
+    keys: Option<&str>,
+    preset: Option<&str>,
+) -> Result<crate::treasury::types::GrantConfigInput> {
+    use crate::treasury::types::{AuthorizationInput, ContractGrantInput, GrantConfigInput};
+
+    // Resolve preset if provided
+    let (resolved_type_url, resolved_auth_type) = if let Some(preset_name) = preset {
+        let found = PRESET_TYPES
+            .iter()
+            .find(|(name, _, _)| *name == preset_name)
+            .ok_or_else(|| anyhow::anyhow!("Unknown preset: {}. Available: send, execute, instantiate, instantiate2, delegate, undelegate, redelegate, withdraw-rewards, vote, ibc-transfer", preset_name))?;
+        (Some(found.1.to_string()), Some(found.2.to_string()))
+    } else {
+        (
+            type_url.map(|s| s.to_string()),
+            auth_type.map(|s| s.to_string()),
+        )
+    };
+
+    // Validate required fields
+    let type_url =
+        resolved_type_url.ok_or_else(|| anyhow::anyhow!("--type-url or --preset is required"))?;
+    let description = description
+        .ok_or_else(|| anyhow::anyhow!("--description is required"))?
+        .to_string();
+
+    // Determine auth type (default to generic if not specified)
+    let auth_type_str = resolved_auth_type.unwrap_or_else(|| "generic".to_string());
+
+    // Security check: MsgExecuteContract must use contract-execution authorization
+    // Generic authorization is too risky as it allows unlimited contract execution
+    if type_url.contains("MsgExecuteContract") && auth_type_str == "generic" {
+        anyhow::bail!(
+            "MsgExecuteContract requires --auth-type contract-execution for security. \
+             Generic authorization is not allowed as it permits unlimited contract execution. \
+             Use --contract, --max-calls/--max-funds, and --filter-type to configure limits."
+        );
+    }
+
+    // Build authorization based on type
+    let authorization = match auth_type_str.as_str() {
+        "generic" => AuthorizationInput::Generic,
+        "send" => {
+            let spend = spend_limit
+                .ok_or_else(|| anyhow::anyhow!("--spend-limit is required for send authorization"))?
+                .to_string();
+            let allow = allow_list.map(|s| s.split(',').map(|s| s.trim().to_string()).collect());
+            AuthorizationInput::Send {
+                spend_limit: spend,
+                allow_list: allow,
+            }
+        }
+        "contract-execution" => {
+            if contracts.is_empty() {
+                anyhow::bail!("--contract is required for contract-execution authorization");
+            }
+
+            let mut grants = Vec::new();
+            for (i, contract) in contracts.iter().enumerate() {
+                let max_call = max_calls.get(i).copied();
+                let max_fund = max_funds.get(i).map(|s| s.to_string());
+
+                if max_call.is_none() && max_fund.is_none() {
+                    anyhow::bail!(
+                        "At least one of --max-calls or --max-funds is required for each contract"
+                    );
+                }
+
+                let filter = if filter_type == "accepted-keys" {
+                    let keys_str = keys.ok_or_else(|| {
+                        anyhow::anyhow!("--keys is required when --filter-type=accepted-keys")
+                    })?;
+                    Some(keys_str.split(',').map(|s| s.trim().to_string()).collect())
+                } else {
+                    None
+                };
+
+                grants.push(ContractGrantInput {
+                    address: contract.clone(),
+                    max_calls: max_call,
+                    max_funds: max_fund,
+                    filter_type: filter_type.to_string(),
+                    keys: filter,
+                });
+            }
+            AuthorizationInput::ContractExecution { grants }
+        }
+        "stake" => {
+            anyhow::bail!("Stake authorization requires --config file for complex configuration");
+        }
+        "ibc_transfer" => {
+            anyhow::bail!(
+                "IBC transfer authorization requires --config file for complex configuration"
+            );
+        }
+        _ => {
+            anyhow::bail!("Unknown auth-type: {}. Valid options: generic, send, contract-execution, stake, ibc_transfer", auth_type_str);
+        }
+    };
+
+    Ok(GrantConfigInput {
+        type_url,
+        description,
+        authorization,
+        optional: false,
+    })
 }
 
 async fn handle_grant_config_remove(address: &str, type_url: &str) -> Result<()> {
