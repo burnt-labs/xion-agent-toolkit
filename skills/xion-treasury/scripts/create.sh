@@ -9,20 +9,21 @@
 #   ./create.sh [OPTIONS]
 #
 # Options:
-#   --network NETWORK           Network: local, testnet, mainnet (default: testnet)
+#   --network NETWORK           Network: testnet, mainnet (default: testnet)
 #   --name NAME                 Treasury name (required if not using --config)
 #   --redirect-url URL          OAuth redirect URL
 #   --icon-url URL              Treasury icon URL
 #   --config FILE               JSON config file with all settings
 #
 # Fee Grant Options:
-#   --fee-allowance TYPE        Fee allowance: basic, periodic, allowed-msg
+#   --fee-allowance-type TYPE   Fee allowance: basic, periodic, allowed-msg
 #   --fee-spend-limit AMOUNT    Spend limit (e.g., "1000000uxion")
 #   --fee-description TEXT      Fee grant description
 #   --fee-period-seconds N      Period duration (for periodic allowance)
 #   --fee-period-spend-limit N  Period spend limit (for periodic allowance)
 #
 # Authz Grant Options:
+#   --grant-type-url URL        Message type URL (e.g., /cosmos.bank.v1beta1.MsgSend)
 #   --grant-auth-type TYPE      Authorization: generic, send, stake, ibc-transfer, contract-execution
 #   --grant-spend-limit AMOUNT  Spend limit (for send authorization)
 #   --grant-description TEXT    Grant description
@@ -69,11 +70,12 @@ NAME=""
 REDIRECT_URL=""
 ICON_URL=""
 CONFIG_FILE=""
-FEE_ALLOWANCE=""
+FEE_ALLOWANCE_TYPE=""
 FEE_SPEND_LIMIT=""
 FEE_DESCRIPTION=""
 FEE_PERIOD_SECONDS=""
 FEE_PERIOD_SPEND_LIMIT=""
+GRANT_TYPE_URL=""
 GRANT_AUTH_TYPE=""
 GRANT_SPEND_LIMIT=""
 GRANT_DESCRIPTION=""
@@ -100,8 +102,8 @@ while [[ $# -gt 0 ]]; do
             CONFIG_FILE="$2"
             shift 2
             ;;
-        --fee-allowance)
-            FEE_ALLOWANCE="$2"
+        --fee-allowance-type)
+            FEE_ALLOWANCE_TYPE="$2"
             shift 2
             ;;
         --fee-spend-limit)
@@ -118,6 +120,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --fee-period-spend-limit)
             FEE_PERIOD_SPEND_LIMIT="$2"
+            shift 2
+            ;;
+        --grant-type-url)
+            GRANT_TYPE_URL="$2"
             shift 2
             ;;
         --grant-auth-type)
@@ -193,8 +199,8 @@ else
     fi
     
     # Fee grant configuration
-    if [ -n "$FEE_ALLOWANCE" ]; then
-        CLI_ARGS="$CLI_ARGS --fee-allowance $FEE_ALLOWANCE"
+    if [ -n "$FEE_ALLOWANCE_TYPE" ]; then
+        CLI_ARGS="$CLI_ARGS --fee-allowance-type $FEE_ALLOWANCE_TYPE"
     fi
     if [ -n "$FEE_SPEND_LIMIT" ]; then
         CLI_ARGS="$CLI_ARGS --fee-spend-limit \"$FEE_SPEND_LIMIT\""
@@ -210,6 +216,9 @@ else
     fi
     
     # Authz grant configuration
+    if [ -n "$GRANT_TYPE_URL" ]; then
+        CLI_ARGS="$CLI_ARGS --grant-type-url \"$GRANT_TYPE_URL\""
+    fi
     if [ -n "$GRANT_AUTH_TYPE" ]; then
         CLI_ARGS="$CLI_ARGS --grant-auth-type $GRANT_AUTH_TYPE"
     fi
