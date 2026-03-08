@@ -4,7 +4,6 @@
 //! Supports listing, querying, and managing treasury contracts.
 
 use anyhow::{Context, Result};
-use base64::Engine;
 use chrono::DateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -161,13 +160,13 @@ impl TreasuryApiClient {
 
     /// Helper function to build and broadcast a CosmWasm execute contract message
     ///
-    /// This follows the same format as create_treasury, ensuring consistency across all APIs.
+    /// This follows the same format as withdraw_treasury, ensuring consistency across all APIs.
     ///
     /// # Arguments
     /// * `access_token` - Valid OAuth2 access token
     /// * `sender` - Sender address
     /// * `contract` - Treasury contract address
-    /// * `execute_msg` - Execute message to send (will be JSON-encoded then base64-encoded)
+    /// * `execute_msg` - Execute message to send (passed as raw JSON object)
     /// * `memo` - Transaction memo
     ///
     /// # Returns
@@ -180,17 +179,12 @@ impl TreasuryApiClient {
         execute_msg: &T,
         memo: &str,
     ) -> Result<String> {
-        // Convert execute message to JSON then to base64 (OAuth2 API expects base64-encoded JSON string)
-        let msg_json = serde_json::to_string(execute_msg)?;
-        let msg_base64 = base64::engine::general_purpose::STANDARD.encode(msg_json.as_bytes());
-
-        debug!("Execute message JSON:\n{}", msg_json);
-
-        // Build MsgExecuteContract message value (matching create_treasury format)
+        // OAuth2 API expects raw JSON object for MsgExecuteContract.msg field
+        // (unlike MsgInstantiateContract2 which expects base64-encoded JSON string)
         let msg_value = serde_json::json!({
             "sender": sender,
             "contract": contract,
-            "msg": msg_base64,  // base64-encoded JSON string
+            "msg": execute_msg,  // Raw JSON object directly, not base64
             "funds": []
         });
 

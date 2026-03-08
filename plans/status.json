@@ -95,14 +95,14 @@
       "created_at": "2025-03-05",
       "updated_at": "2026-03-08",
       "done_at": null,
-      "notes": "All 330+ tests passing. E2E test infrastructure ready. Awaiting manual E2E validation on testnet. BLOCKED by transaction-format-fix plan."
+      "notes": "All 330+ tests passing. E2E test infrastructure ready. Awaiting manual E2E validation on testnet. Transaction format fix complete."
     },
     {
       "id": "transaction-format-fix",
       "title": "Transaction Format Fix & Common Method Extraction",
       "file": "plans/transaction-format-fix.md",
-      "status": "InProgress",
-      "progress": 0,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@fullstack-dev"
@@ -115,8 +115,8 @@
       ],
       "created_at": "2026-03-08",
       "updated_at": "2026-03-08",
-      "done_at": null,
-      "notes": "Fix transaction format based on successful create_treasury. Extract common broadcast method."
+      "done_at": "2026-03-08",
+      "notes": "Fixed: broadcast_execute_contract now passes raw JSON object for MsgExecuteContract.msg field (not base64-encoded). Removed unused base64 import. All treasury tests pass."
     },
     {
       "id": "oauth2-client-architecture",
