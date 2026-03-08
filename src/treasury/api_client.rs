@@ -4,6 +4,7 @@
 //! Supports listing, querying, and managing treasury contracts.
 
 use anyhow::{Context, Result};
+use base64::Engine;
 use chrono::DateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -156,6 +157,56 @@ impl TreasuryApiClient {
             indexer_url,
             http_client,
         }
+    }
+
+    /// Helper function to build and broadcast a CosmWasm execute contract message
+    ///
+    /// This follows the same format as create_treasury, ensuring consistency across all APIs.
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `sender` - Sender address
+    /// * `contract` - Treasury contract address
+    /// * `execute_msg` - Execute message to send (will be JSON-encoded then base64-encoded)
+    /// * `memo` - Transaction memo
+    ///
+    /// # Returns
+    /// Transaction hash on success
+    async fn broadcast_execute_contract<T: Serialize>(
+        &self,
+        access_token: &str,
+        sender: &str,
+        contract: &str,
+        execute_msg: &T,
+        memo: &str,
+    ) -> Result<String> {
+        // Convert execute message to JSON then to base64 (OAuth2 API expects base64-encoded JSON string)
+        let msg_json = serde_json::to_string(execute_msg)?;
+        let msg_base64 = base64::engine::general_purpose::STANDARD.encode(msg_json.as_bytes());
+
+        debug!("Execute message JSON:\n{}", msg_json);
+
+        // Build MsgExecuteContract message value (matching create_treasury format)
+        let msg_value = serde_json::json!({
+            "sender": sender,
+            "contract": contract,
+            "msg": msg_base64,  // base64-encoded JSON string
+            "funds": []
+        });
+
+        let broadcast_request = BroadcastRequest {
+            messages: vec![super::types::TransactionMessage {
+                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
+                value: msg_value,
+            }],
+            memo: Some(memo.to_string()),
+        };
+
+        let response = self
+            .broadcast_transaction(access_token, broadcast_request)
+            .await?;
+
+        Ok(response.tx_hash)
     }
 
     /// List all treasuries for authenticated user
@@ -1043,36 +1094,22 @@ impl TreasuryApiClient {
             grant_config: grant_config_chain,
         };
 
-        // Debug: print the JSON message being sent
-        let msg_json = serde_json::to_string_pretty(&exec_msg)?;
-        eprintln!("[DEBUG] Execute message JSON:\n{}", msg_json);
-        debug!("Execute message JSON:\n{}", msg_json);
-
-        let request = BroadcastRequest {
-            messages: vec![super::types::TransactionMessage {
-                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
-                value: serde_json::json!({
-                    "sender": from_address,
-                    "contract": treasury_address,
-                    "msg": serde_json::to_value(&exec_msg)?, // JSON object directly, not base64
-                    "funds": []
-                }),
-            }],
-            memo: Some(format!("Update grant config for {}", type_url)),
-        };
-
-        eprintln!(
-            "[DEBUG] Full request to OAuth2 API:\n{}",
-            serde_json::to_string_pretty(&request)?
-        );
-
-        let response = self.broadcast_transaction(access_token, request).await?;
+        // Broadcast using helper function (follows create_treasury format)
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                &format!("Update grant config for {}", type_url),
+            )
+            .await?;
 
         Ok(super::types::GrantConfigResult {
             treasury_address: treasury_address.to_string(),
             type_url: type_url.to_string(),
             operation: "update".to_string(),
-            tx_hash: response.tx_hash,
+            tx_hash,
         })
     }
 
@@ -1095,25 +1132,22 @@ impl TreasuryApiClient {
             msg_type_url: type_url.to_string(),
         };
 
-        let request = BroadcastRequest {
-            messages: vec![super::types::TransactionMessage {
-                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
-                value: serde_json::json!({
-                    "sender": from_address,
-                    "contract": treasury_address,
-                    "msg": serde_json::to_value(&remove_msg)?, // JSON object directly, not base64
-                    "funds": []
-                }),
-            }],
-            memo: Some(format!("Remove grant config {}", type_url)),
-        };
-        let response = self.broadcast_transaction(access_token, request).await?;
+        // Broadcast using helper function (follows create_treasury format)
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &remove_msg,
+                &format!("Remove grant config {}", type_url),
+            )
+            .await?;
 
         Ok(super::types::GrantConfigResult {
             treasury_address: treasury_address.to_string(),
             type_url: type_url.to_string(),
             operation: "remove".to_string(),
-            tx_hash: response.tx_hash,
+            tx_hash,
         })
     }
 
@@ -1200,24 +1234,21 @@ impl TreasuryApiClient {
             fee_config: fee_config_chain,
         };
 
-        let request = BroadcastRequest {
-            messages: vec![super::types::TransactionMessage {
-                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
-                value: serde_json::json!({
-                    "sender": from_address,
-                    "contract": treasury_address,
-                    "msg": serde_json::to_value(&exec_msg)?, // JSON object directly, not base64
-                    "funds": []
-                }),
-            }],
-            memo: Some("Update fee config".to_string()),
-        };
-        let response = self.broadcast_transaction(access_token, request).await?;
+        // Broadcast using helper function (follows create_treasury format)
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                "Update fee config",
+            )
+            .await?;
 
         Ok(super::types::FeeConfigResult {
             treasury_address: treasury_address.to_string(),
             operation: "update".to_string(),
-            tx_hash: response.tx_hash,
+            tx_hash,
         })
     }
 
@@ -1240,24 +1271,21 @@ impl TreasuryApiClient {
             grantee: grantee.to_string(),
         };
 
-        let request = BroadcastRequest {
-            messages: vec![super::types::TransactionMessage {
-                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
-                value: serde_json::json!({
-                    "sender": from_address,
-                    "contract": treasury_address,
-                    "msg": serde_json::to_value(&exec_msg)?, // JSON object directly, not base64
-                    "funds": []
-                }),
-            }],
-            memo: Some("Remove fee config".to_string()),
-        };
-        let response = self.broadcast_transaction(access_token, request).await?;
+        // Broadcast using helper function (follows create_treasury format)
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                "Remove fee config",
+            )
+            .await?;
 
         Ok(super::types::FeeConfigResult {
             treasury_address: treasury_address.to_string(),
             operation: "remove".to_string(),
-            tx_hash: response.tx_hash,
+            tx_hash,
         })
     }
 
