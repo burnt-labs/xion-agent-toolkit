@@ -179,12 +179,20 @@ fn encode_string_field(field_number: u32, value: &str) -> Vec<u8> {
 }
 
 /// Encode a protobuf Coin message
+///
+/// Cosmos SDK Coin protobuf definition:
+/// ```protobuf
+/// message Coin {
+///   string denom = 1;
+///   string amount = 2;
+/// }
+/// ```
 fn encode_coin(coin: &Coin) -> Vec<u8> {
     let mut result = Vec::new();
-    // Field 1: amount (string)
-    result.extend(encode_string_field(1, &coin.amount));
-    // Field 2: denom (string)
-    result.extend(encode_string_field(2, &coin.denom));
+    // Field 1: denom (string)
+    result.extend(encode_string_field(1, &coin.denom));
+    // Field 2: amount (string)
+    result.extend(encode_string_field(2, &coin.amount));
     result
 }
 

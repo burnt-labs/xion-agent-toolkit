@@ -492,3 +492,58 @@ After fixes:
 **Status**: Ready for quick fix next session  
 **Estimated Time to Fix**: 5-10 minutes  
 **Confidence**: HIGH (exact issue identified with working reference)
+
+---
+
+## 2026-03-08 Update: Coin Protobuf Field Order Bug
+
+### Issue Discovered
+
+User reported: newly created Treasury shows `SpendLimit` as `uxion1000000` instead of `1000000uxion`.
+
+### Root Cause
+
+**Protobuf Coin message field order was wrong!**
+
+Cosmos SDK Coin protobuf definition:
+```protobuf
+message Coin {
+  string denom = 1;   // denom is field 1
+  string amount = 2;  // amount is field 2
+}
+```
+
+Our code (WRONG):
+```rust
+// Field 1: amount (string) ❌
+result.extend(encode_string_field(1, &coin.amount));
+// Field 2: denom (string) ❌
+result.extend(encode_string_field(2, &coin.denom));
+```
+
+### Fix Applied
+
+```rust
+// Field 1: denom (string) ✅
+result.extend(encode_string_field(1, &coin.denom));
+// Field 2: amount (string) ✅
+result.extend(encode_string_field(2, &coin.amount));
+```
+
+**File**: `src/treasury/encoding.rs:182-189`
+
+### Test Results
+
+- All 33 encoding tests pass ✅
+- All 115 library tests pass (except 1 unrelated flaky encryption test) ✅
+
+### Impact
+
+This fix affects all Coin encoding:
+- `encode_basic_allowance`
+- `encode_send_authorization`
+- `encode_stake_authorization`
+- `encode_ibc_transfer_authorization`
+- `encode_contract_execution_authorization` (max_funds)
+
+**Status**: FIXED ✅

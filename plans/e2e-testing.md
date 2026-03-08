@@ -136,15 +136,27 @@ Run the E2E test script after logging in:
 
 ## Test Checklist
 
-- [ ] Authentication status shows correct info
-- [ ] Configuration display works
-- [ ] Treasury list returns valid JSON
-- [ ] Treasury create works (requires testnet tokens)
-- [ ] Treasury query returns details
+- [x] Authentication status shows correct info
+- [x] Configuration display works
+- [x] Treasury list returns valid JSON
+- [x] Treasury create works (requires testnet tokens)
+- [x] Treasury query returns details
 - [ ] Grant config with presets works
-- [ ] Fee config works
+- [x] Fee config works (Basic + Periodic verified on chain)
 - [ ] Token refresh works
-- [ ] DaoDao Indexer returns correct format
+- [x] DaoDao Indexer returns correct format
+
+## Test Results (2026-03-08)
+
+### Fee Config Update ✅
+- **Basic Allowance**: Successfully set `5000000uxion` spend limit
+- **Periodic Allowance**: Successfully set daily `100000uxion` with basic `1000000uxion`
+- **Coin Encoding**: Verified correct protobuf field order (denom=1, amount=2)
+- **Chain Verification**: Direct query from chain confirms data integrity
+
+### Transaction Hashes
+- Basic: `A866A6D2394A0DC1923BCD497D1E0EC1F665F8EA19A6B13C73C7B8FEF26A2D2C`
+- Periodic: `DBB96A64AAD75B21A9FCB0F609815E0FAAF1C333572D90AA6C87B875C22F98D3`
 
 ## Known Limitations
 
@@ -177,3 +189,6 @@ Wait a few seconds for DaoDao Indexer to sync, then retry.
 | 2026-03-07 | E2E test plan created | ✅ |
 | 2026-03-07 | E2E test script created | ✅ |
 | 2026-03-07 | Manual E2E testing | 🔄 |
+| 2026-03-08 | Fee config E2E test (Basic) | ✅ |
+| 2026-03-08 | Fee config E2E test (Periodic) | ✅ |
+| 2026-03-08 | Coin encoding fix verified on chain | ✅ |

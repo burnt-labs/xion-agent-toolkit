@@ -1,7 +1,8 @@
 ---
-status: InProgress
+status: Done
 created_at: 2026-03-06
-updated_at: 2026-03-06
+updated_at: 2026-03-08
+done_at: 2026-03-07
 ---
 # Treasury Grant Config & Fee Config Implementation
 
