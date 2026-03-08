@@ -35,14 +35,14 @@
       "title": "E2E Testing Plan",
       "file": "plans/e2e-testing.md",
       "status": "InProgress",
-      "progress": 70,
+      "progress": 75,
       "owner": "@project-manager",
       "agents": ["@qa-engineer"],
       "tags": ["testing", "e2e", "treasury", "oauth2"],
       "created_at": "2026-03-07",
       "updated_at": "2026-03-08",
       "done_at": null,
-      "notes": "E2E tests in progress. Fee config (Basic+Periodic), token refresh, grant config add verified. Grant config subsequent ops have intermittent failures."
+      "notes": "Fee config (Basic+Periodic), Grant config (Send), Token refresh verified. Subsequent requests have intermittent failures - OAuth2 API state issue TBD."
     },
     {
       "id": "treasury-grant-fee-config",

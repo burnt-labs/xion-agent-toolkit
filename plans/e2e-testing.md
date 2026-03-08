@@ -170,11 +170,31 @@ Run the E2E test script after logging in:
 - Periodic Fee Config: `DBB96A64AAD75B21A9FCB0F609815E0FAAF1C333572D90AA6C87B875C22F98D3`
 - Send Grant Config: `FEE48BF3744A6DAA60852EE435496120483469B5797AEBE146120CE64C690DBE`
 
-## Known Limitations
+## Known Issues
 
-1. **Treasury Create**: Requires testnet tokens for gas fees
-2. **OAuth2 Login**: Requires browser interaction
-3. **DaoDao Indexer**: May have slight delay for newly created treasuries
+### Grant/Fee Config 间歇性失败
+
+**现象**：部分 grant-config 和 fee-config 操作返回 "payload msg: invalid" 错误
+
+**调查结果**：
+1. ✅ Admin 权限正确 - 链上查询确认 admin 已设置
+2. ✅ Authz grants 存在 - grantee 有 3 个有效的 grants
+3. ✅ 消息格式正确 - 与成功的交易格式完全相同
+4. ❌ 错误来自 CosmWasm 合约层的 validateBasic 阶段
+
+**可能原因**：
+- OAuth2 API 内部状态问题
+- Testnet RPC 节点间歇性问题
+- 某种速率限制或并发限制
+
+**验证方法**：
+- 检查成功的交易：`FEE48BF...` (Grant Config), `A866A6D...` (Fee Config)
+- 链上数据确认：admin、grant_configs、fee_config 都正确设置
+
+**后续行动**：
+- 在不同时间重试
+- 检查 OAuth2 API 日志
+- 考虑添加重试机制
 
 ## Troubleshooting
 
