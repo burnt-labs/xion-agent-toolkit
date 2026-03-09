@@ -112,6 +112,9 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
+      # Inject OAuth client IDs for build.rs from GitHub Actions variables
+      XION_TESTNET_OAUTH_CLIENT_ID: ${{ vars.XION_TESTNET_OAUTH_CLIENT_ID }}
+      XION_MAINNET_OAUTH_CLIENT_ID: ${{ vars.XION_MAINNET_OAUTH_CLIENT_ID }}
     steps:
       - name: enable windows longpaths
         run: |
