@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "package-name": "xion-agent-toolkit",
+      "release-type": "rust",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": false,
+      "draft": false,
+      "prerelease": false,
+      "changelog-path": "CHANGELOG.md",
+      "changelog-type": "default",
+      "changelog-sections": [
+        {"type": "feat", "section": "Features"},
+        {"type": "fix", "section": "Bug Fixes"},
+        {"type": "perf", "section": "Performance"},
+        {"type": "refactor", "section": "Refactoring"},
+        {"type": "docs", "section": "Documentation"},
+        {"type": "test", "section": "Tests"},
+        {"type": "ci", "section": "CI/CD"},
+        {"type": "chore", "section": "Chores"}
+      ],
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$.package.version"
+        }
+      ]
+    }
+  },
+  "bootstrap-sha": "5675164d0e5a8f9c8b7a6e5d4c3b2a1098765432",
+  "last-release-sha": "5675164d0e5a8f9c8b7a6e5d4c3b2a1098765432",
+  "always-update": false,
+  "separate-pull-requests": true
+}

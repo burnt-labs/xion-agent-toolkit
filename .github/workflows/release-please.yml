@@ -1,0 +1,42 @@
+# Release Please workflow
+# Automates version bumps, CHANGELOG updates, and release creation
+# https://github.com/google-github-actions/release-please-action
+
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    
+    steps:
+      - name: Release Please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: main
+
+  # Trigger cargo-dist after release-please creates the release
+  trigger-dist:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger cargo-dist build
+        run: |
+          echo "Release ${{ needs.release-please.outputs.tag_name }} created"
+          echo "The release.yml workflow will be triggered by the tag automatically"

@@ -3,6 +3,47 @@
   "updated_at": "2026-03-09",
   "plans": [
 {
+      "id": "release-please-automation",
+      "title": "Release-please Automation",
+      "file": "plans/release-please-automation.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": [],
+      "tags": [
+        "release",
+        "release-please",
+        "ci-cd",
+        "automation",
+        "changelog"
+      ],
+      "created_at": "2026-03-09",
+      "updated_at": "2026-03-09",
+      "done_at": "2026-03-09",
+      "notes": "Complete: release-please-action integrated for automated version bumps and CHANGELOG generation. Full automation: conventional commits → Release PR → merge → tag → cargo-dist build → publish."
+    },
+{
+      "id": "cargo-dist-release",
+      "title": "Cargo-dist Release Automation",
+      "file": "plans/cargo-dist-release.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": [
+        "@ops-engineer"
+      ],
+      "tags": [
+        "release",
+        "cargo-dist",
+        "ci-cd",
+        "automation"
+      ],
+      "created_at": "2026-03-09",
+      "updated_at": "2026-03-09",
+      "done_at": "2026-03-09",
+      "notes": "cargo-dist integration complete. Supports 6 target platforms, shell/powershell installers, SHA256 checksums. Release workflow triggers on tags. Documentation at docs/release.md."
+    },
+{
       "id": "documentation-update",
       "title": "Documentation Update",
       "file": "plans/documentation-update.md",

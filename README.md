@@ -23,12 +23,40 @@ Xion Agent Toolkit provides a command-line interface for interacting with Xion's
 
 ## Installation
 
-### Prerequisites
+### From GitHub Releases (Recommended)
 
-- Rust 1.75 or higher
-- OpenSSL development libraries
+Pre-built binaries are available for Linux, macOS, and Windows:
+
+**macOS / Linux:**
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
+
+**Windows (PowerShell):**
+```powershell
+powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
+```
+
+**Manual Download:**
+
+Download the appropriate archive from the [Releases page](https://github.com/burnt-labs/xion-agent-toolkit/releases):
+
+| Platform | Archive |
+|----------|---------|
+| Linux x64 | `xion-agent-toolkit-x86_64-unknown-linux-gnu.tar.xz` |
+| Linux ARM64 | `xion-agent-toolkit-aarch64-unknown-linux-gnu.tar.xz` |
+| macOS Intel | `xion-agent-toolkit-x86_64-apple-darwin.tar.xz` |
+| macOS Apple Silicon | `xion-agent-toolkit-aarch64-apple-darwin.tar.xz` |
+| Windows x64 | `xion-agent-toolkit-x86_64-pc-windows-msvc.zip` |
+
+Extract the archive and add the binary to your `PATH`.
 
 ### From Source
+
+Prerequisites:
+- Rust 1.75 or higher
+- OpenSSL development libraries
 
 ```bash
 git clone https://github.com/burnt-labs/xion-agent-toolkit
@@ -36,27 +64,21 @@ cd xion-agent-toolkit
 cargo install --path .
 ```
 
-## Quick Start
-
-### 1. Configure OAuth Client IDs
+### From Crates.io
 
 ```bash
-cp .env.example .env
-# Edit .env and add your OAuth Client IDs
+cargo install xion-agent-toolkit
 ```
 
-Required variables:
-- `XION_LOCAL_OAUTH_CLIENT_ID`
-- `XION_TESTNET_OAUTH_CLIENT_ID`
-- `XION_MAINNET_OAUTH_CLIENT_ID`
+## Quick Start
 
-### 2. Check Status
+### 1. Check Status
 
 ```bash
 xion-toolkit status
 ```
 
-### 3. Login
+### 2. Login
 
 ```bash
 xion-toolkit auth login

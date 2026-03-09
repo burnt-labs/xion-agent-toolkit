@@ -8,6 +8,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 - [Code Standards](#code-standards)
 - [Pull Request Process](#pull-request-process)
 - [Testing Guidelines](#testing-guidelines)
+- [Release Process](#release-process)
 
 ## Development Setup
 
@@ -32,7 +33,7 @@ cargo test
 
 # Configure OAuth (required for integration testing)
 cp .env.example .env
-# Edit .env with your OAuth Client IDs
+# Edit .env with your OAuth Client IDs (XION_TESTNET_OAUTH_CLIENT_ID, XION_MAINNET_OAUTH_CLIENT_ID)
 ```
 
 ## Code Standards
@@ -49,22 +50,53 @@ cargo clippy --all-targets --all-features -- -D warnings
 
 ### Commit Messages
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow [Conventional Commits](https://www.conventionalcommits.org/). This is **required** for automated releases.
 
 ```
-<type>[scope]: <description>
+<type>(<scope>): <description>
 
 [optional body]
+
+[optional footer(s)]
 ```
 
-**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
+**Types and Version Impact:**
+
+| Type | Version Bump | Description |
+|------|--------------|-------------|
+| `feat` | Minor (0.2.0 → 0.3.0) | New feature |
+| `fix` | Patch (0.2.0 → 0.2.1) | Bug fix |
+| `feat!` or `fix!` | Major (0.2.0 → 1.0.0) | Breaking change |
+| `docs` | None | Documentation only |
+| `style` | None | Code style (formatting, semicolons) |
+| `refactor` | None | Code refactoring |
+| `perf` | Patch | Performance improvement |
+| `test` | None | Adding/updating tests |
+| `chore` | None | Maintenance tasks |
+| `ci` | None | CI/CD changes |
+
+**Scope (optional):** `oauth`, `treasury`, `cli`, `config`, `api`, etc.
 
 **Examples:**
 ```
-feat(oauth): add PKCE challenge generation
-fix(treasury): handle API timeout correctly
+feat(treasury): add batch withdrawal support
+fix(auth): handle token refresh edge case
 docs(readme): update installation instructions
 test(pkce): add unit tests for verifier generation
+chore(deps): update reqwest to 0.12
+ci(release): add cargo-dist configuration
+```
+
+**Breaking Changes:**
+```
+feat(api)!: change callback server port signature
+
+BREAKING CHANGE: The callback server now requires explicit port configuration.
+```
+
+or use `!` after the type:
+```
+feat!: redesign CLI output format
 ```
 
 ### Error Handling
@@ -236,11 +268,64 @@ pub fn generate_pkce_challenge(verifier: &str) -> Result<String> {
 - Validate all external inputs
 - Use HTTPS for all external communications
 
+## Release Process
+
+We use an **automated release pipeline** combining:
+- **[release-please](https://github.com/google-github-actions/release-please-action)**: Generates Release PRs with version bumps and CHANGELOG
+- **[cargo-dist](https://axodotdev.github.io/cargo-dist/)**: Builds cross-platform binaries and publishes GitHub Releases
+
+See the full [Release Process Documentation](docs/release.md) for details.
+
+### Automated Release Flow
+
+```
+1. Developer commits (conventional commits required)
+2. PR merged to main
+3. release-please creates/updates Release PR
+4. Maintainer reviews and merges Release PR
+5. Tag created automatically (v0.X.X)
+6. cargo-dist builds and publishes release
+```
+
+### For Maintainers: Releasing
+
+1. **Review the Release PR** that release-please creates automatically
+2. **Check the CHANGELOG** is accurate
+3. **Merge the Release PR** when ready
+4. **Done!** The tag triggers cargo-dist to build and publish
+
+### Commit Requirements for Releases
+
+- **All commits** must follow conventional commits format
+- `feat:` commits → included in minor version bump
+- `fix:` commits → included in patch version bump
+- `feat!:` or `BREAKING CHANGE:` → major version bump
+- `chore:`, `docs:`, `test:`, etc. → no version bump
+
+### Manual Release (Emergency Only)
+
+If you need to release manually:
+
+```bash
+# 1. Update version
+# Edit Cargo.toml version
+
+# 2. Update CHANGELOG
+# Add new version section
+
+# 3. Commit and tag
+git add Cargo.toml CHANGELOG.md
+git commit -m "chore(release): prepare for v0.X.X"
+git tag -a v0.X.X -m "Release v0.X.X"
+git push origin main --tags
+```
+
 ## Getting Help
 
 - **GitHub Issues**: Bug reports and feature requests
 - **Code Review**: All PRs reviewed by maintainers
 - **Documentation**: See `plans/` for architecture details
+- **Release Process**: See `docs/release.md`
 
 ## License
 

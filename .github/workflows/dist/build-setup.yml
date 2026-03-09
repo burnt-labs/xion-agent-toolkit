@@ -1,0 +1,10 @@
+---
+# Extra setup steps for cargo-dist GitHub builds.
+# This file is referenced from dist-workspace.toml via `github-build-setup`
+# and is injected before `dist build` runs.
+
+- name: Export OAuth client IDs for build.rs
+  run: |
+    echo "XION_TESTNET_OAUTH_CLIENT_ID=${{ vars.XION_TESTNET_OAUTH_CLIENT_ID }}" >> "$GITHUB_ENV"
+    echo "XION_MAINNET_OAUTH_CLIENT_ID=${{ vars.XION_MAINNET_OAUTH_CLIENT_ID }}" >> "$GITHUB_ENV"
+
