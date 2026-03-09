@@ -222,13 +222,33 @@ git tag -a v0.X.X -m "Release v0.X.X"
 git push origin main --tags
 ```
 
+## OAuth Client ID Configuration
+
+The release binaries embed pre-configured OAuth client IDs for both testnet and mainnet. These values are provided at build time via GitHub Actions variables and consumed by `build.rs`.
+
+### Required GitHub Actions variables
+
+In the GitHub repository, configure the following repository **Variables** (not secrets) under:
+
+`Settings → Secrets and variables → Actions → Variables`
+
+- `XION_TESTNET_OAUTH_CLIENT_ID` – OAuth client ID for testnet
+- `XION_MAINNET_OAUTH_CLIENT_ID` – OAuth client ID for mainnet
+
+These map directly to the environment variables read in `build.rs`:
+
+- `XION_TESTNET_OAUTH_CLIENT_ID`
+- `XION_MAINNET_OAUTH_CLIENT_ID`
+
+The `cargo-dist` workflow (`.github/workflows/release.yml`) uses `github-build-setup` (configured in `dist-workspace.toml`) to inject these variables into the build environment before `dist build` runs. If either variable is missing, the binaries will fall back to placeholder client IDs and OAuth flows will not work correctly in production.
+
 ## Configuration Files
 
 | File | Purpose |
 |------|---------|
 | `release-please-config.json` | release-please configuration |
 | `.release-please-manifest.json` | Current version tracking |
-| `dist-workspace.toml` | cargo-dist configuration |
+| `dist-workspace.toml` | cargo-dist configuration (including GitHub build setup) |
 | `.github/workflows/release-please.yml` | Release PR automation |
 | `.github/workflows/release.yml` | Binary build automation |
 

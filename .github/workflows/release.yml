@@ -112,9 +112,6 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
-      # Inject OAuth client IDs for build.rs from GitHub Actions variables
-      XION_TESTNET_OAUTH_CLIENT_ID: ${{ vars.XION_TESTNET_OAUTH_CLIENT_ID }}
-      XION_MAINNET_OAUTH_CLIENT_ID: ${{ vars.XION_MAINNET_OAUTH_CLIENT_ID }}
     steps:
       - name: enable windows longpaths
         run: |
@@ -130,6 +127,10 @@ jobs:
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           fi
+      - name: "Export OAuth client IDs for build.rs"
+        run: |
+          echo "XION_TESTNET_OAUTH_CLIENT_ID=${{ vars.XION_TESTNET_OAUTH_CLIENT_ID }}" >> "$GITHUB_ENV"
+          echo "XION_MAINNET_OAUTH_CLIENT_ID=${{ vars.XION_MAINNET_OAUTH_CLIENT_ID }}" >> "$GITHUB_ENV"
       - name: Install dist
         run: ${{ matrix.install_dist.run }}
       # Get the dist-manifest
