@@ -7,6 +7,10 @@ members = ["cargo:."]
 cargo-dist-version = "0.31.0"
 # CI backends to support
 ci = "github"
+# Dispatch releases manually from release-please instead of tag-push events
+dispatch-releases = true
+# Reuse the GitHub Release created by release-please
+create-release = false
 # Extra GitHub build setup steps (used to inject env vars, etc.)
 github-build-setup = "dist/build-setup.yml"
 # The installers to generate for each app
