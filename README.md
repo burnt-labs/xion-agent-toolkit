@@ -104,12 +104,23 @@ xion-toolkit treasury params update xion1abc123... \
 
 # Query on-chain grants
 xion-toolkit treasury chain-query grants xion1abc123...
+```
 
+## Contract Commands
+
+```bash
 # Instantiate a contract
-xion-toolkit treasury instantiate \
+xion-toolkit contract instantiate \
   --code-id 1260 \
   --label "my-contract" \
   --msg instantiate-msg.json
+
+# Instantiate with predictable address (instantiate2)
+xion-toolkit contract instantiate2 \
+  --code-id 1260 \
+  --label "my-contract" \
+  --msg instantiate-msg.json \
+  --salt "01020304"
 ```
 
 ## CLI Reference
@@ -153,10 +164,14 @@ xion-toolkit treasury params update <address> [options]        # Update treasury
 # On-chain queries
 xion-toolkit treasury chain-query grants <address>             # Query authz grants
 xion-toolkit treasury chain-query allowances <address>         # Query fee allowances
+```
 
+### Contract
+
+```bash
 # Contract instantiation
-xion-toolkit treasury instantiate --code-id <id> --label <label> --msg <file> [options]
-xion-toolkit treasury instantiate2 --code-id <id> --label <label> --msg <file> [options]
+xion-toolkit contract instantiate --code-id <id> --label <label> --msg <file> [options]
+xion-toolkit contract instantiate2 --code-id <id> --label <label> --msg <file> [options]
 ```
 
 ### Configuration

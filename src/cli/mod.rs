@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod config;
+pub mod contract;
 pub mod treasury;
 
 use anyhow::Result;
@@ -40,6 +41,10 @@ pub enum Commands {
     #[command(subcommand)]
     Config(config::ConfigCommands),
 
+    /// Contract instantiation commands
+    #[command(subcommand)]
+    Contract(contract::ContractCommands),
+
     /// Show current status (network, auth, etc.)
     Status,
 }
@@ -54,6 +59,10 @@ pub async fn handle_treasury_command(cmd: treasury::TreasuryCommands) -> Result<
 
 pub fn handle_config_command(cmd: config::ConfigCommands) -> Result<()> {
     config::handle_command(cmd)
+}
+
+pub async fn handle_contract_command(cmd: contract::ContractCommands) -> Result<()> {
+    contract::handle_command(cmd).await
 }
 
 pub fn handle_status_command() -> Result<()> {

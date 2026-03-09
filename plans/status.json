@@ -27,8 +27,8 @@
       "id": "contract-instantiate-refactor",
       "title": "Contract Instantiate Refactor",
       "file": "plans/contract-instantiate-refactor.md",
-      "status": "Todo",
-      "progress": 0,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@fullstack-dev"
@@ -41,8 +41,8 @@
       ],
       "created_at": "2026-03-09",
       "updated_at": "2026-03-09",
-      "done_at": null,
-      "notes": "Move instantiate/instantiate2 from treasury to contract subcommand for proper command structure"
+      "done_at": "2026-03-09",
+      "notes": "Completed: Moved instantiate/instantiate2 from treasury to contract subcommand. Created new contract module. Updated all documentation. All 330 tests passing."
     },
 {
       "id": "treasury-e2e-testing",

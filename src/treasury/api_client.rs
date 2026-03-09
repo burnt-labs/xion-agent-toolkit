@@ -1613,10 +1613,7 @@ impl TreasuryApiClient {
         debug!("Updating params for treasury: {}", treasury_address);
 
         // Validate that at least one parameter is provided
-        if params.redirect_url.is_none()
-            && params.icon_url.is_none()
-            && params.metadata.is_none()
-        {
+        if params.redirect_url.is_none() && params.icon_url.is_none() && params.metadata.is_none() {
             anyhow::bail!("At least one parameter must be provided for update (redirect_url, icon_url, or metadata)");
         }
 

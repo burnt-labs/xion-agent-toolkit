@@ -7,6 +7,7 @@ Complete reference for the Xion Agent Toolkit CLI commands.
 - [Global Options](#global-options)
 - [Authentication Commands](#authentication-commands)
 - [Treasury Commands](#treasury-commands)
+- [Contract Commands](#contract-commands)
 - [Configuration Commands](#configuration-commands)
 - [Output Format](#output-format)
 
@@ -782,13 +783,15 @@ xion-toolkit treasury chain-query allowances xion1abc123...
 
 ---
 
-### `treasury instantiate`
+## Contract Commands
+
+### `contract instantiate`
 
 Instantiates a generic smart contract (v1 - dynamic address).
 
 **Usage:**
 ```bash
-xion-toolkit treasury instantiate --code-id <ID> --label <LABEL> --msg <FILE> [options]
+xion-toolkit contract instantiate --code-id <ID> --label <LABEL> --msg <FILE> [options]
 ```
 
 **Options:**
@@ -810,7 +813,7 @@ xion-toolkit treasury instantiate --code-id <ID> --label <LABEL> --msg <FILE> [o
 
 **Example:**
 ```bash
-xion-toolkit treasury instantiate \
+xion-toolkit contract instantiate \
   --code-id 1260 \
   --label "my-contract" \
   --msg instantiate-msg.json \
@@ -819,13 +822,13 @@ xion-toolkit treasury instantiate \
 
 ---
 
-### `treasury instantiate2`
+### `contract instantiate2`
 
 Instantiates a smart contract with predictable address (v2 - using salt).
 
 **Usage:**
 ```bash
-xion-toolkit treasury instantiate2 --code-id <ID> --label <LABEL> --msg <FILE> [options]
+xion-toolkit contract instantiate2 --code-id <ID> --label <LABEL> --msg <FILE> [options]
 ```
 
 **Options:**
@@ -850,7 +853,7 @@ xion-toolkit treasury instantiate2 --code-id <ID> --label <LABEL> --msg <FILE> [
 
 **Example:**
 ```bash
-xion-toolkit treasury instantiate2 \
+xion-toolkit contract instantiate2 \
   --code-id 1260 \
   --label "my-contract" \
   --msg instantiate-msg.json \

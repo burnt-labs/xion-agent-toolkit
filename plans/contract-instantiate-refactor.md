@@ -1,5 +1,5 @@
 ---
-status: Todo
+status: Done
 created_at: 2026-03-09
 updated_at: 2026-03-09
 ---
@@ -73,30 +73,30 @@ pub enum Commands {
 ## Tasks
 
 ### Code Changes
-- [ ] Create `src/cli/contract.rs` module
-- [ ] Define `ContractCommands` enum with Instantiate and Instantiate2
-- [ ] Move handler functions from treasury to contract
-- [ ] Update `src/cli/mod.rs` to include contract module
-- [ ] Update `src/main.rs` to handle contract commands
+- [x] Create `src/cli/contract.rs` module
+- [x] Define `ContractCommands` enum with Instantiate and Instantiate2
+- [x] Move handler functions from treasury to contract
+- [x] Update `src/cli/mod.rs` to include contract module
+- [x] Update `src/main.rs` to handle contract commands
 
 ### Documentation Updates
-- [ ] Update README.md CLI examples
-- [ ] Update docs/cli-reference.md
-- [ ] Update skills/xion-treasury/SKILL.md
+- [x] Update README.md CLI examples
+- [x] Update docs/cli-reference.md
+- [x] Update skills/xion-treasury/SKILL.md
 
 ### Testing
-- [ ] Verify `contract instantiate` works
-- [ ] Verify `contract instantiate2` works
-- [ ] Run all existing tests
-- [ ] Verify clippy passes
+- [x] Verify `contract instantiate` works
+- [x] Verify `contract instantiate2` works
+- [x] Run all existing tests
+- [x] Verify clippy passes
 
 ## Acceptance Criteria
 
-- [ ] `xion-toolkit contract instantiate` works
-- [ ] `xion-toolkit contract instantiate2` works
-- [ ] Old `treasury instantiate` returns error or deprecation warning
-- [ ] Documentation updated
-- [ ] All tests pass
+- [x] `xion-toolkit contract instantiate` works
+- [x] `xion-toolkit contract instantiate2` works
+- [x] Old `treasury instantiate` returns error or deprecation warning
+- [x] Documentation updated
+- [x] All tests pass
 
 ## Sign-off
 
@@ -104,3 +104,4 @@ pub enum Commands {
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-03-09 | @fullstack-dev | Completed refactoring: instantiate/instantiate2 moved to contract subcommand. All tests passing (330 tests). Documentation updated. | Done |
