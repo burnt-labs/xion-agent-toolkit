@@ -98,3 +98,4 @@ xion-toolkit treasury instantiate2 \
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
 | 2026-03-09 | @backend-engineer | Implemented all tasks, all tests pass | Done |
+| 2026-03-09 | @qa-engineer | Verified: all tests pass, clippy passes, fmt passes, CLI commands work | Done |
