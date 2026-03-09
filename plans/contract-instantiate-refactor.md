@@ -10,11 +10,13 @@ updated_at: 2026-03-09
 
 The `instantiate` and `instantiate2` commands are currently under `treasury` subcommand, but they are generic contract instantiation commands that should be at the `contract` level. This is a structural issue that needs to be fixed.
 
-**Current (wrong)**:
+**Previous (incorrectly under treasury)**:
 ```bash
 xion-toolkit treasury instantiate ...
 xion-toolkit treasury instantiate2 ...
 ```
+
+> These commands have been moved to `contract` subcommand. Use `contract instantiate` instead.
 
 **Expected (correct)**:
 ```bash
