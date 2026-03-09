@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-03-08",
+  "updated_at": "2026-03-09",
   "plans": [
     {
       "id": "coin-encoding-fix",
@@ -136,10 +136,10 @@
     },
     {
       "id": "transaction-format-fix",
-      "title": "Transaction Format Fix - Base64 Encoding",
+      "title": "Transaction Format Fix - Number Array Encoding",
       "file": "plans/transaction-format-fix.md",
       "status": "InProgress",
-      "progress": 60,
+      "progress": 85,
       "owner": "@project-manager",
       "agents": [
         "@fullstack-dev",
@@ -153,9 +153,9 @@
         "encoding"
       ],
       "created_at": "2026-03-08",
-      "updated_at": "2026-03-08",
-      "done_at": "2026-03-08",
-      "notes": "Fixed: Both MsgInstantiateContract2 and MsgExecuteContract now use base64-encoded JSON strings for 'msg' field. Analyzed successful on-chain transaction for correct format. All unit tests passing."
+      "updated_at": "2026-03-09",
+      "done_at": null,
+      "notes": "Fixed: msg/salt fields now use number arrays (not base64). Refactored withdraw_treasury to use broadcast_execute_contract. Grant-config add E2E test SUCCESS. Some ops blocked by OAuth2 'GRANTED_FAILED' auth issue."
     },
     {
       "id": "oauth2-client-architecture",

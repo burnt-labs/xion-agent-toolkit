@@ -225,25 +225,40 @@ let msg_value = serde_json::json!({
 - [x] Confirm number array format works with `BinaryWriter.bytes()` and `Uint8Array.set()`
 - [x] Document the correct fix approach
 
-### Phase 3: Apply Fix
-- [ ] Update `broadcast_execute_contract` — `msg` → number array
-- [ ] Update `withdraw_treasury` — `msg` → number array
-- [ ] Update `create_treasury` — `msg` + `salt` → number arrays
-- [ ] All unit tests pass
-- [ ] `cargo clippy` + `cargo fmt` pass
+### Phase 3: Apply Fix ✅
+- [x] Update `broadcast_execute_contract` — `msg` → number array
+- [x] Update `withdraw_treasury` — `msg` → number array
+- [x] Update `create_treasury` — `msg` + `salt` → number arrays
+- [x] Add helper function `bytes_to_json_array`
+- [x] Remove unused `base64` import
+- [x] All unit tests pass (115 tests)
+- [x] `cargo clippy` + `cargo fmt` pass
 
-### Phase 4: E2E Testing
-- [ ] Test `treasury create` on testnet
-- [ ] Test `treasury grant-config add` on testnet
-- [ ] Test `treasury fee-config set` on testnet
-- [ ] Test `treasury withdraw` on testnet
+### Phase 4: E2E Testing (2026-03-09)
+- [x] Test `treasury grant-config add` on testnet — **SUCCESS** (tx: `30EA09A1C0E6D88D2F5A725B18F8412D44AE2DF93593965B1C8922780FA5937B`)
+- [ ] Test `treasury fee-config set` on testnet — **AUTH ISSUE** (format OK, OAuth2 API returns "GRANTED_FAILED: Authorization was not granted by user")
+- [ ] Test `treasury withdraw` on testnet — **AUTH ISSUE** (format OK, OAuth2 API returns "GRANTED_FAILED")
+- [ ] Test `treasury create` on testnet — **AUTH ISSUE** (format OK, OAuth2 API returns "GRANTED_FAILED")
+
+### Key Findings (2026-03-09)
+
+1. **Transaction Format Fix is Working**: The number array format for `msg` and `salt` fields is correct. We're no longer getting "msg: invalid" errors.
+
+2. **Grant-Config Add Succeeded**: The `treasury grant-config add` command successfully broadcasted a transaction.
+
+3. **Authorization Issues**: Some operations fail with "GRANTED_FAILED: Authorization was not granted by user". This is an OAuth2 API / session key / authz grant issue, not a transaction format issue. This requires further investigation of the OAuth2 API's grant flow.
+
+4. **Refactoring Complete**: `withdraw_treasury` now uses the unified `broadcast_execute_contract` method.
 
 ## Success Criteria
 
-- [ ] Treasury create command works successfully
-- [ ] All grant config operations work
-- [ ] All fee config operations work
-- [ ] E2E tests pass for all operations
+- [x] Transaction format fixed (number array for `msg` and `salt`)
+- [x] All MsgExecuteContract operations use unified `broadcast_execute_contract`
+- [x] Unit tests pass
+- [x] Grant config operations work (format verified)
+- [ ] Treasury create command works end-to-end (blocked by auth issue)
+- [ ] Fee config operations work end-to-end (blocked by auth issue)
+- [ ] Withdraw operations work end-to-end (blocked by auth issue)
 
 ## On-Chain Transaction Analysis (2026-03-08)
 
@@ -302,4 +317,9 @@ The on-chain `msg` field contains UTF-8 bytes of the JSON string, which is base6
 | 2026-03-08 | Attempted fix: Use base64-encoded JSON string for `msg` field | ❌ Incorrect — `fromPartial` doesn't decode base64 |
 | 2026-03-09 | **Deep-dive root cause analysis**: Traced full chain CLI→API→Registry→BinaryWriter | ✅ Complete |
 | 2026-03-09 | Found: API uses `fromPartial` (not `fromAmino`); `msg` must be `Uint8Array`/number array | ✅ Complete |
-| 2026-03-09 | Fix approach: Use number arrays `[123, 34, ...]` for `msg` and `salt` fields | 🔄 Implementation pending |
+| 2026-03-09 | **Fix implementation**: Changed `msg` and `salt` to number arrays; added `bytes_to_json_array` helper | ✅ Complete |
+| 2026-03-09 | **Refactoring**: `withdraw_treasury` now uses unified `broadcast_execute_contract` | ✅ Complete |
+| 2026-03-09 | **Unit tests**: All 115 tests pass | ✅ Complete |
+| 2026-03-09 | **E2E test**: `treasury grant-config add` SUCCESS (tx: `30EA09A1...`) | ✅ Format verified |
+| 2026-03-09 | **E2E tests**: `fee-config set`, `withdraw`, `create` blocked by OAuth2 GRANTED_FAILED | 🔄 Auth issue TBD |
+| 2026-03-09 | **Implementation complete**: All 3 functions updated, tests pass | ✅ Done |

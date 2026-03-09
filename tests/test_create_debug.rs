@@ -11,7 +11,7 @@ fn main() {
         "funds": [],
         "admin": "xion1test",
     });
-    
+
     println!("MsgInstantiateContract2 JSON:");
     println!("{}", serde_json::to_string_pretty(&msg_value).unwrap());
     println!("\nField names (camelCase):");

@@ -223,6 +223,12 @@ xion-toolkit treasury fee-config <address> --fee-allowance-type basic --fee-spen
 xion-toolkit treasury fee-config <address> --fee-allowance-type periodic --fee-period-seconds 86400 --fee-period-spend-limit "100000uxion" --fee-description "Daily fee allowance"
 ```
 
+### Protected Treasury Contracts
+
+- For all development, testing, and automation, treat Treasury `xion17vg5l9za4768g0hnxezltgnu4h7eleqdcmwark2uuz2s4z5q4dfsr80vvm` as **write-protected**:
+  - Do **not** fund, withdraw from, modify grants/fees for, or otherwise mutate this Treasury via CLI, scripts, or skills.
+  - Tests and e2e scripts **must not** touch this Treasury address under any circumstance.
+
 ## Git Standards
 
 ### Commit Messages

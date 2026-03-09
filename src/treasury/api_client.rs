@@ -4,7 +4,6 @@
 //! Supports listing, querying, and managing treasury contracts.
 
 use anyhow::{Context, Result};
-use base64::Engine;
 use chrono::DateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -180,17 +179,18 @@ impl TreasuryApiClient {
         execute_msg: &T,
         memo: &str,
     ) -> Result<String> {
-        // Serialize execute message to JSON then to base64
-        // (OAuth2 API expects base64-encoded JSON string for MsgExecuteContract.msg field)
+        // Serialize execute message to JSON, then convert to number array
+        // (OAuth2 API's JSON object path uses `fromPartial` which expects
+        // bytes fields as array-like objects, not base64 strings)
         let msg_json = serde_json::to_string(execute_msg)?;
-        let msg_base64 = base64::engine::general_purpose::STANDARD.encode(msg_json.as_bytes());
+        let msg_bytes = msg_json.as_bytes();
 
         debug!("Execute message JSON:\n{}", msg_json);
 
         let msg_value = serde_json::json!({
             "sender": sender,
             "contract": contract,
-            "msg": msg_base64,  // Base64-encoded JSON string
+            "msg": bytes_to_json_array(msg_bytes),  // Number array, not base64 string
             "funds": []
         });
 
@@ -672,27 +672,25 @@ impl TreasuryApiClient {
             }
         });
 
-        // Serialize message to JSON then to base64
-        // (OAuth2 API expects base64-encoded JSON string for MsgExecuteContract.msg field)
-        let msg_json = serde_json::to_string(&withdraw_msg)?;
-        let msg_base64 = base64::engine::general_purpose::STANDARD.encode(msg_json.as_bytes());
+        // Use the unified broadcast_execute_contract method
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &withdraw_msg,
+                &format!("Withdraw from treasury {}", treasury_address),
+            )
+            .await?;
 
-        debug!("Withdraw message JSON:\n{}", msg_json);
-
-        let request = BroadcastRequest {
-            messages: vec![super::types::TransactionMessage {
-                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
-                value: serde_json::json!({
-                    "sender": from_address,
-                    "contract": treasury_address,
-                    "msg": msg_base64,  // Base64-encoded JSON string
-                    "funds": []
-                }),
-            }],
-            memo: Some(format!("Withdraw from treasury {}", treasury_address)),
-        };
-
-        self.broadcast_transaction(access_token, request).await
+        // Return BroadcastResponse format for backward compatibility
+        Ok(BroadcastResponse {
+            success: true,
+            tx_hash,
+            from: from_address.to_string(),
+            gas_used: None,
+            gas_wanted: None,
+        })
     }
 
     /// Create a new treasury contract
@@ -777,24 +775,22 @@ impl TreasuryApiClient {
         // Build the instantiation message
         let instantiate_msg = build_treasury_instantiate_msg(&request)?;
 
-        // Serialize instantiate message to JSON then to base64
-        // (OAuth2 API expects base64-encoded JSON string for MsgInstantiateContract2.msg field)
+        // Serialize instantiate message to JSON, then convert to number array
+        // (OAuth2 API's JSON object path uses `fromPartial` which expects
+        // bytes fields as array-like objects, not base64 strings)
         let msg_json = serde_json::to_string(&instantiate_msg)?;
-        let msg_base64 = base64::engine::general_purpose::STANDARD.encode(msg_json.as_bytes());
+        let msg_bytes = msg_json.as_bytes();
 
         debug!("Instantiate message JSON:\n{}", msg_json);
 
-        // Convert salt to base64 (for JSON serialization)
-        let salt_base64 = base64::engine::general_purpose::STANDARD.encode(salt);
-
         // Build the MsgInstantiateContract2 message
-        // Note: codeId is number, msg is base64-encoded JSON string, salt is base64-encoded bytes
+        // Note: codeId is number, msg and salt are number arrays (not base64 strings)
         let msg_value = serde_json::json!({
             "sender": request.admin,
             "codeId": treasury_code_id,  // number, not string
             "label": format!("Treasury-{}", chrono::Utc::now().format("%Y%m%d-%H%M%S")),
-            "msg": msg_base64,           // Base64-encoded JSON string
-            "salt": salt_base64,          // Raw salt bytes (base64 for JSON serialization)
+            "msg": bytes_to_json_array(msg_bytes),   // Number array
+            "salt": bytes_to_json_array(salt),       // Number array
             "funds": [],
             "admin": request.admin,
             "fixMsg": false,
@@ -1039,6 +1035,20 @@ fn extract_address_from_token(token: &str) -> Result<String> {
     }
 
     Ok(address)
+}
+
+/// Convert bytes to JSON number array for OAuth2 API
+///
+/// The OAuth2 API's JSON object path uses `fromPartial` which expects
+/// bytes fields (like `msg` and `salt`) to be array-like objects (number arrays)
+/// rather than base64 strings.
+fn bytes_to_json_array(bytes: &[u8]) -> serde_json::Value {
+    serde_json::Value::Array(
+        bytes
+            .iter()
+            .map(|b| serde_json::Value::Number((*b).into()))
+            .collect(),
+    )
 }
 
 // ============================================================================
