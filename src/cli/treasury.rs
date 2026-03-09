@@ -36,6 +36,48 @@ pub enum TreasuryCommands {
         amount: String,
     },
 
+    /// Instantiate a generic contract (v1 - dynamic address)
+    Instantiate {
+        /// Code ID of the contract to instantiate
+        #[arg(long)]
+        code_id: u64,
+
+        /// Label for the contract instance
+        #[arg(long)]
+        label: String,
+
+        /// Path to JSON file containing instantiate message
+        #[arg(short, long)]
+        msg: PathBuf,
+
+        /// Admin address for contract migrations (optional)
+        #[arg(long)]
+        admin: Option<String>,
+    },
+
+    /// Instantiate a contract with predictable address (v2 - instantiate2)
+    Instantiate2 {
+        /// Code ID of the contract to instantiate
+        #[arg(long)]
+        code_id: u64,
+
+        /// Label for the contract instance
+        #[arg(long)]
+        label: String,
+
+        /// Path to JSON file containing instantiate message
+        #[arg(short, long)]
+        msg: PathBuf,
+
+        /// Salt for predictable address (hex-encoded, optional - auto-generated if not provided)
+        #[arg(long)]
+        salt: Option<String>,
+
+        /// Admin address for contract migrations (optional)
+        #[arg(long)]
+        admin: Option<String>,
+    },
+
     /// Create a new treasury contract
     Create(Box<CreateArgs>),
 
@@ -221,6 +263,19 @@ pub async fn handle_command(cmd: TreasuryCommands) -> Result<()> {
         TreasuryCommands::Create(args) => handle_create(*args).await,
         TreasuryCommands::Fund { address, amount } => handle_fund(&address, &amount).await,
         TreasuryCommands::Withdraw { address, amount } => handle_withdraw(&address, &amount).await,
+        TreasuryCommands::Instantiate {
+            code_id,
+            label,
+            msg,
+            admin,
+        } => handle_instantiate(code_id, &label, &msg, admin.as_deref()).await,
+        TreasuryCommands::Instantiate2 {
+            code_id,
+            label,
+            msg,
+            salt,
+            admin,
+        } => handle_instantiate2(code_id, &label, &msg, salt.as_deref(), admin.as_deref()).await,
         TreasuryCommands::GrantConfig(sub) => handle_grant_config(sub).await,
         TreasuryCommands::FeeConfig(sub) => handle_fee_config(sub).await,
     }
@@ -672,6 +727,192 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
                 "success": false,
                 "error": format!("Failed to withdraw from treasury: {}", e),
                 "code": code,
+                "suggestion": suggestion
+            });
+            print_json(&result)
+        }
+    }
+}
+
+// ============================================================================
+// Contract Instantiation Handlers
+// ============================================================================
+
+async fn handle_instantiate(
+    code_id: u64,
+    label: &str,
+    msg_path: &PathBuf,
+    admin: Option<&str>,
+) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Instantiating contract code_id={} with label='{}'...",
+        code_id, label
+    ));
+
+    // Load instantiate message from file
+    let content = std::fs::read_to_string(msg_path)
+        .map_err(|e| anyhow::anyhow!("Failed to read msg file: {}", e))?;
+    let msg: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("Invalid JSON in msg file: {}", e))?;
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config);
+
+    // Check auth
+    if !manager.is_authenticated()? {
+        return print_json(&serde_json::json!({
+            "success": false,
+            "code": "NOT_AUTHENTICATED",
+            "error": "Not authenticated",
+            "suggestion": "Run 'xion-toolkit auth login' first"
+        }));
+    }
+
+    // Call manager
+    match manager
+        .instantiate_contract(code_id, &msg, label, admin)
+        .await
+    {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "tx_hash": result.tx_hash,
+                "code_id": result.code_id,
+                "label": result.label,
+                "admin": result.admin
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let (code, suggestion) =
+                if error_msg.contains("insufficient") || error_msg.contains("balance") {
+                    (
+                        "INSUFFICIENT_BALANCE",
+                        "Fund your account before instantiating a contract",
+                    )
+                } else if error_msg.contains("invalid") || error_msg.contains("format") {
+                    (
+                        "INVALID_INPUT",
+                        "Check your instantiate message and parameters",
+                    )
+                } else if error_msg.contains("unauthorized") {
+                    (
+                        "UNAUTHORIZED",
+                        "You may not have permission to perform this action",
+                    )
+                } else {
+                    ("INSTANTIATE_FAILED", "Check the error message for details")
+                };
+
+            let result = serde_json::json!({
+                "success": false,
+                "code": code,
+                "error": e.to_string(),
+                "suggestion": suggestion
+            });
+            print_json(&result)
+        }
+    }
+}
+
+async fn handle_instantiate2(
+    code_id: u64,
+    label: &str,
+    msg_path: &PathBuf,
+    salt: Option<&str>,
+    admin: Option<&str>,
+) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Instantiating contract2 code_id={} with label='{}'...",
+        code_id, label
+    ));
+
+    // Load instantiate message from file
+    let content = std::fs::read_to_string(msg_path)
+        .map_err(|e| anyhow::anyhow!("Failed to read msg file: {}", e))?;
+    let msg: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("Invalid JSON in msg file: {}", e))?;
+
+    // Parse salt if provided (hex-encoded)
+    let salt_bytes = if let Some(s) = salt {
+        Some(hex::decode(s).map_err(|e| anyhow::anyhow!("Invalid hex salt: {}", e))?)
+    } else {
+        None
+    };
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config);
+
+    // Check auth
+    if !manager.is_authenticated()? {
+        return print_json(&serde_json::json!({
+            "success": false,
+            "code": "NOT_AUTHENTICATED",
+            "error": "Not authenticated",
+            "suggestion": "Run 'xion-toolkit auth login' first"
+        }));
+    }
+
+    // Call manager
+    match manager
+        .instantiate_contract2(code_id, &msg, label, salt_bytes.as_deref(), admin)
+        .await
+    {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "tx_hash": result.tx_hash,
+                "code_id": result.code_id,
+                "label": result.label,
+                "salt": result.salt,
+                "admin": result.admin,
+                "predicted_address": result.predicted_address
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let (code, suggestion) =
+                if error_msg.contains("insufficient") || error_msg.contains("balance") {
+                    (
+                        "INSUFFICIENT_BALANCE",
+                        "Fund your account before instantiating a contract",
+                    )
+                } else if error_msg.contains("invalid") || error_msg.contains("format") {
+                    (
+                        "INVALID_INPUT",
+                        "Check your instantiate message and parameters",
+                    )
+                } else if error_msg.contains("unauthorized") {
+                    (
+                        "UNAUTHORIZED",
+                        "You may not have permission to perform this action",
+                    )
+                } else {
+                    ("INSTANTIATE_FAILED", "Check the error message for details")
+                };
+
+            let result = serde_json::json!({
+                "success": false,
+                "code": code,
+                "error": e.to_string(),
                 "suggestion": suggestion
             });
             print_json(&result)

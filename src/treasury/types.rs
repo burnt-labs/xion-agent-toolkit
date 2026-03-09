@@ -307,6 +307,36 @@ pub struct WithdrawResult {
     pub tx_hash: String,
 }
 
+/// Result of contract instantiation (v1 - dynamic address)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstantiateResult {
+    /// Transaction hash
+    pub tx_hash: String,
+    /// Code ID of the instantiated contract
+    pub code_id: u64,
+    /// Label for the contract instance
+    pub label: String,
+    /// Admin address for contract migrations (optional)
+    pub admin: Option<String>,
+}
+
+/// Result of contract instantiation2 (v2 - predictable address)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Instantiate2Result {
+    /// Transaction hash
+    pub tx_hash: String,
+    /// Code ID of the instantiated contract
+    pub code_id: u64,
+    /// Label for the contract instance
+    pub label: String,
+    /// Salt for predictable address (hex-encoded)
+    pub salt: String,
+    /// Admin address for contract migrations (optional)
+    pub admin: Option<String>,
+    /// Predicted contract address (can be computed locally)
+    pub predicted_address: Option<String>,
+}
+
 // ============================================================================
 // CHAIN-READY TYPES (AFTER ENCODING)
 // ============================================================================

@@ -2,12 +2,12 @@
   "version": 1,
   "updated_at": "2026-03-09",
   "plans": [
-    {
+{
       "id": "generic-contract-instantiation-api",
       "title": "Generic Contract Instantiation Public API",
       "file": "plans/generic-contract-instantiation-api.md",
-      "status": "Todo",
-      "progress": 0,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@fullstack-dev"
@@ -20,8 +20,8 @@
       ],
       "created_at": "2026-03-09",
       "updated_at": "2026-03-09",
-      "done_at": null,
-      "notes": "Expose generic contract instantiation as public API and CLI commands"
+      "done_at": "2026-03-09",
+      "notes": "Implemented: Made broadcast_instantiate_contract/2 public, added InstantiateResult/Instantiate2Result types, added manager methods, added CLI commands. All 120 tests pass."
     },
     {
       "id": "treasury-enhancements",

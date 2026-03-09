@@ -213,10 +213,6 @@ impl TreasuryApiClient {
     ///
     /// Instantiates a new contract instance with a dynamically assigned address.
     ///
-    /// Note: This method is reserved for future use cases requiring MsgInstantiateContract (v1).
-    /// Currently, all contract instantiation uses MsgInstantiateContract2 (v2) via
-    /// `broadcast_instantiate_contract2` for predictable addresses.
-    ///
     /// # Arguments
     /// * `access_token` - Valid OAuth2 access token
     /// * `sender` - Sender address
@@ -228,8 +224,8 @@ impl TreasuryApiClient {
     ///
     /// # Returns
     /// Transaction hash on success
-    #[allow(dead_code, clippy::too_many_arguments)]
-    async fn broadcast_instantiate_contract<T: Serialize>(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn broadcast_instantiate_contract<T: Serialize>(
         &self,
         access_token: &str,
         sender: &str,
@@ -292,7 +288,7 @@ impl TreasuryApiClient {
     /// # Returns
     /// Transaction hash on success
     #[allow(clippy::too_many_arguments)]
-    async fn broadcast_instantiate_contract2<T: Serialize>(
+    pub async fn broadcast_instantiate_contract2<T: Serialize>(
         &self,
         access_token: &str,
         sender: &str,

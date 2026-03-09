@@ -14,7 +14,8 @@ use crate::oauth::OAuthClient;
 use super::api_client::TreasuryApiClient;
 use super::cache::TreasuryCache;
 use super::types::{
-    FundResult, QueryOptions, TreasuryInfo, TreasuryListItem, TreasuryParams, WithdrawResult,
+    FundResult, Instantiate2Result, InstantiateResult, QueryOptions, TreasuryInfo,
+    TreasuryListItem, TreasuryParams, WithdrawResult,
 };
 
 /// Treasury Manager
@@ -639,6 +640,144 @@ impl TreasuryManager {
             treasury_address: address.to_string(),
             amount: amount.to_string(),
             tx_hash: broadcast_response.tx_hash,
+        })
+    }
+
+    /// Instantiate a generic contract (v1 - dynamic address)
+    ///
+    /// Instantiates a new contract instance from a code ID with a dynamically assigned address.
+    ///
+    /// Use this when you don't need a predictable contract address.
+    /// For predictable addresses, use `instantiate_contract2` instead.
+    ///
+    /// # Arguments
+    /// * `code_id` - Code ID of the contract to instantiate
+    /// * `instantiate_msg` - Instantiate message (any serializable type)
+    /// * `label` - Label for the contract instance
+    /// * `admin` - Optional admin address for contract migrations
+    ///
+    /// # Returns
+    /// Instantiate result with transaction hash
+    #[instrument(skip(self, instantiate_msg))]
+    pub async fn instantiate_contract<T: serde::Serialize + std::fmt::Debug>(
+        &self,
+        code_id: u64,
+        instantiate_msg: &T,
+        label: &str,
+        admin: Option<&str>,
+    ) -> Result<InstantiateResult> {
+        debug!(
+            "Instantiating contract code_id={} with label={}",
+            code_id, label
+        );
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let sender = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to broadcast instantiate
+        let tx_hash = self
+            .api_client
+            .broadcast_instantiate_contract(
+                &access_token,
+                &sender,
+                code_id,
+                instantiate_msg,
+                label,
+                admin,
+                "Instantiate contract via Xion Agent Toolkit",
+            )
+            .await?;
+
+        Ok(InstantiateResult {
+            tx_hash,
+            code_id,
+            label: label.to_string(),
+            admin: admin.map(|s| s.to_string()),
+        })
+    }
+
+    /// Instantiate a generic contract (v2 - predictable address)
+    ///
+    /// Instantiates a new contract instance with a predictable address using instantiate2.
+    ///
+    /// # Arguments
+    /// * `code_id` - Code ID of the contract to instantiate
+    /// * `instantiate_msg` - Instantiate message (any serializable type)
+    /// * `label` - Label for the contract instance
+    /// * `salt` - Optional salt for predictable address. If None, a cryptographically
+    ///   random 32-byte salt is generated. Provide your own salt if you need address
+    ///   predictability or reproducibility across deployments.
+    /// * `admin` - Optional admin address for contract migrations
+    ///
+    /// # Returns
+    /// Instantiate2 result with transaction hash and salt
+    #[instrument(skip(self, instantiate_msg))]
+    pub async fn instantiate_contract2<T: serde::Serialize + std::fmt::Debug>(
+        &self,
+        code_id: u64,
+        instantiate_msg: &T,
+        label: &str,
+        salt: Option<&[u8]>,
+        admin: Option<&str>,
+    ) -> Result<Instantiate2Result> {
+        debug!(
+            "Instantiating contract2 code_id={} with label={}",
+            code_id, label
+        );
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let sender = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Generate salt if not provided (32 bytes)
+        let salt_bytes = salt.map(|s| s.to_vec()).unwrap_or_else(|| {
+            use rand::RngCore;
+            let mut buf = vec![0u8; 32];
+            rand::thread_rng().fill_bytes(&mut buf);
+            buf
+        });
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to broadcast instantiate2
+        let tx_hash = self
+            .api_client
+            .broadcast_instantiate_contract2(
+                &access_token,
+                &sender,
+                code_id,
+                instantiate_msg,
+                label,
+                &salt_bytes,
+                admin,
+                "Instantiate contract2 via Xion Agent Toolkit",
+            )
+            .await?;
+
+        Ok(Instantiate2Result {
+            tx_hash,
+            code_id,
+            label: label.to_string(),
+            salt: hex::encode(&salt_bytes),
+            admin: admin.map(|s| s.to_string()),
+            predicted_address: None, // TODO: compute if needed
         })
     }
 
