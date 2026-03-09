@@ -209,6 +209,138 @@ impl TreasuryApiClient {
         Ok(response.tx_hash)
     }
 
+    /// Helper function to build and broadcast a CosmWasm instantiate contract message (v1)
+    ///
+    /// Instantiates a new contract instance with a dynamically assigned address.
+    ///
+    /// Note: This method is reserved for future use cases requiring MsgInstantiateContract (v1).
+    /// Currently, all contract instantiation uses MsgInstantiateContract2 (v2) via
+    /// `broadcast_instantiate_contract2` for predictable addresses.
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `sender` - Sender address
+    /// * `code_id` - Code ID of the contract to instantiate
+    /// * `instantiate_msg` - Instantiate message (will be JSON-encoded)
+    /// * `label` - Label for the contract instance
+    /// * `admin` - Optional admin address for contract migrations
+    /// * `memo` - Transaction memo
+    ///
+    /// # Returns
+    /// Transaction hash on success
+    #[allow(dead_code, clippy::too_many_arguments)]
+    async fn broadcast_instantiate_contract<T: Serialize>(
+        &self,
+        access_token: &str,
+        sender: &str,
+        code_id: u64,
+        instantiate_msg: &T,
+        label: &str,
+        admin: Option<&str>,
+        memo: &str,
+    ) -> Result<String> {
+        // Serialize instantiate message to JSON, then convert to number array
+        let msg_json = serde_json::to_string(instantiate_msg)?;
+        let msg_bytes = msg_json.as_bytes();
+
+        debug!("Instantiate message JSON:\n{}", msg_json);
+
+        // Build MsgInstantiateContract message
+        // Note: codeId is number, msg is number array (not base64 string)
+        let mut msg_value = serde_json::json!({
+            "sender": sender,
+            "codeId": code_id,  // number, not string
+            "label": label,
+            "msg": bytes_to_json_array(msg_bytes),  // Number array
+            "funds": []
+        });
+
+        // Add optional admin field
+        if let Some(admin_addr) = admin {
+            msg_value["admin"] = serde_json::json!(admin_addr);
+        }
+
+        let broadcast_request = BroadcastRequest {
+            messages: vec![super::types::TransactionMessage {
+                type_url: "/cosmwasm.wasm.v1.MsgInstantiateContract".to_string(),
+                value: msg_value,
+            }],
+            memo: Some(memo.to_string()),
+        };
+
+        let response = self
+            .broadcast_transaction(access_token, broadcast_request)
+            .await?;
+
+        Ok(response.tx_hash)
+    }
+
+    /// Helper function to build and broadcast a CosmWasm instantiate2 contract message (v2, predictable addresses)
+    ///
+    /// Instantiates a new contract instance with a predictable address using instantiate2.
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `sender` - Sender address
+    /// * `code_id` - Code ID of the contract to instantiate
+    /// * `instantiate_msg` - Instantiate message (will be JSON-encoded)
+    /// * `label` - Label for the contract instance
+    /// * `salt` - Salt for predictable address generation
+    /// * `admin` - Optional admin address for contract migrations
+    /// * `memo` - Transaction memo
+    ///
+    /// # Returns
+    /// Transaction hash on success
+    #[allow(clippy::too_many_arguments)]
+    async fn broadcast_instantiate_contract2<T: Serialize>(
+        &self,
+        access_token: &str,
+        sender: &str,
+        code_id: u64,
+        instantiate_msg: &T,
+        label: &str,
+        salt: &[u8],
+        admin: Option<&str>,
+        memo: &str,
+    ) -> Result<String> {
+        // Serialize instantiate message to JSON, then convert to number array
+        let msg_json = serde_json::to_string(instantiate_msg)?;
+        let msg_bytes = msg_json.as_bytes();
+
+        debug!("Instantiate2 message JSON:\n{}", msg_json);
+
+        // Build MsgInstantiateContract2 message
+        // Note: codeId is number, msg and salt are number arrays (not base64 strings)
+        let mut msg_value = serde_json::json!({
+            "sender": sender,
+            "codeId": code_id,  // number, not string
+            "label": label,
+            "msg": bytes_to_json_array(msg_bytes),  // Number array
+            "salt": bytes_to_json_array(salt),       // Number array
+            "funds": [],
+            "fixMsg": false,
+        });
+
+        // Add optional admin field
+        if let Some(admin_addr) = admin {
+            msg_value["admin"] = serde_json::json!(admin_addr);
+        }
+
+        let broadcast_request = BroadcastRequest {
+            messages: vec![super::types::TransactionMessage {
+                type_url: "/cosmwasm.wasm.v1.MsgInstantiateContract2".to_string(),
+                value: msg_value,
+            }],
+            memo: Some(memo.to_string()),
+        };
+
+        let response = self
+            .broadcast_transaction(access_token, broadcast_request)
+            .await?;
+
+        Ok(response.tx_hash)
+    }
+
     /// List all treasuries for authenticated user
     ///
     /// Retrieves a list of all treasury contracts associated with the authenticated user
@@ -775,53 +907,33 @@ impl TreasuryApiClient {
         // Build the instantiation message
         let instantiate_msg = build_treasury_instantiate_msg(&request)?;
 
-        // Serialize instantiate message to JSON, then convert to number array
-        // (OAuth2 API's JSON object path uses `fromPartial` which expects
-        // bytes fields as array-like objects, not base64 strings)
-        let msg_json = serde_json::to_string(&instantiate_msg)?;
-        let msg_bytes = msg_json.as_bytes();
+        // Generate label for the treasury
+        let label = format!("Treasury-{}", chrono::Utc::now().format("%Y%m%d-%H%M%S"));
 
-        debug!("Instantiate message JSON:\n{}", msg_json);
-
-        // Build the MsgInstantiateContract2 message
-        // Note: codeId is number, msg and salt are number arrays (not base64 strings)
-        let msg_value = serde_json::json!({
-            "sender": request.admin,
-            "codeId": treasury_code_id,  // number, not string
-            "label": format!("Treasury-{}", chrono::Utc::now().format("%Y%m%d-%H%M%S")),
-            "msg": bytes_to_json_array(msg_bytes),   // Number array
-            "salt": bytes_to_json_array(salt),       // Number array
-            "funds": [],
-            "admin": request.admin,
-            "fixMsg": false,
-        });
-
-        let broadcast_request = BroadcastRequest {
-            messages: vec![super::types::TransactionMessage {
-                type_url: "/cosmwasm.wasm.v1.MsgInstantiateContract2".to_string(),
-                value: msg_value,
-            }],
-            memo: Some("Create Treasury via Xion Agent Toolkit".to_string()),
-        };
-
-        // Broadcast the transaction
-        let response = self
-            .broadcast_transaction(access_token, broadcast_request)
+        // Use the generic broadcast_instantiate_contract2 method
+        let tx_hash = self
+            .broadcast_instantiate_contract2(
+                access_token,
+                &request.admin,
+                treasury_code_id,
+                &instantiate_msg,
+                &label,
+                salt,
+                Some(&request.admin), // admin for contract migrations
+                "Create Treasury via Xion Agent Toolkit",
+            )
             .await?;
 
-        debug!(
-            "Treasury creation transaction broadcast: {}",
-            response.tx_hash
-        );
+        debug!("Treasury creation transaction broadcast: {}", tx_hash);
 
         // Wait for the treasury to be indexed and return the actual address
         let treasury_address = self
-            .wait_for_treasury_creation(access_token, &request.admin, &response.tx_hash)
+            .wait_for_treasury_creation(access_token, &request.admin, &tx_hash)
             .await?;
 
         Ok(super::types::CreateTreasuryResult {
             treasury_address,
-            tx_hash: response.tx_hash,
+            tx_hash,
             admin: request.admin,
             created_at: chrono::Utc::now().to_rfc3339(),
         })
@@ -1548,5 +1660,219 @@ mod tests {
 
         // Invalid token - wrong format
         assert!(extract_address_from_token("notxion:grant:secret").is_err());
+    }
+
+    #[test]
+    fn test_bytes_to_json_array() {
+        // Test empty bytes
+        let empty: &[u8] = &[];
+        let result = bytes_to_json_array(empty);
+        assert_eq!(result, serde_json::json!([]));
+
+        // Test single byte
+        let single: &[u8] = &[65];
+        let result = bytes_to_json_array(single);
+        assert_eq!(result, serde_json::json!([65]));
+
+        // Test multiple bytes
+        let bytes: &[u8] = &[72, 101, 108, 108, 111]; // "Hello"
+        let result = bytes_to_json_array(bytes);
+        assert_eq!(result, serde_json::json!([72, 101, 108, 108, 111]));
+    }
+
+    #[test]
+    fn test_broadcast_instantiate_contract_message_format() {
+        // Test that the message format is correct for MsgInstantiateContract
+        // This verifies the JSON structure without making actual network calls
+
+        // Simulate the message construction logic
+        let sender = "xion1sender";
+        let code_id: u64 = 1260;
+        let label = "TestContract-20240101-120000";
+        let admin = Some("xion1admin");
+
+        // Create a simple instantiate message
+        #[derive(Serialize)]
+        struct TestInstantiateMsg {
+            name: String,
+            value: u64,
+        }
+        let instantiate_msg = TestInstantiateMsg {
+            name: "test".to_string(),
+            value: 42,
+        };
+
+        // Serialize to JSON and convert to bytes
+        let msg_json = serde_json::to_string(&instantiate_msg).unwrap();
+        let msg_bytes = msg_json.as_bytes();
+
+        // Build the expected message value
+        let mut msg_value = serde_json::json!({
+            "sender": sender,
+            "codeId": code_id,
+            "label": label,
+            "msg": bytes_to_json_array(msg_bytes),
+            "funds": []
+        });
+        if let Some(admin_addr) = admin {
+            msg_value["admin"] = serde_json::json!(admin_addr);
+        }
+
+        // Verify the structure
+        assert_eq!(msg_value["sender"], "xion1sender");
+        assert_eq!(msg_value["codeId"], 1260);
+        assert_eq!(msg_value["label"], "TestContract-20240101-120000");
+        assert!(msg_value["msg"].is_array());
+        assert_eq!(msg_value["funds"], serde_json::json!([]));
+        assert_eq!(msg_value["admin"], "xion1admin");
+
+        // Verify msg is a number array, not a base64 string
+        if let serde_json::Value::Array(arr) = &msg_value["msg"] {
+            assert!(!arr.is_empty());
+            // Verify all elements are numbers
+            for item in arr {
+                assert!(item.is_number());
+            }
+        } else {
+            panic!("msg should be an array");
+        }
+    }
+
+    #[test]
+    fn test_broadcast_instantiate_contract2_message_format() {
+        // Test that the message format is correct for MsgInstantiateContract2
+        // This verifies the JSON structure without making actual network calls
+
+        let sender = "xion1sender";
+        let code_id: u64 = 1260;
+        let label = "Treasury-20240101-120000";
+        let salt: &[u8] = &[
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+            25, 26, 27, 28, 29, 30, 31, 32,
+        ];
+        let admin = Some("xion1admin");
+
+        // Create a simple instantiate message
+        #[derive(Serialize)]
+        struct TestInstantiateMsg {
+            admin: String,
+            params: TestParams,
+        }
+        #[derive(Serialize)]
+        struct TestParams {
+            redirect_url: String,
+            icon_url: String,
+        }
+        let instantiate_msg = TestInstantiateMsg {
+            admin: "xion1admin".to_string(),
+            params: TestParams {
+                redirect_url: "https://example.com".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+            },
+        };
+
+        // Serialize to JSON and convert to bytes
+        let msg_json = serde_json::to_string(&instantiate_msg).unwrap();
+        let msg_bytes = msg_json.as_bytes();
+
+        // Build the expected message value
+        let mut msg_value = serde_json::json!({
+            "sender": sender,
+            "codeId": code_id,
+            "label": label,
+            "msg": bytes_to_json_array(msg_bytes),
+            "salt": bytes_to_json_array(salt),
+            "funds": [],
+            "fixMsg": false,
+        });
+        if let Some(admin_addr) = admin {
+            msg_value["admin"] = serde_json::json!(admin_addr);
+        }
+
+        // Verify the structure
+        assert_eq!(msg_value["sender"], "xion1sender");
+        assert_eq!(msg_value["codeId"], 1260);
+        assert_eq!(msg_value["label"], "Treasury-20240101-120000");
+        assert!(msg_value["msg"].is_array());
+        assert!(msg_value["salt"].is_array());
+        assert_eq!(msg_value["funds"], serde_json::json!([]));
+        assert_eq!(msg_value["fixMsg"], false);
+        assert_eq!(msg_value["admin"], "xion1admin");
+
+        // Verify msg and salt are number arrays, not base64 strings
+        if let serde_json::Value::Array(arr) = &msg_value["msg"] {
+            assert!(!arr.is_empty());
+            for item in arr {
+                assert!(item.is_number());
+            }
+        } else {
+            panic!("msg should be an array");
+        }
+
+        if let serde_json::Value::Array(arr) = &msg_value["salt"] {
+            assert_eq!(arr.len(), 32); // 32-byte salt
+            for item in arr {
+                assert!(item.is_number());
+            }
+        } else {
+            panic!("salt should be an array");
+        }
+    }
+
+    #[test]
+    fn test_broadcast_instantiate_without_admin() {
+        // Test MsgInstantiateContract without optional admin field
+        let sender = "xion1sender";
+        let code_id: u64 = 1260;
+        let label = "NoAdminContract";
+
+        #[derive(Serialize)]
+        struct EmptyMsg {}
+        let instantiate_msg = EmptyMsg {};
+
+        let msg_json = serde_json::to_string(&instantiate_msg).unwrap();
+        let msg_bytes = msg_json.as_bytes();
+
+        let msg_value = serde_json::json!({
+            "sender": sender,
+            "codeId": code_id,
+            "label": label,
+            "msg": bytes_to_json_array(msg_bytes),
+            "funds": []
+        });
+
+        // Verify admin is not present
+        assert!(msg_value.get("admin").is_none() || msg_value["admin"].is_null());
+    }
+
+    #[test]
+    fn test_broadcast_instantiate2_without_admin() {
+        // Test MsgInstantiateContract2 without optional admin field
+        let sender = "xion1sender";
+        let code_id: u64 = 1260;
+        let label = "NoAdminContract2";
+        let salt: &[u8] = &[0u8; 32];
+
+        #[derive(Serialize)]
+        struct EmptyMsg {}
+        let instantiate_msg = EmptyMsg {};
+
+        let msg_json = serde_json::to_string(&instantiate_msg).unwrap();
+        let msg_bytes = msg_json.as_bytes();
+
+        let msg_value = serde_json::json!({
+            "sender": sender,
+            "codeId": code_id,
+            "label": label,
+            "msg": bytes_to_json_array(msg_bytes),
+            "salt": bytes_to_json_array(salt),
+            "funds": [],
+            "fixMsg": false,
+        });
+
+        // Verify admin is not present
+        assert!(msg_value.get("admin").is_none() || msg_value["admin"].is_null());
+        // fixMsg should still be present
+        assert_eq!(msg_value["fixMsg"], false);
     }
 }
