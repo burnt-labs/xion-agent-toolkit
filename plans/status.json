@@ -283,10 +283,19 @@
     }
   ],
   "_notes": {
-    "untracked_files": [
-      "plans/knowledge/oauth-client-implementation.md - Development log (2026-03-05), not a plan",
-      "plans/knowledge/treasury-create-design.md - Design document referenced by treasury-create-enhancement",
-      "plans/knowledge/TYPES_COMPARISON.md - Type comparison / mismatch analysis notes"
+    "knowledge": [
+      {
+        "file": "plans/knowledge/oauth-client-implementation.md",
+        "desc": "Development log and technical decisions for OAuthClient implementation (2026-03-05)."
+      },
+      {
+        "file": "plans/knowledge/treasury-create-design.md",
+        "desc": "Design document for enhanced `xion-toolkit treasury create` CLI command."
+      },
+      {
+        "file": "plans/knowledge/TYPES_COMPARISON.md",
+        "desc": "Treasury-related type comparison and mismatch impact analysis notes."
+      }
     ]
   }
 }
