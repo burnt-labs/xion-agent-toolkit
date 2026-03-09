@@ -5,6 +5,13 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/btspoony/xion-agent-toolkit/compare/v0.4.0...0.4.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* **release:** update release-please configuration ([#5](https://github.com/btspoony/xion-agent-toolkit/issues/5)) ([1e7d05a](https://github.com/btspoony/xion-agent-toolkit/commit/1e7d05a7f16290617d28e4f437868d52da9e4406))
+
 ## [0.4.0] (2026-03-09)
 
 ### Features
