@@ -39,7 +39,7 @@ We use a fully automated release pipeline combining:
 ┌─────────────────────────────────────────────────────────────────┐
 │  Merge Release PR                                               │
 │  • release-please creates the release tag                       │
-│  • release-please creates a draft GitHub Release                │
+│  • release-please creates the GitHub Release                    │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -47,7 +47,7 @@ We use a fully automated release pipeline combining:
 │  • Builds binaries for all platforms                            │
 │  • Generates installers and checksums                           │
 │  • Uploads artifacts to the existing GitHub Release             │
-│  • Publishes the release after artifacts are attached           │
+│  • Finalizes the release metadata after artifacts are attached  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -112,9 +112,9 @@ BREAKING CHANGE: The callback server now requires explicit port.
    - Edit the PR description if needed
 
 3. **Merge the Release PR**:
-   - This creates the version tag and a draft GitHub Release
+   - This creates the version tag and GitHub Release
    - The `release-please.yml` workflow dispatches `release.yml`
-   - cargo-dist builds artifacts and publishes the existing release
+   - cargo-dist builds artifacts and uploads them to the existing release
 
 4. **Done!** Monitor the [Actions tab](https://github.com/burnt-labs/xion-agent-toolkit/actions) for build status
 
@@ -201,7 +201,7 @@ Each release includes:
    git tag -d v0.X.X
    git push --delete origin v0.X.X
    ```
-3. Re-run the `Release` workflow with the same tag in the `tag` input, or rerun `Release Please` if the release draft was not created
+3. Re-run the `Release` workflow with the same tag in the `tag` input, or rerun `Release Please` if the release was not created
 
 ## Manual Release (Emergency Only)
 
@@ -250,7 +250,7 @@ The release pipeline intentionally avoids relying on tag-push events from `relea
 
 - `release-please.yml` runs on pushes to `main`
 - When a release is created, it dispatches `release.yml` with `workflow_dispatch`
-- `release.yml` receives the release tag through its `tag` input and uploads artifacts to the existing draft release
+- `release.yml` receives the release tag through its `tag` input and uploads artifacts to the existing release
 
 ## Configuration Files
 

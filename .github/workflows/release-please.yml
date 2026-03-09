@@ -40,6 +40,6 @@ jobs:
       - name: Trigger cargo-dist release workflow
         run: |
           echo "Release ${{ needs.release-please.outputs.tag_name }} created"
-          gh workflow run "release.yml" --ref main -f tag="${{ needs.release-please.outputs.tag_name }}"
+          gh workflow run "release.yml" --repo "${{ github.repository }}" --ref main -f tag="${{ needs.release-please.outputs.tag_name }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
