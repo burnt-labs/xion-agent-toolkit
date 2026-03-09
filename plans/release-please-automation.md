@@ -1,7 +1,8 @@
 ---
-status: InProgress
+status: Done
 created_at: 2026-03-09
 updated_at: 2026-03-09
+done_at: 2026-03-09
 ---
 # Release-please + Cargo-dist Automated Release
 
@@ -74,20 +75,20 @@ Types:
 
 ## Tasks
 
-- [ ] Create release-please-config.json
-- [ ] Create .release-please-manifest.json
-- [ ] Create .github/workflows/release-please.yml
-- [ ] Update CONTRIBUTING.md with commit conventions
-- [ ] Update README.md with installation instructions
-- [ ] Update docs/release.md with new workflow
+- [x] Create release-please-config.json
+- [x] Create .release-please-manifest.json
+- [x] Create .github/workflows/release-please.yml
+- [x] Update CONTRIBUTING.md with commit conventions
+- [x] Update README.md with installation instructions
+- [x] Update docs/release.md with new workflow
 
 ## Acceptance Criteria
 
-- [ ] release-please workflow triggers on merge to main
-- [ ] Release PR is created with version bump and CHANGELOG
-- [ ] Merging Release PR creates tag and triggers cargo-dist
-- [ ] Documentation updated with commit conventions
-- [ ] README includes installation from releases
+- [x] release-please workflow triggers on merge to main
+- [x] Release PR is created with version bump and CHANGELOG
+- [x] Merging Release PR creates tag and triggers cargo-dist
+- [x] Documentation updated with commit conventions
+- [x] README includes installation from releases
 
 ## Sign-off
 
@@ -95,3 +96,4 @@ Types:
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-03-09 | @project-manager | Full automation complete | ✅ Done |
