@@ -380,6 +380,31 @@ Treat the CLI as a command-line equivalent of the Developer Portal:
 3. Match encoding patterns exactly.
 4. Follow the same field naming conventions.
 
+## OAuth2 API vs Query API
+
+### Important: OAuth2 API is Transaction-Only
+
+The OAuth2 API (`/api/v1/transaction`) is designed for **transaction broadcasting only**, not for querying.
+
+- **OAuth2 API**: Use only for `/api/v1/transaction` endpoint (signing and broadcasting transactions)
+- **Query operations**: Use DaoDao Indexer or direct chain queries (RPC)
+
+### Query Data Sources
+
+| Data | Source |
+| ---- | ------ |
+| Treasury list | DaoDao Indexer (`{indexer_url}/contract/{user_address}/xion/account/treasuries`) |
+| Treasury info | DaoDao Indexer (basic) + on-chain query (admin, grants, fee config) |
+| Transaction status | RPC (`{rpc_url}/tx?hash=0x...`) |
+| Authz grants | Chain query via RPC |
+
+### Why This Matters
+
+1. OAuth2 API is optimized for transaction signing with session keys
+2. Query endpoints on OAuth2 API may not exist or return incomplete data
+3. Indexer provides faster, aggregated views of treasury data
+4. Direct chain queries ensure data accuracy for critical fields
+
 <!-- gitnexus:start -->
 ## GitNexus — Code Intelligence
 

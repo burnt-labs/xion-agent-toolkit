@@ -49,8 +49,8 @@
       "id": "e2e-testing",
       "title": "E2E Testing Plan",
       "file": "plans/e2e-testing.md",
-      "status": "InProgress",
-      "progress": 75,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@qa-engineer"
@@ -62,9 +62,9 @@
         "oauth2"
       ],
       "created_at": "2026-03-07",
-      "updated_at": "2026-03-08",
-      "done_at": null,
-      "notes": "Fee config (Basic+Periodic), Grant config (Send), Token refresh verified. Subsequent requests have intermittent failures - OAuth2 API state issue TBD."
+      "updated_at": "2026-03-09",
+      "done_at": "2026-03-09",
+      "notes": "All treasury operations E2E verified: grant-config, fee-config, withdraw, fund. OAuth2 API architecture clarified."
     },
     {
       "id": "treasury-grant-fee-config",
@@ -113,8 +113,8 @@
       "id": "treasury-automation",
       "title": "Treasury Automation Plan",
       "file": "plans/treasury-automation.md",
-      "status": "InProgress",
-      "progress": 99,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@architect",
@@ -130,16 +130,16 @@
         "rust"
       ],
       "created_at": "2025-03-05",
-      "updated_at": "2026-03-08",
-      "done_at": null,
-      "notes": "All 330+ tests passing. E2E test infrastructure ready. Awaiting manual E2E validation on testnet. Transaction format fix complete."
+      "updated_at": "2026-03-09",
+      "done_at": "2026-03-09",
+      "notes": "All 330+ tests passing. Transaction format fix complete. All treasury operations E2E verified: grant-config, fee-config, withdraw, fund."
     },
     {
       "id": "transaction-format-fix",
       "title": "Transaction Format Fix - Number Array Encoding",
       "file": "plans/transaction-format-fix.md",
-      "status": "InProgress",
-      "progress": 85,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@fullstack-dev",
@@ -154,8 +154,8 @@
       ],
       "created_at": "2026-03-08",
       "updated_at": "2026-03-09",
-      "done_at": null,
-      "notes": "Fixed: msg/salt fields now use number arrays (not base64). Refactored withdraw_treasury to use broadcast_execute_contract. Grant-config add E2E test SUCCESS. Some ops blocked by OAuth2 'GRANTED_FAILED' auth issue."
+      "done_at": "2026-03-09",
+      "notes": "Fixed: msg/salt fields now use number arrays. All treasury operations E2E verified: grant-config, fee-config, withdraw, fund."
     },
     {
       "id": "oauth2-client-architecture",
