@@ -62,7 +62,6 @@ Each release includes pre-built binaries for:
 | Platform | Target | Archive Format |
 |----------|--------|----------------|
 | Linux x64 (GNU) | `x86_64-unknown-linux-gnu` | `.tar.xz` |
-| Linux x64 (musl) | `x86_64-unknown-linux-musl` | `.tar.xz` |
 | Linux ARM64 | `aarch64-unknown-linux-gnu` | `.tar.xz` |
 | macOS Intel | `x86_64-apple-darwin` | `.tar.xz` |
 | macOS Apple Silicon | `aarch64-apple-darwin` | `.tar.xz` |
