@@ -3,6 +3,48 @@
   "updated_at": "2026-03-09",
   "plans": [
 {
+      "id": "documentation-update",
+      "title": "Documentation Update",
+      "file": "plans/documentation-update.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": [
+        "@frontend-dev"
+      ],
+      "tags": [
+        "documentation",
+        "readme",
+        "skills",
+        "cli-reference"
+      ],
+      "created_at": "2026-03-09",
+      "updated_at": "2026-03-09",
+      "done_at": null,
+      "notes": "Update README, skills scripts, and create CLI reference documentation"
+    },
+{
+      "id": "treasury-e2e-testing",
+      "title": "Treasury E2E Testing",
+      "file": "plans/treasury-e2e-testing.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": [
+        "@qa-engineer"
+      ],
+      "tags": [
+        "testing",
+        "e2e",
+        "treasury",
+        "lifecycle"
+      ],
+      "created_at": "2026-03-09",
+      "updated_at": "2026-03-09",
+      "done_at": null,
+      "notes": "Full treasury lifecycle E2E tests: create → fund → configure → manage → query → withdraw"
+    },
+{
       "id": "generic-contract-instantiation-api",
       "title": "Generic Contract Instantiation Public API",
       "file": "plans/generic-contract-instantiation-api.md",
