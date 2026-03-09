@@ -8,10 +8,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Treasury creation command (planned)
-- Treasury fund/withdraw operations (planned)
-- Grant configuration management (planned)
-- Agent skills (xion-oauth2, xion-treasury) (planned)
+- Treasury E2E lifecycle testing (planned)
+
+## [0.2.0] - 2026-03-09
+
+### Added - Treasury Enhancements
+
+#### Admin Management
+- `treasury admin propose` - Propose a new admin for treasury
+- `treasury admin accept` - Accept admin role (called by pending admin)
+- `treasury admin cancel` - Cancel pending admin proposal
+
+#### Params Configuration
+- `treasury params update` - Update treasury metadata (redirect_url, icon_url, metadata)
+
+#### Chain Query
+- `treasury chain-query grants` - List authz grants via on-chain RPC
+- `treasury chain-query allowances` - List fee allowances via on-chain RPC
+
+#### Batch Operations
+- `grant_config_batch` API method for batch grant configuration
+
+### Added - Contract Commands
+
+#### New Contract Subcommand
+- `contract instantiate` - Instantiate a new smart contract (moved from treasury)
+- `contract instantiate2` - Instantiate with predictable address (moved from treasury)
+
+### Added - Documentation
+- `docs/cli-reference.md` - Comprehensive CLI command reference
+- Updated README.md with all new commands
+- Updated skills scripts with new CLI commands
+- `skills/xion-treasury/scripts/admin.sh` - Admin management operations
+- `skills/xion-treasury/scripts/chain-query.sh` - On-chain query operations
+- `skills/xion-treasury/scripts/update-params.sh` - Updated to use actual CLI
+
+### Fixed
+
+#### Transaction Format
+- Fixed `msg` and `salt` fields to use number arrays instead of base64 strings
+- Fixed Coin protobuf field order: denom=field1, amount=field2
+- Fixed `ProtobufAny.value` encoding from Binary to String
+
+#### OAuth2 API Format
+- Fixed `MsgExecuteContract.msg` to use raw JSON object format
+- Standardized transaction message formats for treasury operations
+- Fixed metadata JSON parsing to return clear error messages
+- Fixed empty params validation in `update_params`
+
+### Changed
+
+#### CLI Restructure
+- **BREAKING**: Moved `instantiate` and `instantiate2` from `treasury` to `contract` subcommand
+  - Old: `xion-toolkit treasury instantiate`
+  - New: `xion-toolkit contract instantiate`
+
+#### API Changes
+- Added `rpc_url` parameter to `TreasuryApiClient::new()` for on-chain queries
+- Made `broadcast_instantiate_contract` and `broadcast_instantiate_contract2` public
+- Added `InstantiateResult` and `Instantiate2Result` types
+
+### Testing
+- 330+ unit tests passing
+- Integration tests for treasury operations
+- E2E tests verified: grant-config, fee-config, withdraw, fund
 
 ## [0.1.0] - 2026-03-05
 
@@ -194,21 +254,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **0.2.0** (2026-03-09) - Treasury Enhancements, Contract Commands, Documentation
 - **0.1.0** (2026-03-05) - Phase 1, 2, 3 core complete
 - **0.0.1** (2025-03-05) - Initial project setup
 
 ## Next Milestones
 
-- **0.2.0** - Phase 3.5: Advanced Treasury features
-  - Treasury creation
-  - Fund/withdraw operations
-  - Grant configuration management
+- **0.3.0** - Phase 5: Advanced Features
+  - Treasury E2E lifecycle testing
+  - Batch CLI commands
+  - Performance optimizations
   
-- **0.3.0** - Phase 4: Agent Skills
-  - xion-oauth2 skill
-  - xion-treasury skill
-  - Documentation and examples
-
 - **1.0.0** - Production release
   - Complete feature set
   - Comprehensive testing
