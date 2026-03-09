@@ -487,6 +487,7 @@ async fn test_create_treasury_api_success() {
     let client = TreasuryApiClient::new(
         server.url(),
         server.url(), // Use mock server as indexer URL
+        "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     );
 
     let request = CreateTreasuryRequest {
@@ -555,6 +556,7 @@ async fn test_create_treasury_api_unauthorized() {
     let client = TreasuryApiClient::new(
         server.url(),
         "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+        "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     );
 
     let request = CreateTreasuryRequest {
@@ -768,6 +770,7 @@ async fn test_full_create_flow_with_mocks() {
     let client = TreasuryApiClient::new(
         server.url(),
         server.url(), // Use mock server as indexer URL
+        "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     );
 
     // Test that we can build and encode a treasury create request

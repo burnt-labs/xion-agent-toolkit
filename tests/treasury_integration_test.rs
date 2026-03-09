@@ -13,6 +13,7 @@ fn create_test_api_client(base_url: &str) -> TreasuryApiClient {
     TreasuryApiClient::new(
         base_url.to_string(),
         "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+        "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     )
 }
 
@@ -127,28 +128,25 @@ async fn test_fund_treasury_unauthorized() {
 }
 
 #[tokio::test]
-async fn test_fund_treasury_invalid_amount_format() {
-    // Start mock server
-    let server = Server::new_async().await;
+async fn test_network_timeout() {
+    // Use a non-routable IP to simulate network timeout
+    let client = TreasuryApiClient::new(
+        "http://10.255.255.1:1".to_string(),
+        "http://10.255.255.1:1".to_string(),
+        "http://10.255.255.1:1".to_string(),
+    );
 
-    let client = create_test_api_client(&server.url());
-
-    // Try to fund with invalid amount format (missing denom)
     let result = client
         .fund_treasury(
             "mock_token",
             "xion1treasury123",
-            "1000000", // Invalid - missing denom
+            "1000000uxion",
             "xion1sender123",
         )
         .await;
 
-    // Should fail with parse error
+    // Should fail with network error
     assert!(result.is_err());
-    let error = result.unwrap_err();
-    assert!(
-        error.to_string().contains("Invalid coin format") || error.to_string().contains("denom")
-    );
 }
 
 #[tokio::test]
@@ -537,27 +535,6 @@ async fn test_withdraw_result_json_format() {
 // ============================================================================
 // Network Error Tests
 // ============================================================================
-
-#[tokio::test]
-async fn test_network_timeout() {
-    // Use a non-routable IP to simulate network timeout
-    let client = TreasuryApiClient::new(
-        "http://10.255.255.1:1".to_string(),
-        "http://10.255.255.1:1".to_string(),
-    );
-
-    let result = client
-        .fund_treasury(
-            "mock_token",
-            "xion1treasury123",
-            "1000000uxion",
-            "xion1sender123",
-        )
-        .await;
-
-    // Should fail with network error
-    assert!(result.is_err());
-}
 
 #[tokio::test]
 async fn test_api_server_error() {

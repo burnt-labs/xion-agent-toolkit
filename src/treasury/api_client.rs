@@ -37,6 +37,8 @@ pub struct TreasuryApiClient {
     base_url: String,
     /// DaoDao Indexer URL for treasury listing
     indexer_url: String,
+    /// RPC URL for on-chain queries
+    rpc_url: String,
     /// HTTP client for making requests
     http_client: Client,
 }
@@ -135,6 +137,7 @@ impl TreasuryApiClient {
     /// # Arguments
     /// * `base_url` - Base URL of the Treasury API service (e.g., "https://oauth2.testnet.burnt.com")
     /// * `indexer_url` - DaoDao Indexer URL for listing treasuries (e.g., "https://daodaoindexer.burnt.com/xion-testnet-2")
+    /// * `rpc_url` - RPC URL for on-chain queries (e.g., "https://rpc.xion-testnet-2.burnt.com:443")
     ///
     /// # Example
     /// ```no_run
@@ -143,9 +146,10 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     /// ```
-    pub fn new(base_url: String, indexer_url: String) -> Self {
+    pub fn new(base_url: String, indexer_url: String, rpc_url: String) -> Self {
         let http_client = Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
@@ -154,6 +158,7 @@ impl TreasuryApiClient {
         Self {
             base_url,
             indexer_url,
+            rpc_url,
             http_client,
         }
     }
@@ -363,6 +368,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     /// let treasuries = client.list_treasuries("access_token_123").await?;
     /// println!("Found {} treasuries", treasuries.len());
@@ -482,6 +488,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     /// let options = QueryOptions::default();
     /// let treasury = client.query_treasury(
@@ -617,6 +624,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     ///
     /// let request = BroadcastRequest {
@@ -701,6 +709,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     /// let result = client.fund_treasury(
     ///     "access_token_123",
@@ -766,6 +775,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     /// let result = client.withdraw_treasury(
     ///     "access_token_123",
@@ -851,6 +861,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     /// );
     ///
     /// let request = CreateTreasuryRequest {
@@ -1442,6 +1453,526 @@ impl TreasuryApiClient {
             Ok(None)
         }
     }
+
+    // ========================================================================
+    // Admin Management Operations
+    // ========================================================================
+
+    /// Propose a new admin for a treasury
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `treasury_address` - Treasury contract address
+    /// * `new_admin` - New admin address to propose
+    /// * `from_address` - Current admin's MetaAccount address
+    ///
+    /// # Returns
+    /// Admin result with transaction hash
+    #[instrument(skip(self, access_token))]
+    pub async fn propose_admin(
+        &self,
+        access_token: &str,
+        treasury_address: &str,
+        new_admin: &str,
+        from_address: &str,
+    ) -> Result<super::types::AdminResult> {
+        debug!(
+            "Proposing new admin {} for treasury: {}",
+            new_admin, treasury_address
+        );
+
+        // Create the propose_admin message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::ProposeAdmin {
+            new_admin: new_admin.to_string(),
+        };
+
+        // Broadcast using helper function
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                &format!("Propose new admin: {}", new_admin),
+            )
+            .await?;
+
+        Ok(super::types::AdminResult {
+            treasury_address: treasury_address.to_string(),
+            operation: "propose".to_string(),
+            new_admin: Some(new_admin.to_string()),
+            tx_hash,
+        })
+    }
+
+    /// Accept admin role for a treasury
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `treasury_address` - Treasury contract address
+    /// * `from_address` - Pending admin's MetaAccount address
+    ///
+    /// # Returns
+    /// Admin result with transaction hash
+    #[instrument(skip(self, access_token))]
+    pub async fn accept_admin(
+        &self,
+        access_token: &str,
+        treasury_address: &str,
+        from_address: &str,
+    ) -> Result<super::types::AdminResult> {
+        debug!("Accepting admin role for treasury: {}", treasury_address);
+
+        // Create the accept_admin message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::AcceptAdmin {};
+
+        // Broadcast using helper function
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                "Accept admin role",
+            )
+            .await?;
+
+        Ok(super::types::AdminResult {
+            treasury_address: treasury_address.to_string(),
+            operation: "accept".to_string(),
+            new_admin: None,
+            tx_hash,
+        })
+    }
+
+    /// Cancel proposed admin for a treasury
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `treasury_address` - Treasury contract address
+    /// * `from_address` - Current admin's MetaAccount address
+    ///
+    /// # Returns
+    /// Admin result with transaction hash
+    #[instrument(skip(self, access_token))]
+    pub async fn cancel_proposed_admin(
+        &self,
+        access_token: &str,
+        treasury_address: &str,
+        from_address: &str,
+    ) -> Result<super::types::AdminResult> {
+        debug!(
+            "Canceling proposed admin for treasury: {}",
+            treasury_address
+        );
+
+        // Create the cancel_proposed_admin message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::CancelProposedAdmin {};
+
+        // Broadcast using helper function
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                "Cancel proposed admin",
+            )
+            .await?;
+
+        Ok(super::types::AdminResult {
+            treasury_address: treasury_address.to_string(),
+            operation: "cancel".to_string(),
+            new_admin: None,
+            tx_hash,
+        })
+    }
+
+    // ========================================================================
+    // Params Management Operations
+    // ========================================================================
+
+    /// Update treasury parameters
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `treasury_address` - Treasury contract address
+    /// * `params` - New parameters to set
+    /// * `from_address` - Admin's MetaAccount address
+    ///
+    /// # Returns
+    /// Params result with transaction hash
+    #[instrument(skip(self, access_token))]
+    pub async fn update_params(
+        &self,
+        access_token: &str,
+        treasury_address: &str,
+        params: super::types::UpdateParamsInput,
+        from_address: &str,
+    ) -> Result<super::types::ParamsResult> {
+        debug!("Updating params for treasury: {}", treasury_address);
+
+        // Validate that at least one parameter is provided
+        if params.redirect_url.is_none()
+            && params.icon_url.is_none()
+            && params.metadata.is_none()
+        {
+            anyhow::bail!("At least one parameter must be provided for update (redirect_url, icon_url, or metadata)");
+        }
+
+        // Build params chain format
+        // Note: metadata should be JSON string, not JSON object
+        let params_chain = super::types::TreasuryParamsChain {
+            redirect_url: params.redirect_url.unwrap_or_default(),
+            icon_url: params.icon_url.unwrap_or_default(),
+            metadata: params
+                .metadata
+                .map(|m| m.to_string())
+                .unwrap_or_else(|| "{}".to_string()),
+        };
+
+        // Create the update_params message (matches contract's ExecuteMsg)
+        let exec_msg = super::types::TreasuryExecuteMsg::UpdateParams {
+            params: params_chain,
+        };
+
+        // Broadcast using helper function
+        let tx_hash = self
+            .broadcast_execute_contract(
+                access_token,
+                from_address,
+                treasury_address,
+                &exec_msg,
+                "Update treasury params",
+            )
+            .await?;
+
+        Ok(super::types::ParamsResult {
+            treasury_address: treasury_address.to_string(),
+            tx_hash,
+        })
+    }
+
+    // ========================================================================
+    // Batch Operations
+    // ========================================================================
+
+    /// Add multiple grant configurations in a single transaction
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token
+    /// * `treasury_address` - Treasury contract address
+    /// * `grant_configs` - List of grant configurations to add
+    /// * `from_address` - Admin's MetaAccount address
+    ///
+    /// # Returns
+    /// Batch grant config result with transaction hash
+    #[allow(dead_code)]
+    #[instrument(skip(self, access_token, grant_configs))]
+    pub async fn grant_config_batch(
+        &self,
+        access_token: &str,
+        treasury_address: &str,
+        grant_configs: Vec<(String, super::types::GrantConfigInput)>,
+        from_address: &str,
+    ) -> Result<super::types::BatchGrantConfigResult> {
+        debug!(
+            "Adding {} grant configs in batch to treasury: {}",
+            grant_configs.len(),
+            treasury_address
+        );
+
+        // Save the count before consuming the vector
+        let count = grant_configs.len();
+
+        // Build multiple update_grant_config messages
+        let mut messages = Vec::new();
+
+        for (type_url, grant_config_input) in grant_configs {
+            // Encode the authorization
+            let (auth_type_url, auth_value) = super::encoding::encode_authorization_input(
+                &grant_config_input.authorization,
+                &type_url,
+            )?;
+
+            // Build the grant config for chain
+            let grant_config_chain = super::types::GrantConfigChain {
+                description: grant_config_input.description.clone(),
+                authorization: super::types::ProtobufAny {
+                    type_url: auth_type_url,
+                    value: auth_value,
+                },
+                optional: grant_config_input.optional,
+            };
+
+            // Create update_grant_config execute message
+            let exec_msg = super::types::TreasuryExecuteMsg::UpdateGrantConfig {
+                msg_type_url: type_url,
+                grant_config: grant_config_chain,
+            };
+
+            // Serialize execute message
+            let msg_json = serde_json::to_string(&exec_msg)?;
+            let msg_bytes = msg_json.as_bytes();
+
+            // Build MsgExecuteContract message
+            let msg_value = serde_json::json!({
+                "sender": from_address,
+                "contract": treasury_address,
+                "msg": bytes_to_json_array(msg_bytes),
+                "funds": []
+            });
+
+            messages.push(super::types::TransactionMessage {
+                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
+                value: msg_value,
+            });
+        }
+
+        // Broadcast all messages in a single transaction
+        let broadcast_request = BroadcastRequest {
+            messages,
+            memo: Some(format!("Batch update {} grant configs", count)),
+        };
+
+        let response = self
+            .broadcast_transaction(access_token, broadcast_request)
+            .await?;
+
+        Ok(super::types::BatchGrantConfigResult {
+            treasury_address: treasury_address.to_string(),
+            count,
+            tx_hash: response.tx_hash,
+        })
+    }
+
+    // ========================================================================
+    // On-Chain Query Operations (via RPC)
+    // ========================================================================
+
+    /// List all authz grants for a treasury (granter)
+    ///
+    /// Queries the blockchain directly via RPC for authz grants.
+    ///
+    /// # Arguments
+    /// * `treasury_address` - Treasury contract address (granter)
+    ///
+    /// # Returns
+    /// List of authz grants where the treasury is the granter
+    #[instrument(skip(self))]
+    pub async fn list_authz_grants(
+        &self,
+        treasury_address: &str,
+    ) -> Result<Vec<super::types::AuthzGrantInfo>> {
+        debug!("Listing authz grants for treasury: {}", treasury_address);
+
+        // Query authz grants via RPC
+        // Endpoint: /cosmos/authz/v1beta1/grants?granter={treasury_address}
+        let url = format!(
+            "{}/cosmos/authz/v1beta1/grants?granter={}",
+            self.rpc_url, treasury_address
+        );
+
+        let response = self
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to query authz grants")?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            anyhow::bail!("Failed to query authz grants: {} - {}", status, error_text);
+        }
+
+        // Parse the response
+        #[derive(Debug, Deserialize)]
+        struct AuthzGrantsResponse {
+            grants: Vec<AuthzGrantItem>,
+        }
+
+        #[derive(Debug, Deserialize)]
+        struct AuthzGrantItem {
+            granter: String,
+            grantee: String,
+            authorization: Option<serde_json::Value>,
+            expiration: Option<String>,
+        }
+
+        let grants_response: AuthzGrantsResponse = response
+            .json()
+            .await
+            .context("Failed to parse authz grants response")?;
+
+        // Convert to AuthzGrantInfo
+        let grants: Vec<super::types::AuthzGrantInfo> = grants_response
+            .grants
+            .into_iter()
+            .map(|grant| {
+                let authorization_type_url = grant
+                    .authorization
+                    .as_ref()
+                    .and_then(|auth| auth.get("@type"))
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                super::types::AuthzGrantInfo {
+                    granter: grant.granter,
+                    grantee: grant.grantee,
+                    authorization_type_url,
+                    expiration: grant.expiration,
+                }
+            })
+            .collect();
+
+        debug!("Found {} authz grants", grants.len());
+        Ok(grants)
+    }
+
+    /// List all fee allowances for a treasury (granter)
+    ///
+    /// Queries the blockchain directly via RPC for fee allowances.
+    ///
+    /// # Arguments
+    /// * `treasury_address` - Treasury contract address (granter)
+    ///
+    /// # Returns
+    /// List of fee allowances where the treasury is the granter
+    #[instrument(skip(self))]
+    pub async fn list_fee_allowances(
+        &self,
+        treasury_address: &str,
+    ) -> Result<Vec<super::types::FeeAllowanceInfo>> {
+        debug!("Listing fee allowances for treasury: {}", treasury_address);
+
+        // Query fee allowances via RPC
+        // Endpoint: /cosmos/feegrant/v1beta1/allowances/{granter}
+        let url = format!(
+            "{}/cosmos/feegrant/v1beta1/allowances/{}",
+            self.rpc_url, treasury_address
+        );
+
+        let response = self
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to query fee allowances")?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            anyhow::bail!(
+                "Failed to query fee allowances: {} - {}",
+                status,
+                error_text
+            );
+        }
+
+        // Parse the response
+        #[derive(Debug, Deserialize)]
+        struct FeeAllowancesResponse {
+            allowances: Vec<FeeAllowanceItem>,
+        }
+
+        #[derive(Debug, Deserialize)]
+        struct FeeAllowanceItem {
+            granter: String,
+            grantee: String,
+            allowance: Option<serde_json::Value>,
+        }
+
+        let allowances_response: FeeAllowancesResponse = response
+            .json()
+            .await
+            .context("Failed to parse fee allowances response")?;
+
+        // Convert to FeeAllowanceInfo
+        let allowances: Vec<super::types::FeeAllowanceInfo> = allowances_response
+            .allowances
+            .into_iter()
+            .map(|allowance| {
+                let allowance_type_url = allowance
+                    .allowance
+                    .as_ref()
+                    .and_then(|a| a.get("@type"))
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                // Extract spend limit if present
+                let spend_limit = allowance.allowance.as_ref().and_then(|a| {
+                    a.get("spend_limit")
+                        .and_then(|sl| sl.as_array())
+                        .and_then(|coins| coins.first())
+                        .and_then(|coin| {
+                            let amount = coin.get("amount")?.as_str()?;
+                            let denom = coin.get("denom")?.as_str()?;
+                            Some(format!("{}{}", amount, denom))
+                        })
+                });
+
+                // Extract expiration if present
+                let expiration = allowance
+                    .allowance
+                    .as_ref()
+                    .and_then(|a| a.get("expiration"))
+                    .and_then(|e| {
+                        // Try to parse as timestamp and convert to string
+                        e.as_str()
+                            .map(|s| s.to_string())
+                            .or_else(|| e.as_i64().map(|ts| ts.to_string()))
+                    });
+
+                // Extract period details for periodic allowance
+                let (period, period_spend_limit, period_can_spend) = allowance
+                    .allowance
+                    .as_ref()
+                    .map(|a| {
+                        let period = a
+                            .get("period")
+                            .and_then(|p| p.as_str())
+                            .map(|s| s.to_string());
+                        let period_spend_limit = a
+                            .get("period_spend_limit")
+                            .and_then(|sl| sl.as_array())
+                            .and_then(|coins| coins.first())
+                            .and_then(|coin| {
+                                let amount = coin.get("amount")?.as_str()?;
+                                let denom = coin.get("denom")?.as_str()?;
+                                Some(format!("{}{}", amount, denom))
+                            });
+                        let period_can_spend = a
+                            .get("period_can_spend")
+                            .and_then(|sl| sl.as_array())
+                            .and_then(|coins| coins.first())
+                            .and_then(|coin| {
+                                let amount = coin.get("amount")?.as_str()?;
+                                let denom = coin.get("denom")?.as_str()?;
+                                Some(format!("{}{}", amount, denom))
+                            });
+                        (period, period_spend_limit, period_can_spend)
+                    })
+                    .unwrap_or((None, None, None));
+
+                super::types::FeeAllowanceInfo {
+                    granter: allowance.granter,
+                    grantee: allowance.grantee,
+                    allowance_type_url,
+                    spend_limit,
+                    expiration,
+                    period,
+                    period_spend_limit,
+                    period_can_spend,
+                }
+            })
+            .collect();
+
+        debug!("Found {} fee allowances", allowances.len());
+        Ok(allowances)
+    }
 }
 
 #[cfg(test)]
@@ -1453,6 +1984,7 @@ mod tests {
         let client = TreasuryApiClient::new(
             "https://test.com".to_string(),
             "https://indexer.test.com/network".to_string(),
+            "https://rpc.test.com:443".to_string(),
         );
         assert_eq!(client.base_url, "https://test.com");
     }
@@ -1572,7 +2104,11 @@ mod tests {
             )
             .create();
 
-        let client = TreasuryApiClient::new(server.url(), server.url());
+        let client = TreasuryApiClient::new(
+            server.url(),
+            server.url(),
+            "https://rpc.test.com:443".to_string(),
+        );
 
         // Call the wait_for_treasury_creation method
         let result = client
@@ -1630,7 +2166,11 @@ mod tests {
             )
             .create();
 
-        let client = TreasuryApiClient::new(server.url(), server.url());
+        let client = TreasuryApiClient::new(
+            server.url(),
+            server.url(),
+            "https://rpc.test.com:443".to_string(),
+        );
 
         let result = client
             .wait_for_treasury_creation(&token, admin_address, "tx456")

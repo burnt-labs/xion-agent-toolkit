@@ -94,8 +94,11 @@ impl TreasuryManager {
     /// # }
     /// ```
     pub fn new(oauth_client: OAuthClient, config: NetworkConfig) -> Self {
-        let api_client =
-            TreasuryApiClient::new(config.oauth_api_url.clone(), config.indexer_url.clone());
+        let api_client = TreasuryApiClient::new(
+            config.oauth_api_url.clone(),
+            config.indexer_url.clone(),
+            config.rpc_url.clone(),
+        );
         let cache = Some(Arc::new(RwLock::new(TreasuryCache::new())));
 
         Self {
@@ -111,8 +114,11 @@ impl TreasuryManager {
     /// Disables caching for all operations. Useful when you always need fresh data.
     #[allow(dead_code)]
     pub fn without_cache(oauth_client: OAuthClient, config: NetworkConfig) -> Self {
-        let api_client =
-            TreasuryApiClient::new(config.oauth_api_url.clone(), config.indexer_url.clone());
+        let api_client = TreasuryApiClient::new(
+            config.oauth_api_url.clone(),
+            config.indexer_url.clone(),
+            config.rpc_url.clone(),
+        );
 
         Self {
             oauth_client,
@@ -993,6 +999,228 @@ impl TreasuryManager {
         self.api_client
             .query_fee_config(&access_token, address)
             .await
+    }
+
+    // ========================================================================
+    // Admin Management Operations
+    // ========================================================================
+
+    /// Propose a new admin for a treasury
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    /// * `new_admin` - New admin address to propose
+    ///
+    /// # Returns
+    /// Admin result with transaction hash
+    #[instrument(skip(self))]
+    pub async fn propose_admin(
+        &self,
+        address: &str,
+        new_admin: &str,
+    ) -> Result<super::types::AdminResult> {
+        debug!("Proposing new admin {} for treasury {}", new_admin, address);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to propose admin
+        self.api_client
+            .propose_admin(&access_token, address, new_admin, &from_address)
+            .await
+    }
+
+    /// Accept admin role for a treasury
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    ///
+    /// # Returns
+    /// Admin result with transaction hash
+    #[instrument(skip(self))]
+    pub async fn accept_admin(&self, address: &str) -> Result<super::types::AdminResult> {
+        debug!("Accepting admin role for treasury {}", address);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to accept admin
+        self.api_client
+            .accept_admin(&access_token, address, &from_address)
+            .await
+    }
+
+    /// Cancel proposed admin for a treasury
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    ///
+    /// # Returns
+    /// Admin result with transaction hash
+    #[instrument(skip(self))]
+    pub async fn cancel_proposed_admin(&self, address: &str) -> Result<super::types::AdminResult> {
+        debug!("Canceling proposed admin for treasury {}", address);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to cancel proposed admin
+        self.api_client
+            .cancel_proposed_admin(&access_token, address, &from_address)
+            .await
+    }
+
+    // ========================================================================
+    // Params Management Operations
+    // ========================================================================
+
+    /// Update treasury parameters
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    /// * `params` - New parameters to set
+    ///
+    /// # Returns
+    /// Params result with transaction hash
+    #[instrument(skip(self))]
+    pub async fn update_params(
+        &self,
+        address: &str,
+        params: super::types::UpdateParamsInput,
+    ) -> Result<super::types::ParamsResult> {
+        debug!("Updating params for treasury {}", address);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to update params
+        self.api_client
+            .update_params(&access_token, address, params, &from_address)
+            .await
+    }
+
+    // ========================================================================
+    // Batch Operations
+    // ========================================================================
+
+    /// Add multiple grant configurations in a single transaction
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    /// * `grant_configs` - List of grant configurations to add
+    ///
+    /// # Returns
+    /// Batch grant config result with transaction hash
+    #[allow(dead_code)]
+    #[instrument(skip(self, grant_configs))]
+    pub async fn grant_config_batch(
+        &self,
+        address: &str,
+        grant_configs: Vec<(String, super::types::GrantConfigInput)>,
+    ) -> Result<super::types::BatchGrantConfigResult> {
+        debug!(
+            "Adding {} grant configs in batch to treasury {}",
+            grant_configs.len(),
+            address
+        );
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let from_address = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to add grant configs in batch
+        self.api_client
+            .grant_config_batch(&access_token, address, grant_configs, &from_address)
+            .await
+    }
+
+    // ========================================================================
+    // On-Chain Query Operations
+    // ========================================================================
+
+    /// List all authz grants for a treasury
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address (granter)
+    ///
+    /// # Returns
+    /// List of authz grants
+    #[instrument(skip(self))]
+    pub async fn list_authz_grants(
+        &self,
+        address: &str,
+    ) -> Result<Vec<super::types::AuthzGrantInfo>> {
+        debug!("Listing authz grants for treasury {}", address);
+
+        // Call API client to list authz grants (no auth required for query)
+        self.api_client.list_authz_grants(address).await
+    }
+
+    /// List all fee allowances for a treasury
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address (granter)
+    ///
+    /// # Returns
+    /// List of fee allowances
+    #[instrument(skip(self))]
+    pub async fn list_fee_allowances(
+        &self,
+        address: &str,
+    ) -> Result<Vec<super::types::FeeAllowanceInfo>> {
+        debug!("Listing fee allowances for treasury {}", address);
+
+        // Call API client to list fee allowances (no auth required for query)
+        self.api_client.list_fee_allowances(address).await
     }
 }
 

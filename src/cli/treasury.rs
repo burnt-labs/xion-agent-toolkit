@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Args, Subcommand};
 use std::fs;
 use std::path::PathBuf;
@@ -88,6 +88,81 @@ pub enum TreasuryCommands {
     /// Manage fee configurations
     #[command(subcommand)]
     FeeConfig(FeeConfigCommands),
+
+    /// Manage treasury admin
+    #[command(subcommand)]
+    Admin(AdminCommands),
+
+    /// Manage treasury parameters
+    #[command(subcommand)]
+    Params(ParamsCommands),
+
+    /// Query on-chain data (authz grants, fee allowances)
+    #[command(subcommand)]
+    ChainQuery(ChainQueryCommands),
+}
+
+/// Admin management subcommands
+#[derive(Subcommand)]
+pub enum AdminCommands {
+    /// Propose a new admin for the treasury
+    Propose {
+        /// Treasury contract address
+        address: String,
+        /// New admin address
+        #[arg(long)]
+        new_admin: String,
+    },
+
+    /// Accept admin role (called by pending admin)
+    Accept {
+        /// Treasury contract address
+        address: String,
+    },
+
+    /// Cancel proposed admin
+    Cancel {
+        /// Treasury contract address
+        address: String,
+    },
+}
+
+/// Params management subcommands
+#[derive(Subcommand)]
+pub enum ParamsCommands {
+    /// Update treasury parameters
+    Update {
+        /// Treasury contract address
+        address: String,
+
+        /// Redirect URL
+        #[arg(long)]
+        redirect_url: Option<String>,
+
+        /// Icon URL
+        #[arg(long)]
+        icon_url: Option<String>,
+
+        /// Metadata as JSON string
+        #[arg(long)]
+        metadata: Option<String>,
+    },
+}
+
+/// Query subcommands for on-chain data
+#[derive(Subcommand)]
+pub enum ChainQueryCommands {
+    /// List authz grants for a treasury
+    Grants {
+        /// Treasury contract address
+        address: String,
+    },
+
+    /// List fee allowances for a treasury
+    Allowances {
+        /// Treasury contract address
+        address: String,
+    },
 }
 
 /// Grant configuration subcommands
@@ -278,6 +353,9 @@ pub async fn handle_command(cmd: TreasuryCommands) -> Result<()> {
         } => handle_instantiate2(code_id, &label, &msg, salt.as_deref(), admin.as_deref()).await,
         TreasuryCommands::GrantConfig(sub) => handle_grant_config(sub).await,
         TreasuryCommands::FeeConfig(sub) => handle_fee_config(sub).await,
+        TreasuryCommands::Admin(sub) => handle_admin(sub).await,
+        TreasuryCommands::Params(sub) => handle_params(sub).await,
+        TreasuryCommands::ChainQuery(sub) => handle_chain_query(sub).await,
     }
 }
 
@@ -1481,6 +1559,333 @@ async fn handle_fee_config_query(address: &str) -> Result<()> {
                 "success": false,
                 "error": format!("Failed to query fee config: {}", e),
                 "code": "FEE_CONFIG_QUERY_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+// ============================================================================
+// Admin Management Handlers
+// ============================================================================
+
+async fn handle_admin(cmd: AdminCommands) -> Result<()> {
+    match cmd {
+        AdminCommands::Propose { address, new_admin } => {
+            handle_admin_propose(&address, &new_admin).await
+        }
+        AdminCommands::Accept { address } => handle_admin_accept(&address).await,
+        AdminCommands::Cancel { address } => handle_admin_cancel(&address).await,
+    }
+}
+
+async fn handle_admin_propose(address: &str, new_admin: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Proposing new admin {} for treasury {}...",
+        new_admin, address
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Propose admin
+    match manager.propose_admin(address, new_admin).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": result.treasury_address,
+                "operation": result.operation,
+                "new_admin": result.new_admin,
+                "tx_hash": result.tx_hash
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to propose admin: {}", e),
+                "code": "PROPOSE_ADMIN_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+async fn handle_admin_accept(address: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!("Accepting admin role for treasury {}...", address));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Accept admin
+    match manager.accept_admin(address).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": result.treasury_address,
+                "operation": result.operation,
+                "tx_hash": result.tx_hash
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to accept admin: {}", e),
+                "code": "ACCEPT_ADMIN_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+async fn handle_admin_cancel(address: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Canceling proposed admin for treasury {}...",
+        address
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Cancel proposed admin
+    match manager.cancel_proposed_admin(address).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": result.treasury_address,
+                "operation": result.operation,
+                "tx_hash": result.tx_hash
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to cancel proposed admin: {}", e),
+                "code": "CANCEL_ADMIN_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+// ============================================================================
+// Params Management Handlers
+// ============================================================================
+
+async fn handle_params(cmd: ParamsCommands) -> Result<()> {
+    match cmd {
+        ParamsCommands::Update {
+            address,
+            redirect_url,
+            icon_url,
+            metadata,
+        } => handle_params_update(&address, redirect_url, icon_url, metadata).await,
+    }
+}
+
+async fn handle_params_update(
+    address: &str,
+    redirect_url: Option<String>,
+    icon_url: Option<String>,
+    metadata: Option<String>,
+) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!("Updating params for treasury {}...", address));
+
+    // Build params input
+    let metadata_value = match metadata {
+        Some(m) => Some(
+            serde_json::from_str(&m)
+                .context("Invalid JSON in --metadata argument")?,
+        ),
+        None => None,
+    };
+    let params = crate::treasury::types::UpdateParamsInput {
+        redirect_url,
+        icon_url,
+        metadata: metadata_value,
+    };
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Update params
+    match manager.update_params(address, params).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": result.treasury_address,
+                "tx_hash": result.tx_hash
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to update params: {}", e),
+                "code": "UPDATE_PARAMS_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+// ============================================================================
+// Query Handlers (On-Chain)
+// ============================================================================
+
+async fn handle_chain_query(cmd: ChainQueryCommands) -> Result<()> {
+    match cmd {
+        ChainQueryCommands::Grants { address } => handle_query_grants(&address).await,
+        ChainQueryCommands::Allowances { address } => handle_query_allowances(&address).await,
+    }
+}
+
+async fn handle_query_grants(address: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Querying authz grants for treasury {}...",
+        address
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Query authz grants (no auth required for on-chain query)
+    match manager.list_authz_grants(address).await {
+        Ok(grants) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": address,
+                "grants": grants,
+                "count": grants.len()
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to query authz grants: {}", e),
+                "code": "QUERY_GRANTS_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+async fn handle_query_allowances(address: &str) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Querying fee allowances for treasury {}...",
+        address
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Query fee allowances (no auth required for on-chain query)
+    match manager.list_fee_allowances(address).await {
+        Ok(allowances) => {
+            let response = serde_json::json!({
+                "success": true,
+                "treasury_address": address,
+                "allowances": allowances,
+                "count": allowances.len()
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to query fee allowances: {}", e),
+                "code": "QUERY_ALLOWANCES_FAILED"
             });
             print_json(&result)
         }

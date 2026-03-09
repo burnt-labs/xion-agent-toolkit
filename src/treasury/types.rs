@@ -588,6 +588,55 @@ pub struct FeeConfigResult {
     pub tx_hash: String,
 }
 
+/// Result of admin management operations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdminResult {
+    /// Treasury address
+    pub treasury_address: String,
+    /// Operation performed
+    pub operation: String,
+    /// New admin address (for propose_admin)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub new_admin: Option<String>,
+    /// Transaction hash
+    pub tx_hash: String,
+}
+
+/// Result of params update operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParamsResult {
+    /// Treasury address
+    pub treasury_address: String,
+    /// Transaction hash
+    pub tx_hash: String,
+}
+
+/// Result of batch grant config operation
+#[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchGrantConfigResult {
+    /// Treasury address
+    pub treasury_address: String,
+    /// Number of grant configs processed
+    pub count: usize,
+    /// Transaction hash
+    pub tx_hash: String,
+}
+
+/// Input for update params command
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateParamsInput {
+    /// Redirect URL for OAuth callbacks
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redirect_url: Option<String>,
+    /// Icon URL for display
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon_url: Option<String>,
+    /// Additional metadata as JSON object
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
 /// Fee config info (from query)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeeConfigInfo {
@@ -601,6 +650,48 @@ pub struct FeeConfigInfo {
     /// Expiration (if any)
     #[serde(default)]
     pub expiration: Option<String>,
+}
+
+// ============================================================================
+// QUERY RESULT TYPES (ON-CHAIN)
+// ============================================================================
+
+/// Authz grant info from on-chain query
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthzGrantInfo {
+    /// Granter address
+    pub granter: String,
+    /// Grantee address
+    pub grantee: String,
+    /// Authorization type URL
+    pub authorization_type_url: String,
+    /// Expiration time (optional)
+    #[serde(default)]
+    pub expiration: Option<String>,
+}
+
+/// Fee allowance info from on-chain query
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeeAllowanceInfo {
+    /// Granter address
+    pub granter: String,
+    /// Grantee address
+    pub grantee: String,
+    /// Allowance type URL
+    pub allowance_type_url: String,
+    /// Spend limit (if any)
+    #[serde(default)]
+    pub spend_limit: Option<String>,
+    /// Expiration time (optional)
+    #[serde(default)]
+    pub expiration: Option<String>,
+    /// Period details (for periodic allowance)
+    #[serde(default)]
+    pub period: Option<String>,
+    #[serde(default)]
+    pub period_spend_limit: Option<String>,
+    #[serde(default)]
+    pub period_can_spend: Option<String>,
 }
 
 // ============================================================================
@@ -632,6 +723,14 @@ pub enum TreasuryExecuteMsg {
     },
     Withdraw {
         coins: Vec<CoinInput>,
+    },
+    ProposeAdmin {
+        new_admin: String,
+    },
+    AcceptAdmin {},
+    CancelProposedAdmin {},
+    UpdateParams {
+        params: TreasuryParamsChain,
     },
 }
 
