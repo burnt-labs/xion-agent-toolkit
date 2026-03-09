@@ -8,7 +8,7 @@ We use a fully automated release pipeline combining:
 
 | Tool | Purpose |
 |------|---------|
-| **[release-please](https://github.com/google-github-actions/release-please-action)** | Generates Release PRs with version bumps and CHANGELOG |
+| **[release-please](https://github.com/googleapis/release-please-action)** | Generates Release PRs with version bumps and CHANGELOG |
 | **[cargo-dist](https://axodotdev.github.io/cargo-dist/)** | Builds cross-platform binaries and publishes releases |
 
 ## Release Flow
@@ -38,15 +38,16 @@ We use a fully automated release pipeline combining:
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  Merge Release PR                                               │
-│  • release-please creates tag (v0.X.X)                          │
-│  • release-please creates GitHub Release (draft)                │
+│  • release-please creates the release tag                       │
+│  • release-please creates a draft GitHub Release                │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  cargo-dist workflow triggered by tag                           │
+│  release-please dispatches cargo-dist workflow                  │
 │  • Builds binaries for all platforms                            │
 │  • Generates installers and checksums                           │
-│  • Uploads artifacts to GitHub Release                          │
+│  • Uploads artifacts to the existing GitHub Release             │
+│  • Publishes the release after artifacts are attached           │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -111,8 +112,9 @@ BREAKING CHANGE: The callback server now requires explicit port.
    - Edit the PR description if needed
 
 3. **Merge the Release PR**:
-   - This creates the version tag
-   - This triggers cargo-dist to build and publish
+   - This creates the version tag and a draft GitHub Release
+   - The `release-please.yml` workflow dispatches `release.yml`
+   - cargo-dist builds artifacts and publishes the existing release
 
 4. **Done!** Monitor the [Actions tab](https://github.com/burnt-labs/xion-agent-toolkit/actions) for build status
 
@@ -199,7 +201,7 @@ Each release includes:
    git tag -d v0.X.X
    git push --delete origin v0.X.X
    ```
-3. Re-run the release-please workflow or create a new commit
+3. Re-run the `Release` workflow with the same tag in the `tag` input, or rerun `Release Please` if the release draft was not created
 
 ## Manual Release (Emergency Only)
 
@@ -242,13 +244,21 @@ These map directly to the environment variables read in `build.rs`:
 
 The `cargo-dist` workflow (`.github/workflows/release.yml`) uses `github-build-setup` (configured in `dist-workspace.toml`) to inject these variables into the build environment before `dist build` runs. If either variable is missing, the binaries will fall back to placeholder client IDs and OAuth flows will not work correctly in production.
 
+## Triggering Model
+
+The release pipeline intentionally avoids relying on tag-push events from `release-please`, because tags created with the default GitHub Actions `GITHUB_TOKEN` do not trigger downstream workflows.
+
+- `release-please.yml` runs on pushes to `main`
+- When a release is created, it dispatches `release.yml` with `workflow_dispatch`
+- `release.yml` receives the release tag through its `tag` input and uploads artifacts to the existing draft release
+
 ## Configuration Files
 
 | File | Purpose |
 |------|---------|
 | `release-please-config.json` | release-please configuration |
 | `.release-please-manifest.json` | Current version tracking |
-| `dist-workspace.toml` | cargo-dist configuration (including GitHub build setup) |
+| `dist-workspace.toml` | cargo-dist configuration (including GitHub build setup and release dispatch mode) |
 | `.github/workflows/release-please.yml` | Release PR automation |
 | `.github/workflows/release.yml` | Binary build automation |
 
@@ -256,4 +266,4 @@ The `cargo-dist` workflow (`.github/workflows/release.yml`) uses `github-build-s
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Commit conventions and PR process
 - [cargo-dist documentation](https://axodotdev.github.io/cargo-dist/)
-- [release-please documentation](https://github.com/google-github-actions/release-please-action)
+- [release-please documentation](https://github.com/googleapis/release-please-action)

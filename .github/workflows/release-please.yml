@@ -11,6 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -30,13 +31,15 @@ jobs:
           manifest-file: .release-please-manifest.json
           target-branch: main
 
-  # Trigger cargo-dist after release-please creates the release
+  # Dispatch cargo-dist after release-please creates the release
   trigger-dist:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger cargo-dist build
+      - name: Trigger cargo-dist release workflow
         run: |
           echo "Release ${{ needs.release-please.outputs.tag_name }} created"
-          echo "The release.yml workflow will be triggered by the tag automatically"
+          gh workflow run "release.yml" --ref main -f tag="${{ needs.release-please.outputs.tag_name }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
