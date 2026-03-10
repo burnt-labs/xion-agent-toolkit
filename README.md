@@ -23,6 +23,16 @@ Xion Agent Toolkit provides a command-line interface for interacting with Xion's
 
 ## Installation
 
+### For AI Agents
+
+If you're setting up an AI Agent, see [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for complete integration instructions.
+
+Please tell your AI Agent the following instruction:
+
+```text
+Follow this guide https://raw.githubusercontent.com/burnt-labs/xion-agent-toolkit/main/INSTALL-FOR-AGENTS.md to install and configure the Xion Agent Toolkit skills for AI agents.
+```
+
 ### From GitHub Releases (Recommended)
 
 Pre-built binaries are available for Linux, macOS, and Windows:
@@ -70,10 +80,6 @@ cargo install --path .
 cargo install xion-agent-toolkit
 ```
 
-### For AI Agents
-
-If you're setting up an AI Agent, see [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for complete integration instructions.
-
 ## Skills for AI Agents
 
 Xion Agent Toolkit includes pre-built skills that wrap CLI commands for easy AI Agent integration. These skills follow the [Agent Skills format](https://agentskills.io/).
@@ -100,7 +106,9 @@ npx skills add burnt-labs/xion-skills
 
 ### Using Skills
 
-After installation via skills.sh, skills are automatically available:
+After installation via skills.sh, the `xion-toolkit` CLI is available and wrapped by skills for agent use.
+
+- **From a shell (human/operator)**: call the CLI directly:
 
 ```bash
 # Authenticate with OAuth2
@@ -113,7 +121,9 @@ xion-toolkit treasury list
 xion-toolkit treasury query xion1abc123...
 ```
 
-For complete AI Agent setup instructions, see [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md).
+- **From AI Agents**: call the installed skill scripts (for JSON-only output and better tooling). See:
+  - [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md)
+  - [docs/skills-guide.md](./docs/skills-guide.md)
 
 ## Quick Start
 
