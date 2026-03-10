@@ -688,16 +688,173 @@ mod tests {
         );
     }
 
-    // Integration tests with mock server
-    // TODO: Integration tests temporarily disabled due to mockito/tokio runtime conflict.
-    // Consider using wiremock instead of mockito for async testing.
-    // Unit tests above provide good coverage of the core functionality.
+    // Integration tests with mock server using wiremock
+    // wiremock is async-friendly and works with tokio runtime
     #[cfg(test)]
     mod integration_tests {
-        #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+        use super::*;
+        use wiremock::matchers::{body_string, header, method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        #[tokio::test]
         async fn test_exchange_code_success() {
-            // This test is disabled due to mockito runtime conflict
-            // In production, test against real OAuth2 service or use wiremock
+            // Start mock server
+            let mock_server = MockServer::start().await;
+
+            // Mock token endpoint
+            let token_response = serde_json::json!({
+                "access_token": "test_access_token",
+                "refresh_token": "test_refresh_token",
+                "expires_in": 3600,
+                "token_type": "Bearer",
+                "xion_address": "xion1test123"
+            });
+
+            Mock::given(method("POST"))
+                .and(path("/oauth/token"))
+                .and(body_string(
+                    "grant_type=authorization_code&code=test_code&code_verifier=test_verifier&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&client_id=test_client"
+                ))
+                .respond_with(ResponseTemplate::new(200).set_body_json(token_response))
+                .mount(&mock_server)
+                .await;
+
+            // Create client with mock server URL
+            let client = OAuth2ApiClient::new(mock_server.uri());
+
+            // Test exchange_code_with_endpoint
+            let result = client
+                .exchange_code_with_endpoint(
+                    "test_code",
+                    "test_verifier",
+                    "http://localhost:8080/callback",
+                    "test_client",
+                    &format!("{}/oauth/token", mock_server.uri()),
+                )
+                .await;
+
+            assert!(result.is_ok());
+            let token = result.unwrap();
+            assert_eq!(token.access_token, "test_access_token");
+            assert_eq!(token.refresh_token, "test_refresh_token");
+            assert_eq!(token.expires_in, 3600);
+            assert_eq!(token.xion_address, Some("xion1test123".to_string()));
+        }
+
+        #[tokio::test]
+        async fn test_refresh_token_success() {
+            let mock_server = MockServer::start().await;
+
+            let token_response = serde_json::json!({
+                "access_token": "new_access_token",
+                "refresh_token": "new_refresh_token",
+                "expires_in": 3600,
+                "token_type": "Bearer",
+                "xion_address": "xion1test123"
+            });
+
+            Mock::given(method("POST"))
+                .and(path("/oauth/token"))
+                .and(body_string(
+                    "grant_type=refresh_token&refresh_token=old_refresh_token&client_id=test_client"
+                ))
+                .respond_with(ResponseTemplate::new(200).set_body_json(token_response))
+                .mount(&mock_server)
+                .await;
+
+            let client = OAuth2ApiClient::new(mock_server.uri());
+            let result = client
+                .refresh_token("old_refresh_token", "test_client")
+                .await;
+            assert!(result.is_ok());
+            let token = result.unwrap();
+            assert_eq!(token.access_token, "new_access_token");
+            assert_eq!(token.refresh_token, "new_refresh_token");
+            assert_eq!(token.expires_in, 3600);
+            assert_eq!(token.xion_address, Some("xion1test123".to_string()));
+        }
+
+        #[tokio::test]
+        async fn test_get_user_info_success() {
+            let mock_server = MockServer::start().await;
+
+            let user_response = serde_json::json!({
+                "id": "xion1abc123",
+                "authenticators": [
+                    {
+                        "id": "xion1abc123-0",
+                        "type": "secp256k1",
+                        "index": 0,
+                        "data": {}
+                    }
+                ],
+                "balances": {
+                    "xion": {
+                        "amount": "100.5",
+                        "denom": "uxion",
+                        "microAmount": "100500000"
+                    },
+                    "usdc": {
+                        "amount": "50.0",
+                        "denom": "uusdc",
+                        "microAmount": "50000000"
+                    }
+                }
+            });
+
+            Mock::given(method("GET"))
+                .and(path("/api/v1/me"))
+                .and(header("Authorization", "Bearer test_access_token"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(user_response))
+                .mount(&mock_server)
+                .await;
+
+            let client = OAuth2ApiClient::new(mock_server.uri());
+
+            let result = client.get_user_info("test_access_token").await;
+
+            assert!(result.is_ok());
+            let user_info = result.unwrap();
+            assert_eq!(user_info.id, "xion1abc123");
+            assert_eq!(user_info.authenticators.len(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_oauth2_error_response() {
+            let mock_server = MockServer::start().await;
+
+            let error_response = serde_json::json!({
+                "error": "invalid_grant",
+                "error_description": "The authorization code is invalid"
+            });
+
+            Mock::given(method("POST"))
+                .and(path("/oauth/token"))
+                .respond_with(ResponseTemplate::new(400).set_body_json(error_response))
+                .mount(&mock_server)
+                .await;
+
+            let client = OAuth2ApiClient::new(mock_server.uri());
+
+            let result = client
+                .exchange_code_with_endpoint(
+                    "invalid_code",
+                    "test_verifier",
+                    "http://localhost:8080/callback",
+                    "test_client",
+                    &format!("{}/oauth/token", mock_server.uri()),
+                )
+                .await;
+
+            assert!(result.is_err());
+            let error = result.unwrap_err();
+            // Check the error chain since anyhow's Display only shows top-level message
+            let error_chain: Vec<String> = error.chain().map(|e| e.to_string()).collect();
+            assert!(
+                error_chain.iter().any(|e| e.contains("invalid_grant")),
+                "Expected 'invalid_grant' in error chain, got: {:?}",
+                error_chain
+            );
         }
     }
 }

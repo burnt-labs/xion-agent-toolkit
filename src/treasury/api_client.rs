@@ -2000,6 +2000,8 @@ impl TreasuryApiClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use wiremock::matchers::{method, path_regex};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn test_client_creation() {
@@ -2095,7 +2097,7 @@ mod tests {
     #[tokio::test]
     async fn test_wait_for_treasury_creation_success() {
         // This test verifies the polling mechanism finds the treasury
-        let mut server = mockito::Server::new_async().await;
+        let mock_server = MockServer::start().await;
 
         let admin_address = "xion1admin123";
         let treasury_address = "xion1treasury456";
@@ -2105,30 +2107,23 @@ mod tests {
 
         // Mock the DaoDao indexer endpoint - return treasury with matching admin
         // Using the actual DaoDao Indexer format (direct array)
-        let mock = server
-            .mock(
-                "GET",
-                mockito::Matcher::Regex(
-                    r"/contract/xion1admin123/xion/account/treasuries".to_string(),
-                ),
-            )
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(
-                serde_json::json!([
-                    {
-                        "contractAddress": treasury_address,
-                        "balances": {"uxion": "0"},
-                        "codeId": 1260
-                    }
-                ])
-                .to_string(),
-            )
-            .create();
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/contract/xion1admin123/xion/account/treasuries",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "contractAddress": treasury_address,
+                    "balances": {"uxion": "0"},
+                    "codeId": 1260
+                }
+            ])))
+            .mount(&mock_server)
+            .await;
 
         let client = TreasuryApiClient::new(
-            server.url(),
-            server.url(),
+            mock_server.uri(),
+            mock_server.uri(),
             "https://rpc.test.com:443".to_string(),
         );
 
@@ -2139,15 +2134,13 @@ mod tests {
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), treasury_address);
-
-        mock.assert();
     }
 
     #[tokio::test]
     async fn test_wait_for_treasury_creation_multiple_treasuries() {
         // Test that it returns the first treasury (newest one from indexer)
         // DaoDao Indexer returns treasuries sorted by block height (newest first)
-        let mut server = mockito::Server::new_async().await;
+        let mock_server = MockServer::start().await;
 
         let admin_address = "xion1admin999";
         let treasury_address = "xion1treasury999";
@@ -2157,40 +2150,33 @@ mod tests {
 
         // Mock returning multiple treasuries - newest one first
         // Using the actual DaoDao Indexer format (direct array)
-        let mock = server
-            .mock(
-                "GET",
-                mockito::Matcher::Regex(
-                    r"/contract/xion1admin999/xion/account/treasuries".to_string(),
-                ),
-            )
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(
-                serde_json::json!([
-                    {
-                        "contractAddress": treasury_address,
-                        "balances": {"uxion": "0"},
-                        "codeId": 1260
-                    },
-                    {
-                        "contractAddress": "xion1older1",
-                        "balances": {"uxion": "1000"},
-                        "codeId": 1260
-                    },
-                    {
-                        "contractAddress": "xion1older2",
-                        "balances": {"uxion": "2000"},
-                        "codeId": 1260
-                    }
-                ])
-                .to_string(),
-            )
-            .create();
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/contract/xion1admin999/xion/account/treasuries",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
+                {
+                    "contractAddress": treasury_address,
+                    "balances": {"uxion": "0"},
+                    "codeId": 1260
+                },
+                {
+                    "contractAddress": "xion1older1",
+                    "balances": {"uxion": "1000"},
+                    "codeId": 1260
+                },
+                {
+                    "contractAddress": "xion1older2",
+                    "balances": {"uxion": "2000"},
+                    "codeId": 1260
+                }
+            ])))
+            .mount(&mock_server)
+            .await;
 
         let client = TreasuryApiClient::new(
-            server.url(),
-            server.url(),
+            mock_server.uri(),
+            mock_server.uri(),
             "https://rpc.test.com:443".to_string(),
         );
 
@@ -2201,8 +2187,6 @@ mod tests {
         assert!(result.is_ok());
         // Returns the first treasury (newest one)
         assert_eq!(result.unwrap(), treasury_address);
-
-        mock.assert();
     }
 
     #[test]

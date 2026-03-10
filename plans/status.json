@@ -1,23 +1,17 @@
-{
-  "version": 1,
-  "updated_at": "2026-03-10",
-  "plans": [
     {
-      "id": "contract-execute-command",
-      "title": "Contract Execute Command",
-      "file": "plans/contract-execute-command.md",
+      "id": "integration-tests-fix",
+      "title": "Integration Tests Fix - wiremock",
+      "file": "plans/integration-tests-fix.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["contract", "execute", "cli", "feature"],
+      "agents": ["@fullstack-dev", "@qa-engineer"],
+      "tags": ["testing", "integration", "wiremock"],
       "created_at": "2026-03-10",
       "updated_at": "2026-03-10",
       "done_at": "2026-03-10",
-      "notes": "Complete: contract execute command added with --contract, --msg, --funds options. 325 tests pass. README updated."
+      "notes": "Fixed: Removed mockito, migrated to wiremock, fixed syntax errors in oauth2_api.rs, migrated treasury integration tests. All 331 tests passing."
     },
-{
-      "id": "release-please-automation",
       "title": "Release-please Automation",
       "file": "plans/release-please-automation.md",
       "status": "Done",
