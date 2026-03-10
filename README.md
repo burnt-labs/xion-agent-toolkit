@@ -143,6 +143,17 @@ xion-toolkit contract instantiate2 \
   --label "my-contract" \
   --msg instantiate-msg.json \
   --salt "01020304"
+
+# Execute a message on a deployed contract
+xion-toolkit contract execute \
+  --contract xion1abc123... \
+  --msg execute-msg.json
+
+# Execute with funds
+xion-toolkit contract execute \
+  --contract xion1abc123... \
+  --msg execute-msg.json \
+  --funds "1000000uxion"
 ```
 
 ## CLI Reference
@@ -194,6 +205,9 @@ xion-toolkit treasury chain-query allowances <address>         # Query fee allow
 # Contract instantiation
 xion-toolkit contract instantiate --code-id <id> --label <label> --msg <file> [options]
 xion-toolkit contract instantiate2 --code-id <id> --label <label> --msg <file> [options]
+
+# Contract execution
+xion-toolkit contract execute --contract <address> --msg <file> [--funds <amount>]
 ```
 
 ### Configuration

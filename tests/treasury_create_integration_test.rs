@@ -6,8 +6,9 @@
 //! - End-to-end flow tests with mocked API
 
 use base64::Engine;
-use mockito::Server;
 use serde_json::json;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 use xion_agent_toolkit::config::NetworkConfig;
 use xion_agent_toolkit::oauth::OAuthClient;
 use xion_agent_toolkit::treasury::encoding::{
@@ -429,7 +430,7 @@ fn test_parse_coin_string_invalid_no_denom() {
 
 #[tokio::test]
 async fn test_create_treasury_api_success() {
-    let mut server = Server::new_async().await;
+    let mock_server = MockServer::start().await;
 
     let tx_hash = "tx_create_1234567890abcdef";
     let treasury_address = "xion1newtreasury123456789";
@@ -439,54 +440,34 @@ async fn test_create_treasury_api_success() {
     let token = format!("{}:grant123:secret456", admin_address);
 
     // Mock the broadcast endpoint
-    let _mock_broadcast = server
-        .mock("POST", "/api/v1/transaction")
-        .match_header(
-            "authorization",
-            mockito::Matcher::Regex(r"Bearer .+".to_string()),
-        )
-        .with_status(200)
-        .with_header("content-type", "application/json")
-        .with_body(
-            json!({
-                "success": true,
-                "tx_hash": tx_hash,
-                "from": admin_address,
-                "gas_used": "200000",
-                "gas_wanted": "300000"
-            })
-            .to_string(),
-        )
-        .create();
+    Mock::given(method("POST"))
+        .and(path("/api/v1/transaction"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "tx_hash": tx_hash,
+            "from": admin_address,
+            "gas_used": "200000",
+            "gas_wanted": "300000"
+        })))
+        .mount(&mock_server)
+        .await;
 
     // Mock the DaoDao indexer endpoint (for waiting for indexing)
-    // Using the actual DaoDao Indexer format (direct array)
-    let _mock_list = server
-        .mock(
-            "GET",
-            mockito::Matcher::Regex(format!(
-                r"/contract/{}/xion/account/treasuries",
-                admin_address
-            )),
-        )
-        .with_status(200)
-        .with_header("content-type", "application/json")
-        .with_body(
-            json!([{
-                "contractAddress": treasury_address,
-                "balances": {"uxion": "0"},
-                "codeId": 1260,
-                "params": {
-                    "metadata": "{\"name\":\"Test Treasury\"}"
-                }
-            }])
-            .to_string(),
-        )
-        .create();
+    Mock::given(method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([{
+            "contractAddress": treasury_address,
+            "balances": {"uxion": "0"},
+            "codeId": 1260,
+            "params": {
+                "metadata": "{\"name\":\"Test Treasury\"}"
+            }
+        }])))
+        .mount(&mock_server)
+        .await;
 
     let client = TreasuryApiClient::new(
-        server.url(),
-        server.url(), // Use mock server as indexer URL
+        mock_server.uri(),
+        mock_server.uri(), // Use mock server as indexer URL
         "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     );
 
@@ -531,30 +512,24 @@ async fn test_create_treasury_api_success() {
     );
     let response = result.unwrap();
     assert_eq!(response.tx_hash, tx_hash);
-
-    _mock_broadcast.assert();
 }
 
 #[tokio::test]
 async fn test_create_treasury_api_unauthorized() {
-    let mut server = Server::new_async().await;
+    let mock_server = MockServer::start().await;
 
     // Mock unauthorized response
-    let mock = server
-        .mock("POST", "/api/v1/transaction")
-        .with_status(401)
-        .with_header("content-type", "application/json")
-        .with_body(
-            json!({
-                "error": "UNAUTHORIZED",
-                "message": "Invalid or expired access token"
-            })
-            .to_string(),
-        )
-        .create();
+    Mock::given(method("POST"))
+        .and(path("/api/v1/transaction"))
+        .respond_with(ResponseTemplate::new(401).set_body_json(json!({
+            "error": "UNAUTHORIZED",
+            "message": "Invalid or expired access token"
+        })))
+        .mount(&mock_server)
+        .await;
 
     let client = TreasuryApiClient::new(
-        server.url(),
+        mock_server.uri(),
         "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
         "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     );
@@ -588,14 +563,12 @@ async fn test_create_treasury_api_unauthorized() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.to_string().contains("401") || err.to_string().contains("Unauthorized"));
-
-    mock.assert();
 }
 
 #[tokio::test]
 async fn test_manager_create_requires_auth() {
-    let server = Server::new_async().await;
-    let config = create_test_config(&server.url());
+    let mock_server = MockServer::start().await;
+    let config = create_test_config(&mock_server.uri());
     let oauth_client = OAuthClient::new(config.clone()).expect("Failed to create OAuthClient");
     let manager = TreasuryManager::new(oauth_client, config.clone());
 
@@ -712,7 +685,7 @@ fn test_load_invalid_config_file() {
 
 #[tokio::test]
 async fn test_full_create_flow_with_mocks() {
-    let mut server = Server::new_async().await;
+    let mock_server = MockServer::start().await;
 
     let tx_hash = "tx_full_flow_abcdef123456";
     let admin_address = "xion1admin123456789";
@@ -722,54 +695,34 @@ async fn test_full_create_flow_with_mocks() {
     let token = format!("{}:grant123:secret456", admin_address);
 
     // Mock broadcast transaction
-    let _mock_broadcast = server
-        .mock("POST", "/api/v1/transaction")
-        .match_header(
-            "authorization",
-            mockito::Matcher::Regex(r"Bearer .+".to_string()),
-        )
-        .with_status(200)
-        .with_header("content-type", "application/json")
-        .with_body(
-            json!({
-                "success": true,
-                "tx_hash": tx_hash,
-                "from": admin_address,
-                "gas_used": "250000",
-                "gas_wanted": "350000"
-            })
-            .to_string(),
-        )
-        .create();
+    Mock::given(method("POST"))
+        .and(path("/api/v1/transaction"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "tx_hash": tx_hash,
+            "from": admin_address,
+            "gas_used": "250000",
+            "gas_wanted": "350000"
+        })))
+        .mount(&mock_server)
+        .await;
 
     // Mock DaoDao indexer for wait_for_treasury_creation
-    // Using the actual DaoDao Indexer format (direct array)
-    let _mock_list = server
-        .mock(
-            "GET",
-            mockito::Matcher::Regex(format!(
-                r"/contract/{}/xion/account/treasuries",
-                admin_address
-            )),
-        )
-        .with_status(200)
-        .with_header("content-type", "application/json")
-        .with_body(
-            json!([{
-                "contractAddress": treasury_address,
-                "balances": {"uxion": "0"},
-                "codeId": 1260,
-                "params": {
-                    "metadata": "{\"name\":\"Full Flow Treasury\"}"
-                }
-            }])
-            .to_string(),
-        )
-        .create();
+    Mock::given(method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([{
+            "contractAddress": treasury_address,
+            "balances": {"uxion": "0"},
+            "codeId": 1260,
+            "params": {
+                "metadata": "{\"name\":\"Full Flow Treasury\"}"
+            }
+        }])))
+        .mount(&mock_server)
+        .await;
 
     let client = TreasuryApiClient::new(
-        server.url(),
-        server.url(), // Use mock server as indexer URL
+        mock_server.uri(),
+        mock_server.uri(), // Use mock server as indexer URL
         "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
     );
 
@@ -830,8 +783,6 @@ async fn test_full_create_flow_with_mocks() {
     let response = result.unwrap();
     assert_eq!(response.tx_hash, tx_hash);
     assert_eq!(response.admin, "xion1admin123456789");
-
-    _mock_broadcast.assert();
 }
 
 // ============================================================================

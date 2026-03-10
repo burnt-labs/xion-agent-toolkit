@@ -19,8 +19,8 @@ pub use api_client::TreasuryApiClient;
 pub use manager::TreasuryManager;
 #[allow(unused_imports)]
 pub use types::{
-    BroadcastRequest, BroadcastResponse, CreateTreasuryRequest, FeeConfig, FeeConfigInput,
-    FeeConfigMessage, FeeGrantRequest, FundResult, GrantConfig, GrantConfigInput,
+    BroadcastRequest, BroadcastResponse, CreateTreasuryRequest, ExecuteResult, FeeConfig,
+    FeeConfigInput, FeeConfigMessage, FeeGrantRequest, FundResult, GrantConfig, GrantConfigInput,
     GrantConfigMessage, GrantConfigRequest, QueryOptions, TransactionMessage,
     TreasuryCreateRequest, TreasuryInfo, TreasuryListItem, TreasuryParams, TreasuryParamsInput,
     TreasuryParamsMessage, TypeUrlValue, WithdrawResult,

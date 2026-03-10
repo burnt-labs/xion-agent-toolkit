@@ -863,6 +863,45 @@ xion-toolkit contract instantiate2 \
 
 ---
 
+### `contract execute`
+
+Executes a message on a deployed smart contract.
+
+**Usage:**
+```bash
+xion-toolkit contract execute --contract <ADDRESS> --msg <FILE> [options]
+```
+
+**Options:**
+- `--contract <ADDRESS>` - Contract address to execute (required)
+- `--msg <FILE>` - Path to JSON file containing execute message (required)
+- `--funds <AMOUNT>` - Optional funds to send (e.g., "1000000uxion")
+
+**Output:**
+```json
+{
+  "success": true,
+  "tx_hash": "ABC123...",
+  "contract": "xion1abc..."
+}
+```
+
+**Examples:**
+```bash
+# Basic execution
+xion-toolkit contract execute \
+  --contract xion1abc... \
+  --msg execute-msg.json
+
+# Execution with funds
+xion-toolkit contract execute \
+  --contract xion1abc... \
+  --msg execute-msg.json \
+  --funds "1000000uxion"
+```
+
+---
+
 ## Configuration Commands
 
 ### `config show`

@@ -1,9 +1,17 @@
-{
-  "version": 1,
-  "updated_at": "2026-03-09",
-  "plans": [
-{
-      "id": "release-please-automation",
+    {
+      "id": "integration-tests-fix",
+      "title": "Integration Tests Fix - wiremock",
+      "file": "plans/integration-tests-fix.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qa-engineer"],
+      "tags": ["testing", "integration", "wiremock"],
+      "created_at": "2026-03-10",
+      "updated_at": "2026-03-10",
+      "done_at": "2026-03-10",
+      "notes": "Fixed: Removed mockito, migrated to wiremock, fixed syntax errors in oauth2_api.rs, migrated treasury integration tests. All 331 tests passing."
+    },
       "title": "Release-please Automation",
       "file": "plans/release-please-automation.md",
       "status": "Done",

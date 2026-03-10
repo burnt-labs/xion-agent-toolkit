@@ -9,6 +9,9 @@ pub enum ContractCommands {
 
     /// Instantiate a contract with predictable address (v2 - instantiate2)
     Instantiate2(Instantiate2Args),
+
+    /// Execute a message on a deployed smart contract
+    Execute(ExecuteArgs),
 }
 
 #[derive(Debug, Args)]
@@ -53,10 +56,26 @@ pub struct Instantiate2Args {
     pub admin: Option<String>,
 }
 
+#[derive(Debug, Args)]
+pub struct ExecuteArgs {
+    /// Contract address to execute
+    #[arg(long)]
+    pub contract: String,
+
+    /// Path to JSON file containing execute message
+    #[arg(short, long)]
+    pub msg: PathBuf,
+
+    /// Optional funds to send (e.g., "1000000uxion")
+    #[arg(long)]
+    pub funds: Option<String>,
+}
+
 pub async fn handle_command(cmd: ContractCommands) -> Result<()> {
     match cmd {
         ContractCommands::Instantiate(args) => handle_instantiate(args).await,
         ContractCommands::Instantiate2(args) => handle_instantiate2(args).await,
+        ContractCommands::Execute(args) => handle_execute(args).await,
     }
 }
 
@@ -224,6 +243,82 @@ async fn handle_instantiate2(args: Instantiate2Args) -> Result<()> {
                     )
                 } else {
                     ("INSTANTIATE_FAILED", "Check the error message for details")
+                };
+
+            let result = serde_json::json!({
+                "success": false,
+                "code": code,
+                "error": e.to_string(),
+                "suggestion": suggestion
+            });
+            print_json(&result)
+        }
+    }
+}
+
+async fn handle_execute(args: ExecuteArgs) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Executing message on contract {}...",
+        args.contract
+    ));
+
+    // Load execute message from file
+    let content = std::fs::read_to_string(&args.msg)
+        .map_err(|e| anyhow::anyhow!("Failed to read msg file: {}", e))?;
+    let msg: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("Invalid JSON in msg file: {}", e))?;
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config);
+
+    // Check auth
+    if !manager.is_authenticated()? {
+        return print_json(&serde_json::json!({
+            "success": false,
+            "code": "NOT_AUTHENTICATED",
+            "error": "Not authenticated",
+            "suggestion": "Run 'xion-toolkit auth login' first"
+        }));
+    }
+
+    // Call manager
+    match manager
+        .execute_contract(&args.contract, &msg, args.funds.as_deref())
+        .await
+    {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "tx_hash": result.tx_hash,
+                "contract": result.contract
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let (code, suggestion) =
+                if error_msg.contains("insufficient") || error_msg.contains("balance") {
+                    (
+                        "INSUFFICIENT_BALANCE",
+                        "Fund your account before executing a contract",
+                    )
+                } else if error_msg.contains("invalid") || error_msg.contains("format") {
+                    ("INVALID_INPUT", "Check your execute message and parameters")
+                } else if error_msg.contains("unauthorized") {
+                    (
+                        "UNAUTHORIZED",
+                        "You may not have permission to perform this action",
+                    )
+                } else {
+                    ("EXECUTE_FAILED", "Check the error message for details")
                 };
 
             let result = serde_json::json!({
