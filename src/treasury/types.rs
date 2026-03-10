@@ -337,6 +337,15 @@ pub struct Instantiate2Result {
     pub predicted_address: Option<String>,
 }
 
+/// Result of contract execution
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecuteResult {
+    /// Transaction hash
+    pub tx_hash: String,
+    /// Contract address executed
+    pub contract: String,
+}
+
 // ============================================================================
 // CHAIN-READY TYPES (AFTER ENCODING)
 // ============================================================================

@@ -172,16 +172,18 @@ impl TreasuryApiClient {
     /// * `sender` - Sender address
     /// * `contract` - Treasury contract address
     /// * `execute_msg` - Execute message to send (will be JSON-encoded then base64-encoded)
+    /// * `funds` - Optional funds to send with the execution
     /// * `memo` - Transaction memo
     ///
     /// # Returns
     /// Transaction hash on success
-    async fn broadcast_execute_contract<T: Serialize>(
+    pub async fn broadcast_execute_contract<T: Serialize>(
         &self,
         access_token: &str,
         sender: &str,
         contract: &str,
         execute_msg: &T,
+        funds: Option<&[super::types::Coin]>,
         memo: &str,
     ) -> Result<String> {
         // Serialize execute message to JSON, then convert to number array
@@ -192,11 +194,25 @@ impl TreasuryApiClient {
 
         debug!("Execute message JSON:\n{}", msg_json);
 
+        // Build funds array if provided
+        let funds_value = if let Some(f) = funds {
+            f.iter()
+                .map(|coin| {
+                    serde_json::json!({
+                        "denom": coin.denom,
+                        "amount": coin.amount
+                    })
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
         let msg_value = serde_json::json!({
             "sender": sender,
             "contract": contract,
             "msg": bytes_to_json_array(msg_bytes),  // Number array, not base64 string
-            "funds": []
+            "funds": funds_value
         });
 
         let broadcast_request = BroadcastRequest {
@@ -817,6 +833,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &withdraw_msg,
+                None,
                 &format!("Withdraw from treasury {}", treasury_address),
             )
             .await?;
@@ -1227,6 +1244,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 &format!("Update grant config for {}", type_url),
             )
             .await?;
@@ -1265,6 +1283,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &remove_msg,
+                None,
                 &format!("Remove grant config {}", type_url),
             )
             .await?;
@@ -1367,6 +1386,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 "Update fee config",
             )
             .await?;
@@ -1404,6 +1424,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 "Remove fee config",
             )
             .await?;
@@ -1493,6 +1514,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 &format!("Propose new admin: {}", new_admin),
             )
             .await?;
@@ -1533,6 +1555,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 "Accept admin role",
             )
             .await?;
@@ -1576,6 +1599,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 "Cancel proposed admin",
             )
             .await?;
@@ -1640,6 +1664,7 @@ impl TreasuryApiClient {
                 from_address,
                 treasury_address,
                 &exec_msg,
+                None,
                 "Update treasury params",
             )
             .await?;

@@ -14,7 +14,7 @@ use crate::oauth::OAuthClient;
 use super::api_client::TreasuryApiClient;
 use super::cache::TreasuryCache;
 use super::types::{
-    FundResult, Instantiate2Result, InstantiateResult, QueryOptions, TreasuryInfo,
+    ExecuteResult, FundResult, Instantiate2Result, InstantiateResult, QueryOptions, TreasuryInfo,
     TreasuryListItem, TreasuryParams, WithdrawResult,
 };
 
@@ -784,6 +784,74 @@ impl TreasuryManager {
             salt: hex::encode(&salt_bytes),
             admin: admin.map(|s| s.to_string()),
             predicted_address: None, // TODO: compute if needed
+        })
+    }
+
+    /// Execute a message on a smart contract
+    ///
+    /// Executes a message on a deployed smart contract.
+    ///
+    /// # Arguments
+    /// * `contract` - Contract address to execute
+    /// * `execute_msg` - Execute message (any serializable type)
+    /// * `funds` - Optional funds to send with the execution (e.g., "1000000uxion")
+    ///
+    /// # Returns
+    /// Execute result with transaction hash
+    #[instrument(skip(self, execute_msg))]
+    pub async fn execute_contract<T: serde::Serialize + std::fmt::Debug>(
+        &self,
+        contract: &str,
+        execute_msg: &T,
+        funds: Option<&str>,
+    ) -> Result<ExecuteResult> {
+        debug!("Executing message on contract: {}", contract);
+
+        // Get user credentials to obtain xion_address
+        let credentials = self
+            .oauth_client
+            .get_credentials()?
+            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+
+        let sender = credentials.xion_address.ok_or_else(|| {
+            anyhow::anyhow!("User address not found in credentials. Please login again.")
+        })?;
+
+        // Parse funds if provided
+        let funds_coins = if let Some(f) = funds {
+            let encoding_coins = super::encoding::parse_coin_string(f)?;
+            Some(
+                encoding_coins
+                    .into_iter()
+                    .map(|c| super::types::Coin {
+                        amount: c.amount,
+                        denom: c.denom,
+                    })
+                    .collect::<Vec<_>>(),
+            )
+        } else {
+            None
+        };
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to broadcast execute
+        let tx_hash = self
+            .api_client
+            .broadcast_execute_contract(
+                &access_token,
+                &sender,
+                contract,
+                execute_msg,
+                funds_coins.as_deref(),
+                "Execute contract via Xion Agent Toolkit",
+            )
+            .await?;
+
+        Ok(ExecuteResult {
+            tx_hash,
+            contract: contract.to_string(),
         })
     }
 
