@@ -1,7 +1,8 @@
 ---
-status: InProgress
+status: Done
 created_at: 2026-03-10
 updated_at: 2026-03-10
+done_at: 2026-03-10
 ---
 # Documentation Improvement Plan
 
@@ -43,12 +44,12 @@ Update `README.md`:
 - Add link to INSTALL-FOR-AGENTS.md
 - Reorganize for better flow
 
-### Phase 3: CLI Reference Examples (Medium Priority) - Partial
+### Phase 3: CLI Reference Examples (Medium Priority) ✅
 
 Update `docs/cli-reference.md`:
 - Add practical usage examples for each command
 - Include JSON output examples
-- Add common workflow examples
+- Add common workflow examples (Complete Treasury Lifecycle, Authentication Flow, Grant and Fee Setup, Contract Deployment)
 
 ### Phase 4: Skills Guide (Medium Priority) ✅
 
@@ -57,7 +58,7 @@ Create `docs/skills-guide.md`:
 - Integration with Claude Code and other frameworks
 - Script reference
 
-### Phase 5: Configuration Guide (Low Priority) - Pending
+### Phase 5: Configuration Guide (Low Priority) ✅
 
 Create `docs/configuration.md`:
 - `~/.xion-toolkit/` directory structure
@@ -76,9 +77,9 @@ Publish skills to skills.sh ecosystem:
 
 - [x] Create INSTALL-FOR-AGENTS.md
 - [x] Update README.md with Skills section
-- [ ] Add usage examples to docs/cli-reference.md (partial)
+- [x] Add usage examples to docs/cli-reference.md
 - [x] Create docs/skills-guide.md
-- [ ] Create docs/configuration.md
+- [x] Create docs/configuration.md
 - [x] Fix xion-oauth2/SKILL.md format (add YAML frontmatter)
 - [x] Fix xion-treasury/SKILL.md format (add YAML frontmatter)
 - [x] Create xion-toolkit-init skill with install script
@@ -89,7 +90,7 @@ Publish skills to skills.sh ecosystem:
 
 - [x] AI Agent can install toolkit by reading INSTALL-FOR-AGENTS.md
 - [x] Skills are properly documented and accessible
-- [ ] All CLI commands have usage examples (partial)
+- [x] All CLI commands have usage examples
 - [x] Documentation is clear and actionable
 - [x] Skills can be installed via `npx skills add burnt-labs/xion-agent-toolkit`
 
@@ -100,3 +101,5 @@ Publish skills to skills.sh ecosystem:
 | 2026-03-10 | @project-manager | Created INSTALL-FOR-AGENTS.md, docs/skills-guide.md | ✅ |
 | 2026-03-10 | @project-manager | Created xion-toolkit-init skill | ✅ |
 | 2026-03-10 | @project-manager | Fixed SKILL.md formats, updated README | ✅ |
+| 2026-03-10 | @project-manager | Added workflow examples to cli-reference.md | ✅ |
+| 2026-03-10 | @project-manager | Created docs/configuration.md | ✅ |

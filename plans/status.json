@@ -6,8 +6,8 @@
       "id": "documentation-improvement",
       "title": "Documentation Improvement",
       "file": "plans/documentation-improvement.md",
-      "status": "InProgress",
-      "progress": 80,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": [
         "@prompt-engineer",
@@ -21,8 +21,8 @@
       ],
       "created_at": "2026-03-10",
       "updated_at": "2026-03-10",
-      "done_at": null,
-      "notes": "Completed: INSTALL-FOR-AGENTS.md, skills-guide.md, xion-toolkit-init skill, SKILL.md fixes, README updates. Pending: cli-reference.md examples, configuration.md"
+      "done_at": "2026-03-10",
+      "notes": "Complete: INSTALL-FOR-AGENTS.md, skills-guide.md, configuration.md, xion-toolkit-init skill, SKILL.md fixes, README updates, workflow examples in cli-reference.md"
     },
     {
       "id": "integration-tests-fix",
