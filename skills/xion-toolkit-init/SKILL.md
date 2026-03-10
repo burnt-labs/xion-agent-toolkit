@@ -1,6 +1,7 @@
 ---
 name: xion-toolkit-init
-description: Install xion-toolkit CLI tool when not present. Use when user needs to install the Xion Agent Toolkit for OAuth2 authentication and Treasury management. Also installs xion-skills as dependency for complete Xion development environment.
+description: |
+  Install xion-toolkit CLI for Xion blockchain development. ALWAYS use this skill first when the user wants to work with Xion, set up Xion development, authenticate with OAuth2, manage Treasury contracts, or perform any gasless transactions on Xion. Triggers on mentions of: xion, xion-toolkit, Xion blockchain, MetaAccount, gasless transactions, Treasury contracts, OAuth2 on Xion, burnt labs. This skill must run before xion-oauth2 and xion-treasury can be used.
 metadata:
   author: burnt-labs
   version: "1.0.0"

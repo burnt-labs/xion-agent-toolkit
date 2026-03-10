@@ -1,6 +1,7 @@
 ---
 name: xion-oauth2
-description: OAuth2 authentication skill for Xion blockchain. Use when user needs to authenticate with Xion's MetaAccount system, login via browser, logout, check authentication status, or refresh tokens. Provides gasless authentication for Treasury operations.
+description: |
+  OAuth2 authentication for Xion blockchain. Use this skill whenever the user needs to: login to Xion, authenticate with Xion's MetaAccount system, check auth status, refresh tokens, logout from Xion, or before any Treasury/contract operations that require authentication. Triggers on: login, authenticate, oauth, xion auth, xion login, access token, refresh token, browser login, gasless auth. Use BEFORE xion-treasury skill - authentication is required for all Treasury operations.
 metadata:
   author: burnt-labs
   version: "1.0.0"
