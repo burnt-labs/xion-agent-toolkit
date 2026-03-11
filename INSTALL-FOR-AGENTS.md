@@ -303,15 +303,6 @@ burnt-labs/xion-skills (optional, for advanced operations)
 └── xiond-wasm (contract deployment, requires xiond)
 ```
 
-#### Option B: Manual Installation (Alternative)
-
-If skills.sh is not available, you can install skills manually:
-
-```bash
-# Quick install script for xion-agent-toolkit skills
-curl -fsSL https://raw.githubusercontent.com/burnt-labs/xion-agent-toolkit/main/skills/xion-toolkit-init/scripts/install.sh | bash
-```
-
 #### Skills Comparison
 
 | Feature | xion-agent-toolkit | xion-skills |
@@ -351,80 +342,6 @@ xion-toolkit auth login
 xion-toolkit treasury list
 ```
 
-#### Manual Skills Directory Structure
-
-If installed manually (Option B), skills are stored in:
-
-```
-~/.xion-toolkit/skills/
-├── xion-toolkit-init/
-│   ├── SKILL.md
-│   └── scripts/
-│       └── install.sh
-├── xion-oauth2/
-│   ├── SKILL.md
-│   └── scripts/
-│       ├── login.sh
-│       ├── status.sh
-│       ├── logout.sh
-│       └── refresh.sh
-└── xion-treasury/
-    ├── SKILL.md
-    └── scripts/
-        ├── list.sh
-        ├── query.sh
-        └── ... (more scripts)
-```
-
-#### Verify Skills Installation
-
-```bash
-#!/bin/bash
-set -e
-
-SKILLS_DIR="${HOME}/.xion-toolkit/skills"
-
-echo "=== Verifying Skills Installation ==="
-
-# Check skills directory exists
-if [[ -d "$SKILLS_DIR" ]]; then
-    echo "✓ Skills directory exists: $SKILLS_DIR"
-else
-    echo "✗ Skills directory not found"
-    exit 1
-fi
-
-# Check xion-oauth2 skill
-if [[ -f "$SKILLS_DIR/xion-oauth2/SKILL.md" ]]; then
-    echo "✓ xion-oauth2 skill installed"
-else
-    echo "✗ xion-oauth2 skill not found"
-    exit 1
-fi
-
-# Check xion-treasury skill
-if [[ -f "$SKILLS_DIR/xion-treasury/SKILL.md" ]]; then
-    echo "✓ xion-treasury skill installed"
-else
-    echo "✗ xion-treasury skill not found"
-    exit 1
-fi
-
-# Verify scripts are executable
-echo ""
-echo "Checking script permissions..."
-for script in "$SKILLS_DIR"/*/scripts/*.sh; do
-    if [[ -x "$script" ]]; then
-        echo "  ✓ $(basename "$script")"
-    else
-        echo "  ✗ $(basename "$script") (not executable)"
-    fi
-done
-
-echo ""
-echo "=== Skills Verification Complete ==="
-```
-
 ### Step 5: Authentication Setup
 
 Authentication is required for most Treasury operations.
@@ -437,9 +354,6 @@ xion-toolkit auth status
 
 # Login (opens browser for OAuth2 authorization)
 xion-toolkit auth login
-
-# Or using skills
-~/.xion-toolkit/skills/xion-oauth2/scripts/login.sh
 ```
 
 #### Authentication with Custom Port
@@ -555,31 +469,9 @@ else
     warn "Configuration directory will be created on first use"
 fi
 
-# 4. Check skills installation
+# 4. Check authentication status
 echo ""
-echo "4. Checking Skills Installation..."
-SKILLS_DIR="$CONFIG_DIR/skills"
-if [[ -d "$SKILLS_DIR" ]]; then
-    pass "Skills directory exists"
-    
-    if [[ -f "$SKILLS_DIR/xion-oauth2/SKILL.md" ]]; then
-        pass "xion-oauth2 skill installed"
-    else
-        warn "xion-oauth2 skill not found (optional)"
-    fi
-    
-    if [[ -f "$SKILLS_DIR/xion-treasury/SKILL.md" ]]; then
-        pass "xion-treasury skill installed"
-    else
-        warn "xion-treasury skill not found (optional)"
-    fi
-else
-    warn "Skills not installed (optional component)"
-fi
-
-# 5. Check authentication status
-echo ""
-echo "5. Checking Authentication Status..."
+echo "4. Checking Authentication Status..."
 AUTH_STATUS=$(xion-toolkit auth status 2>&1)
 if echo "$AUTH_STATUS" | grep -q '"authenticated": true'; then
     pass "User is authenticated"
@@ -589,9 +481,9 @@ else
     warn "User not authenticated (run 'xion-toolkit auth login')"
 fi
 
-# 6. Check network connectivity
+# 5. Check network connectivity
 echo ""
-echo "6. Checking Network Connectivity..."
+echo "5. Checking Network Connectivity..."
 if curl -s --head --request GET "https://oauth2.testnet.burnt.com" &> /dev/null; then
     pass "Can reach testnet OAuth2 API"
 else
@@ -697,21 +589,7 @@ curl -I https://oauth2.testnet.burnt.com
 xion-toolkit config set-network mainnet
 ```
 
-#### Issue 5: Skills scripts not executable
-
-**Symptom**: Permission denied when running skill scripts
-
-**Solutions**:
-
-```bash
-# Make all skill scripts executable
-chmod +x ~/.xion-toolkit/skills/*/scripts/*.sh
-
-# Or fix individual script
-chmod +x ~/.xion-toolkit/skills/xion-oauth2/scripts/login.sh
-```
-
-#### Issue 6: "Unsupported architecture" error
+#### Issue 5: "Unsupported architecture" error
 
 **Symptom**: Installation fails on ARM64 or other architectures
 
@@ -731,7 +609,7 @@ cd xion-agent-toolkit
 cargo install --path .
 ```
 
-#### Issue 7: Credentials not persisting
+#### Issue 6: Credentials not persisting
 
 **Symptom**: Need to login every time
 
@@ -826,18 +704,20 @@ xion-toolkit treasury fee-config set <ADDRESS> \
 
 ### Agent Integration
 
-For AI Agent integration, use the skills:
+After installing skills with `npx skills add burnt-labs/xion-agent-toolkit`, use the CLI directly:
 
 ```bash
-# Using xion-oauth2 skill
-~/.xion-toolkit/skills/xion-oauth2/scripts/login.sh
+# Login
+xion-toolkit auth login
 
-# Using xion-treasury skill
-~/.xion-toolkit/skills/xion-treasury/scripts/list.sh
-~/.xion-toolkit/skills/xion-treasury/scripts/query.sh <ADDRESS>
+# List treasuries
+xion-toolkit treasury list
+
+# Query a treasury
+xion-toolkit treasury query <ADDRESS>
 ```
 
-All skill scripts output JSON for easy parsing:
+All CLI commands support `--output json` for easy parsing:
 
 ```json
 {
@@ -853,26 +733,24 @@ All skill scripts output JSON for easy parsing:
 #!/bin/bash
 # Example: Agent treasury management workflow
 
-SKILLS_DIR="$HOME/.xion-toolkit/skills"
-
 # 1. Check authentication
-AUTH_STATUS=$("$SKILLS_DIR/xion-oauth2/scripts/status.sh")
+AUTH_STATUS=$(xion-toolkit auth status --output json)
 AUTHENTICATED=$(echo "$AUTH_STATUS" | jq -r '.authenticated')
 
 if [[ "$AUTHENTICATED" != "true" ]]; then
     echo "Not authenticated. Logging in..."
-    "$SKILLS_DIR/xion-oauth2/scripts/login.sh"
+    xion-toolkit auth login
 fi
 
 # 2. List treasuries
-TREASURIES=$("$SKILLS_DIR/xion-treasury/scripts/list.sh")
+TREASURIES=$(xion-toolkit treasury list --output json)
 echo "$TREASURIES" | jq '.'
 
 # 3. Query first treasury
 FIRST_ADDR=$(echo "$TREASURIES" | jq -r '.treasuries[0].address')
 if [[ "$FIRST_ADDR" != "null" && "$FIRST_ADDR" != "" ]]; then
     echo "Querying treasury: $FIRST_ADDR"
-    "$SKILLS_DIR/xion-treasury/scripts/query.sh" "$FIRST_ADDR" | jq '.'
+    xion-toolkit treasury query "$FIRST_ADDR" --output json | jq '.'
 fi
 ```
 
