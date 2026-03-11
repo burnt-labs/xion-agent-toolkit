@@ -1,3 +1,50 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-11",
+  "plans": [
+    {
+      "id": "skills-integration",
+      "title": "Skills Integration with xion-skills",
+      "file": "plans/skills-integration.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": [
+        "@prompt-engineer"
+      ],
+      "tags": [
+        "skills",
+        "integration",
+        "xion-skills",
+        "xion-dev"
+      ],
+      "created_at": "2026-03-11",
+      "updated_at": "2026-03-11",
+      "done_at": "2026-03-11",
+      "notes": "Complete: Created xion-dev entry skill, updated all skill descriptions with MetaAccount-first philosophy, removed chain-query.sh, updated README with integration guidance."
+    },
+    {
+      "id": "documentation-improvement",
+      "title": "Documentation Improvement",
+      "file": "plans/documentation-improvement.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": [
+        "@prompt-engineer",
+        "@frontend-dev"
+      ],
+      "tags": [
+        "documentation",
+        "agent-guide",
+        "skills",
+        "cli-reference"
+      ],
+      "created_at": "2026-03-10",
+      "updated_at": "2026-03-10",
+      "done_at": "2026-03-10",
+      "notes": "Complete: INSTALL-FOR-AGENTS.md, skills-guide.md, configuration.md, xion-toolkit-init skill, SKILL.md fixes, README updates, workflow examples in cli-reference.md"
+    },
     {
       "id": "integration-tests-fix",
       "title": "Integration Tests Fix - wiremock",
@@ -5,32 +52,21 @@
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qa-engineer"],
-      "tags": ["testing", "integration", "wiremock"],
+      "agents": [
+        "@fullstack-dev",
+        "@qa-engineer"
+      ],
+      "tags": [
+        "testing",
+        "integration",
+        "wiremock"
+      ],
       "created_at": "2026-03-10",
       "updated_at": "2026-03-10",
       "done_at": "2026-03-10",
       "notes": "Fixed: Removed mockito, migrated to wiremock, fixed syntax errors in oauth2_api.rs, migrated treasury integration tests. All 331 tests passing."
     },
-      "title": "Release-please Automation",
-      "file": "plans/release-please-automation.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": [],
-      "tags": [
-        "release",
-        "release-please",
-        "ci-cd",
-        "automation",
-        "changelog"
-      ],
-      "created_at": "2026-03-09",
-      "updated_at": "2026-03-09",
-      "done_at": "2026-03-09",
-      "notes": "Complete: release-please-action integrated for automated version bumps and CHANGELOG generation. Full automation: conventional commits → Release PR → merge → tag → cargo-dist build → publish."
-    },
-{
+    {
       "id": "cargo-dist-release",
       "title": "Cargo-dist Release Automation",
       "file": "plans/cargo-dist-release.md",
@@ -51,7 +87,7 @@
       "done_at": "2026-03-09",
       "notes": "cargo-dist integration complete. Supports 6 target platforms, shell/powershell installers, SHA256 checksums. Release workflow triggers on tags. Documentation at docs/release.md."
     },
-{
+    {
       "id": "documentation-update",
       "title": "Documentation Update",
       "file": "plans/documentation-update.md",
@@ -72,7 +108,7 @@
       "done_at": "2026-03-09",
       "notes": "Complete: README updated with new commands, skills scripts created/updated (admin.sh, chain-query.sh, update-params.sh), SKILL.md updated, CLI reference created."
     },
-{
+    {
       "id": "contract-instantiate-refactor",
       "title": "Contract Instantiate Refactor",
       "file": "plans/contract-instantiate-refactor.md",
@@ -93,7 +129,7 @@
       "done_at": "2026-03-09",
       "notes": "Completed: Moved instantiate/instantiate2 from treasury to contract subcommand. Created new contract module. Updated all documentation. All 330 tests passing."
     },
-{
+    {
       "id": "treasury-e2e-testing",
       "title": "Treasury E2E Testing",
       "file": "plans/treasury-e2e-testing.md",
@@ -112,9 +148,9 @@
       "created_at": "2026-03-09",
       "updated_at": "2026-03-09",
       "done_at": "2026-03-09",
-      "notes": "Complete: E2E test script created at tests/e2e_treasury_lifecycle.sh. Tests full lifecycle: create → fund → grant-config → fee-config → params → withdraw. 7 PASS, 3 SKIP (Admin - requires 2nd account, Chain Query - service unavailable). Old tests archived."
+      "notes": "Complete: E2E test script created at tests/e2e_treasury_lifecycle.sh. Tests full lifecycle: create \u2192 fund \u2192 grant-config \u2192 fee-config \u2192 params \u2192 withdraw. 7 PASS, 3 SKIP (Admin - requires 2nd account, Chain Query - service unavailable). Old tests archived."
     },
-{
+    {
       "id": "generic-contract-instantiation-api",
       "title": "Generic Contract Instantiation Public API",
       "file": "plans/generic-contract-instantiation-api.md",

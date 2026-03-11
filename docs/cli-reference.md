@@ -4,12 +4,192 @@ Complete reference for the Xion Agent Toolkit CLI commands.
 
 ## Table of Contents
 
+- [Usage Examples](#usage-examples)
 - [Global Options](#global-options)
 - [Authentication Commands](#authentication-commands)
 - [Treasury Commands](#treasury-commands)
 - [Contract Commands](#contract-commands)
 - [Configuration Commands](#configuration-commands)
 - [Output Format](#output-format)
+
+---
+
+## Usage Examples
+
+Quick reference to common tasks and workflows.
+
+### Quick Start
+
+```bash
+# 1. Login to your account
+xion-toolkit auth login
+
+# 2. Check authentication status
+xion-toolkit auth status
+
+# 3. List your treasuries
+xion-toolkit treasury list
+
+# 4. Create a new treasury
+xion-toolkit treasury create \
+  --redirect-url "https://example.com/callback" \
+  --icon-url "https://example.com/icon.png" \
+  --name "My Treasury"
+```
+
+### Common Workflows
+
+| Workflow | Commands |
+|----------|----------|
+| [Complete Treasury Lifecycle](#complete-treasury-lifecycle) | create → fund → grant-config → fee-config → use |
+| [Authentication Flow](#authentication-flow) | login → status → refresh |
+| [Grant and Fee Setup](#grant-and-fee-setup-workflow) | grant-config add → fee-config set → verify |
+| [Contract Deployment](#contract-deployment-workflow) | instantiate → execute → query |
+
+### Example Outputs
+
+All commands return JSON output for easy parsing:
+
+**Success:**
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "error": "Error message",
+  "code": "ERROR_CODE",
+  "suggestion": "How to fix it"
+}
+```
+
+### Complete Treasury Lifecycle
+
+End-to-end example of creating and configuring a Treasury:
+
+```bash
+# Step 1: Authenticate
+xion-toolkit auth login
+
+# Step 2: Create a new Treasury
+xion-toolkit treasury create \
+  --redirect-url "https://myapp.example.com/callback" \
+  --name "My App Treasury"
+# Output: {"success": true, "address": "xion1treasury...", ...}
+
+# Step 3: Fund the Treasury (1 XION = 1,000,000 uxion)
+xion-toolkit treasury fund xion1treasury... --amount 10000000
+
+# Step 4: Configure Authz Grant (allow MsgSend)
+xion-toolkit treasury grant-config add xion1treasury... \
+  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
+  --grant-auth-type send \
+  --grant-spend-limit "5000000uxion" \
+  --grant-description "Allow sending funds"
+
+# Step 5: Configure Fee Allowance (gasless transactions)
+xion-toolkit treasury fee-config set xion1treasury... \
+  --fee-allowance-type basic \
+  --fee-spend-limit "1000000uxion" \
+  --fee-description "Basic fee allowance"
+
+# Step 6: Verify configuration
+xion-toolkit treasury query xion1treasury... --include-grants
+
+# Step 7: Use the Treasury (withdraw funds)
+xion-toolkit treasury withdraw xion1treasury... \
+  --amount 1000000 \
+  --to xion1recipient...
+```
+
+### Authentication Flow
+
+Complete authentication management:
+
+```bash
+# Login (opens browser)
+xion-toolkit auth login
+
+# Check status
+xion-toolkit auth status
+# Output: {"success": true, "authenticated": true, ...}
+
+# If token expired, refresh it
+xion-toolkit auth refresh
+
+# Logout when done (clears credentials)
+xion-toolkit auth logout
+```
+
+### Grant and Fee Setup Workflow
+
+Setting up permissions for Treasury operations:
+
+```bash
+# List existing grants
+xion-toolkit treasury grant-config list xion1treasury...
+
+# Add a new grant
+xion-toolkit treasury grant-config add xion1treasury... \
+  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
+  --grant-auth-type send \
+  --grant-spend-limit "1000000uxion" \
+  --grant-description "Daily spending limit"
+
+# Query on-chain grants
+xion-toolkit treasury chain-query grants xion1treasury...
+
+# Set fee allowance
+xion-toolkit treasury fee-config set xion1treasury... \
+  --fee-allowance-type periodic \
+  --fee-period-seconds 86400 \
+  --fee-period-spend-limit "100000uxion" \
+  --fee-description "Daily fee allowance"
+
+# Query fee configuration
+xion-toolkit treasury fee-config query xion1treasury...
+
+# Remove grant when no longer needed
+xion-toolkit treasury grant-config remove xion1treasury... \
+  --type-url "/cosmos.bank.v1beta1.MsgSend"
+```
+
+### Contract Deployment Workflow
+
+Deploying and interacting with CosmWasm contracts:
+
+```bash
+# Instantiate a contract
+xion-toolkit contract instantiate \
+  --code-id 1260 \
+  --label "my-contract-001" \
+  --msg '{"admin": "xion1abc..."}'
+# Output: {"success": true, "address": "xion1contract...", ...}
+
+# Instantiate with predictable address (instantiate2)
+xion-toolkit contract instantiate2 \
+  --code-id 1260 \
+  --label "my-contract-002" \
+  --msg '{"admin": "xion1abc..."}' \
+  --salt "0102030405060708"
+# Output: {"success": true, "address": "xion1predictable...", ...}
+
+# Execute a message on the contract
+xion-toolkit contract execute \
+  --contract xion1contract... \
+  --msg '{"increment": {}}'
+
+# Execute with funds
+xion-toolkit contract execute \
+  --contract xion1contract... \
+  --msg '{"buy_item": {"id": 1}}' \
+  --funds "1000000uxion"
+```
 
 ---
 
@@ -39,20 +219,41 @@ xion-toolkit auth login [--port <PORT>]
 **Options:**
 - `--port <PORT>` - Callback server port (default: 54321)
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit auth login
+```
+
+Output (success):
 ```json
 {
   "success": true,
   "message": "Successfully authenticated",
-  "address": "xion1abc..."
+  "address": "xion1abc123def456..."
 }
 ```
 
-**Example:**
+With custom port:
 ```bash
-xion-toolkit auth login
 xion-toolkit auth login --port 8080
 ```
+
+Output (error - port in use):
+```json
+{
+  "success": false,
+  "error": "Port 8080 is already in use",
+  "code": "PORT_IN_USE",
+  "suggestion": "Try using a different port with --port flag"
+}
+```
+
+**Notes:**
+- Opens browser automatically for authentication
+- Stores encrypted credentials in `~/.xion-toolkit/credentials/`
+- Refresh tokens valid for 30 days
 
 ---
 
@@ -65,13 +266,35 @@ Clears stored credentials and logs out.
 xion-toolkit auth logout
 ```
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit auth logout
+```
+
+Output (success):
 ```json
 {
   "success": true,
   "message": "Successfully logged out"
 }
 ```
+
+Output (error - not authenticated):
+```json
+{
+  "success": false,
+  "error": "No credentials found",
+  "code": "NOT_AUTHENTICATED",
+  "suggestion": "Run 'xion-toolkit auth login' to authenticate first"
+}
+```
+
+**Notes:**
+- ⚠️ Deletes encrypted credential files
+- ⚠️ Requires browser re-login on next use
+- Refresh tokens are long-lived; only logout when necessary
 
 ---
 
@@ -84,13 +307,41 @@ Checks authentication status and token expiration.
 xion-toolkit auth status
 ```
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit auth status
+```
+
+Output (authenticated):
 ```json
 {
   "success": true,
   "authenticated": true,
-  "address": "xion1abc...",
-  "expires_at": "2024-01-01T00:00:00Z"
+  "address": "xion1abc123def456...",
+  "expires_at": "2024-01-15T12:00:00Z",
+  "refresh_token_expires_at": "2024-02-15T12:00:00Z"
+}
+```
+
+Output (not authenticated):
+```json
+{
+  "success": true,
+  "authenticated": false,
+  "message": "No valid credentials found"
+}
+```
+
+Output (token expired):
+```json
+{
+  "success": true,
+  "authenticated": false,
+  "message": "Access token expired",
+  "expires_at": "2024-01-01T00:00:00Z",
+  "suggestion": "Run 'xion-toolkit auth refresh' to refresh your token"
 }
 ```
 
@@ -105,14 +356,36 @@ Refreshes the access token using the stored refresh token.
 xion-toolkit auth refresh
 ```
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit auth refresh
+```
+
+Output (success):
 ```json
 {
   "success": true,
   "message": "Token refreshed successfully",
-  "expires_at": "2024-01-01T00:00:00Z"
+  "expires_at": "2024-01-16T12:00:00Z"
 }
 ```
+
+Output (error - refresh token expired):
+```json
+{
+  "success": false,
+  "error": "Refresh token has expired",
+  "code": "REFRESH_TOKEN_EXPIRED",
+  "suggestion": "Run 'xion-toolkit auth login' to re-authenticate"
+}
+```
+
+**Notes:**
+- Access tokens expire after ~1 hour
+- Refresh tokens valid for 30 days
+- Auto-refresh happens automatically on expired access token
 
 ---
 
@@ -127,20 +400,62 @@ Lists all Treasury contracts owned by the authenticated user.
 xion-toolkit treasury list
 ```
 
-**Output:**
+**Options:**
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+- `--output <FORMAT>` - Output format (json, text). Default: json
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury list
+```
+
+Output (success):
 ```json
 {
   "success": true,
   "treasuries": [
     {
-      "address": "xion1abc123...",
+      "address": "xion1abc123def456...",
       "balance": "10000000",
       "denom": "uxion",
-      "admin": "xion1admin...",
+      "admin": "xion1admin789...",
       "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "address": "xion1xyz789ghi012...",
+      "balance": "5000000",
+      "denom": "uxion",
+      "admin": "xion1admin789...",
+      "created_at": "2024-01-02T00:00:00Z"
     }
   ],
-  "count": 1
+  "count": 2
+}
+```
+
+With network override:
+```bash
+xion-toolkit treasury list --network mainnet
+```
+
+Output (no treasuries):
+```json
+{
+  "success": true,
+  "treasuries": [],
+  "count": 0
+}
+```
+
+Output (error - not authenticated):
+```json
+{
+  "success": false,
+  "error": "No valid credentials found",
+  "code": "NOT_AUTHENTICATED",
+  "suggestion": "Run 'xion-toolkit auth login' to authenticate first"
 }
 ```
 
@@ -158,17 +473,27 @@ xion-toolkit treasury query <ADDRESS>
 **Arguments:**
 - `ADDRESS` - Treasury contract address (required)
 
-**Output:**
+**Options:**
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury query xion1abc123def456...
+```
+
+Output (success):
 ```json
 {
   "success": true,
   "treasury": {
-    "address": "xion1abc123...",
+    "address": "xion1abc123def456...",
     "balance": {
       "denom": "uxion",
       "amount": "10000000"
     },
-    "admin": "xion1admin...",
+    "admin": "xion1admin789...",
     "params": {
       "redirect_url": "https://example.com/callback",
       "icon_url": "https://example.com/icon.png",
@@ -176,10 +501,40 @@ xion-toolkit treasury query <ADDRESS>
         "name": "My Treasury",
         "archived": false
       }
-    }
+    },
+    "grants": [
+      {
+        "type_url": "/cosmos.bank.v1beta1.MsgSend",
+        "description": "Allow sending funds"
+      }
+    ]
   }
 }
 ```
+
+Output (error - treasury not found):
+```json
+{
+  "success": false,
+  "error": "Treasury not found: xion1invalid...",
+  "code": "TREASURY_NOT_FOUND",
+  "suggestion": "Check the address and ensure you have access to this treasury"
+}
+```
+
+Output (error - invalid address):
+```json
+{
+  "success": false,
+  "error": "Invalid address format",
+  "code": "INVALID_ADDRESS",
+  "suggestion": "Address should start with 'xion1' and be a valid bech32 address"
+}
+```
+
+**Notes:**
+- Returns combined data from indexer and on-chain queries
+- Includes current grants and fee allowances
 
 ---
 
@@ -212,34 +567,55 @@ xion-toolkit treasury create [options]
 - `--grant-description <TEXT>` - Grant description
 - `--grant-spend-limit <AMOUNT>` - Spend limit (for send authorization)
 
-**Output:**
+**Examples:**
+
+Using config file:
+```bash
+# treasury-config.json
+{
+  "redirect_url": "https://example.com/callback",
+  "icon_url": "https://example.com/icon.png",
+  "name": "My Treasury",
+  "fee_allowance": {
+    "type": "basic",
+    "spend_limit": "10000000uxion"
+  }
+}
+
+xion-toolkit treasury create --config treasury-config.json
+```
+
+Output (success):
 ```json
 {
   "success": true,
   "treasury": {
-    "address": "xion1abc123...",
-    "admin": "xion1admin...",
+    "address": "xion1newtreasury123...",
+    "admin": "xion1admin789...",
     "balance": "0",
     "denom": "uxion",
     "params": {
       "redirect_url": "https://example.com/callback",
-      "icon_url": "",
+      "icon_url": "https://example.com/icon.png",
       "metadata": {
         "name": "My Treasury",
         "archived": false
       }
     }
   },
-  "tx_hash": "ABC123..."
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Examples:**
+Using flags (minimal):
 ```bash
-# Using config file
-xion-toolkit treasury create --config treasury-config.json
+xion-toolkit treasury create \
+  --redirect-url "https://example.com/callback" \
+  --icon-url "https://example.com/icon.png"
+```
 
-# Using flags
+Using flags (with grants):
+```bash
 xion-toolkit treasury create \
   --redirect-url "https://example.com/callback" \
   --icon-url "https://example.com/icon.png" \
@@ -247,8 +623,45 @@ xion-toolkit treasury create \
   --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
   --grant-auth-type send \
   --grant-spend-limit "1000000uxion" \
-  --grant-description "Allow sending funds"
+  --grant-description "Allow sending funds" \
+  --fee-allowance-type basic \
+  --fee-spend-limit "10000000uxion" \
+  --fee-description "Basic fee allowance"
 ```
+
+With OAuth2 app flag:
+```bash
+xion-toolkit treasury create \
+  --redirect-url "https://app.example.com/oauth" \
+  --icon-url "https://app.example.com/icon.png" \
+  --name "My OAuth2 App" \
+  --is-oauth2-app
+```
+
+Output (error - missing required fields):
+```json
+{
+  "success": false,
+  "error": "Missing required fields: redirect-url, icon-url",
+  "code": "INVALID_INPUT",
+  "suggestion": "Provide --redirect-url and --icon-url, or use --config with a complete config file"
+}
+```
+
+Output (error - network error):
+```json
+{
+  "success": false,
+  "error": "Failed to broadcast transaction: connection timeout",
+  "code": "NETWORK_ERROR",
+  "suggestion": "Check your network connection and try again"
+}
+```
+
+**Notes:**
+- Treasury code ID: 1260 (testnet), 63 (mainnet)
+- Creator becomes the initial admin
+- Consider setting up grants and fee allowances during creation
 
 ---
 
@@ -266,21 +679,53 @@ xion-toolkit treasury fund <ADDRESS> --amount <AMOUNT>
 
 **Options:**
 - `--amount <AMOUNT>` - Amount to fund (e.g., "1000000uxion", required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury fund xion1abc123def456... --amount 1000000uxion
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "amount": "1000000uxion",
-  "tx_hash": "ABC123..."
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
+With larger amount:
 ```bash
-xion-toolkit treasury fund xion1abc123... --amount 1000000uxion
+xion-toolkit treasury fund xion1abc123def456... --amount 100000000uxion
 ```
+
+Output (error - insufficient balance):
+```json
+{
+  "success": false,
+  "error": "Insufficient balance: have 500000uxion, need 1000000uxion",
+  "code": "INSUFFICIENT_BALANCE",
+  "suggestion": "Fund your account first or reduce the amount"
+}
+```
+
+Output (error - treasury not found):
+```json
+{
+  "success": false,
+  "error": "Treasury not found: xion1invalid...",
+  "code": "TREASURY_NOT_FOUND",
+  "suggestion": "Check the address and ensure the treasury exists"
+}
+```
+
+**Notes:**
+- Transfers tokens from your account to the treasury
+- Treasury must exist before funding
 
 ---
 
@@ -298,21 +743,58 @@ xion-toolkit treasury withdraw <ADDRESS> --amount <AMOUNT>
 
 **Options:**
 - `--amount <AMOUNT>` - Amount to withdraw (e.g., "1000000uxion", required)
+- `--to <ADDRESS>` - Recipient address (default: admin address)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
-**Output:**
+**Examples:**
+
+Basic usage (to admin):
+```bash
+xion-toolkit treasury withdraw xion1abc123def456... --amount 500000uxion
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
-  "amount": "1000000uxion",
-  "tx_hash": "ABC123..."
+  "treasury_address": "xion1abc123def456...",
+  "amount": "500000uxion",
+  "recipient": "xion1admin789...",
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
+To specific recipient:
 ```bash
-xion-toolkit treasury withdraw xion1abc123... --amount 1000000uxion
+xion-toolkit treasury withdraw xion1abc123def456... \
+  --amount 500000uxion \
+  --to xion1recipient123...
 ```
+
+Output (error - insufficient treasury balance):
+```json
+{
+  "success": false,
+  "error": "Treasury has insufficient balance: have 300000uxion, need 500000uxion",
+  "code": "INSUFFICIENT_BALANCE",
+  "suggestion": "Check treasury balance with 'xion-toolkit treasury query'"
+}
+```
+
+Output (error - not admin):
+```json
+{
+  "success": false,
+  "error": "Only admin can withdraw funds from this treasury",
+  "code": "UNAUTHORIZED",
+  "suggestion": "Only the treasury admin can perform withdrawals"
+}
+```
+
+**Notes:**
+- Only admin can withdraw funds
+- Funds go to admin address by default
+- Use `--to` to send to a different address
 
 ---
 
@@ -342,42 +824,91 @@ xion-toolkit treasury grant-config add <ADDRESS> [options]
 - `--keys <KEYS>` - Comma-separated list of accepted message keys
 - `--preset <TYPE>` - Preset: send, execute, instantiate, delegate, vote
 
-**Output:**
-```json
-{
-  "success": true,
-  "treasury_address": "xion1abc123...",
-  "operation": "add",
-  "type_url": "/cosmos.bank.v1beta1.MsgSend",
-  "tx_hash": "ABC123..."
-}
-```
-
 **Examples:**
+
+Add send authorization:
 ```bash
-# Add send authorization
-xion-toolkit treasury grant-config add xion1abc123... \
+xion-toolkit treasury grant-config add xion1abc123def456... \
   --type-url "/cosmos.bank.v1beta1.MsgSend" \
   --auth-type send \
   --spend-limit "1000000uxion" \
   --description "Allow sending funds"
+```
 
-# Add contract execution authorization
-xion-toolkit treasury grant-config add xion1abc123... \
+Output (success):
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "operation": "add",
+  "type_url": "/cosmos.bank.v1beta1.MsgSend",
+  "tx_hash": "A1B2C3D4E5F6..."
+}
+```
+
+Add contract execution authorization:
+```bash
+xion-toolkit treasury grant-config add xion1abc123def456... \
   --type-url "/cosmwasm.wasm.v1.MsgExecuteContract" \
   --auth-type contract-execution \
-  --contract xion1contract... \
+  --contract xion1contract789... \
   --max-calls 100 \
   --max-funds "1000000uxion" \
   --filter-type allow-all \
   --description "Execute contract with limits"
+```
 
-# Using preset
-xion-toolkit treasury grant-config add xion1abc123... \
+Using preset (quick setup):
+```bash
+# Send preset
+xion-toolkit treasury grant-config add xion1abc123def456... \
   --preset send \
   --spend-limit "1000000uxion" \
   --description "Allow sending funds"
+
+# Execute preset
+xion-toolkit treasury grant-config add xion1abc123def456... \
+  --preset execute \
+  --contract xion1contract789... \
+  --description "Allow contract execution"
+
+# Instantiate preset
+xion-toolkit treasury grant-config add xion1abc123def456... \
+  --preset instantiate \
+  --description "Allow contract instantiation"
 ```
+
+Using config file:
+```bash
+# grant-config.json
+{
+  "grants": [
+    {
+      "type_url": "/cosmos.bank.v1beta1.MsgSend",
+      "auth_type": "send",
+      "spend_limit": "1000000uxion",
+      "description": "Allow sending funds"
+    }
+  ]
+}
+
+xion-toolkit treasury grant-config add xion1abc123def456... --grant-config grant-config.json
+```
+
+Output (error - duplicate grant):
+```json
+{
+  "success": false,
+  "error": "Grant already exists for type: /cosmos.bank.v1beta1.MsgSend",
+  "code": "DUPLICATE_GRANT",
+  "suggestion": "Use 'grant-config remove' to remove existing grant first"
+}
+```
+
+**Notes:**
+- Multiple grants can be added to a treasury
+- Use presets for common authorization patterns
+- Contract execution grants support fine-grained controls
 
 ---
 
@@ -395,22 +926,40 @@ xion-toolkit treasury grant-config remove <ADDRESS> --type-url <URL>
 
 **Options:**
 - `--type-url <URL>` - Type URL of the grant to remove (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury grant-config remove xion1abc123def456... \
+  --type-url "/cosmos.bank.v1beta1.MsgSend"
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "operation": "remove",
-  "tx_hash": "ABC123..."
+  "type_url": "/cosmos.bank.v1beta1.MsgSend",
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury grant-config remove xion1abc123... \
-  --type-url "/cosmos.bank.v1beta1.MsgSend"
+Output (error - grant not found):
+```json
+{
+  "success": false,
+  "error": "No grant found for type: /cosmos.bank.v1beta1.MsgSend",
+  "code": "GRANT_NOT_FOUND",
+  "suggestion": "Use 'grant-config list' to see available grants"
+}
 ```
+
+**Notes:**
+- Removes the grant from the treasury
+- Does not affect already-used authorizations
 
 ---
 
@@ -426,11 +975,22 @@ xion-toolkit treasury grant-config list <ADDRESS>
 **Arguments:**
 - `ADDRESS` - Treasury contract address (required)
 
-**Output:**
+**Options:**
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+- `--output <FORMAT>` - Output format (json, text). Default: json
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury grant-config list xion1abc123def456...
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "grant_configs": [
     {
       "type_url": "/cosmos.bank.v1beta1.MsgSend",
@@ -439,16 +999,34 @@ xion-toolkit treasury grant-config list <ADDRESS>
         "type": "SendAuthorization",
         "spend_limit": [{"denom": "uxion", "amount": "1000000"}]
       }
+    },
+    {
+      "type_url": "/cosmwasm.wasm.v1.MsgExecuteContract",
+      "description": "Execute contract with limits",
+      "authorization": {
+        "type": "ContractExecutionAuthorization",
+        "allowed_addresses": ["xion1contract789..."],
+        "max_calls": 100
+      }
     }
   ],
-  "count": 1
+  "count": 2
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury grant-config list xion1abc123...
+Output (no grants):
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "grant_configs": [],
+  "count": 0
+}
 ```
+
+**Notes:**
+- Shows configured grants, not necessarily active on-chain grants
+- Use `chain-query grants` for on-chain state
 
 ---
 
@@ -466,6 +1044,7 @@ xion-toolkit treasury fee-config set <ADDRESS> --fee-config <FILE>
 
 **Options:**
 - `--fee-config <FILE>` - JSON config file with fee configuration (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
 **Config File Format:**
 
@@ -473,7 +1052,7 @@ xion-toolkit treasury fee-config set <ADDRESS> --fee-config <FILE>
 ```json
 {
   "basic": {
-    "spend_limit": "1000000uxion",
+    "spend_limit": "10000000uxion",
     "description": "Basic fee allowance"
   }
 }
@@ -485,27 +1064,63 @@ xion-toolkit treasury fee-config set <ADDRESS> --fee-config <FILE>
   "periodic": {
     "basic_spend_limit": "10000000uxion",
     "period_seconds": 86400,
-    "period_spend_limit": "100000uxion",
+    "period_spend_limit": "1000000uxion",
     "description": "Daily fee allowance"
   }
 }
 ```
 
-**Output:**
+**Examples:**
+
+Set basic fee allowance:
+```bash
+xion-toolkit treasury fee-config set xion1abc123def456... \
+  --fee-config fee-config-basic.json
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "operation": "set",
   "allowance_type": "BasicAllowance",
-  "tx_hash": "ABC123..."
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
+Set periodic fee allowance:
 ```bash
-xion-toolkit treasury fee-config set xion1abc123... --fee-config fee-config.json
+xion-toolkit treasury fee-config set xion1abc123def456... \
+  --fee-config fee-config-periodic.json
 ```
+
+Output (success - periodic):
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "operation": "set",
+  "allowance_type": "PeriodicAllowance",
+  "period_seconds": 86400,
+  "tx_hash": "A1B2C3D4E5F6..."
+}
+```
+
+Output (error - invalid config):
+```json
+{
+  "success": false,
+  "error": "Invalid fee config: missing required field 'spend_limit'",
+  "code": "INVALID_INPUT",
+  "suggestion": "Check config file format in documentation"
+}
+```
+
+**Notes:**
+- Fee allowance lets others pay gas on behalf of the treasury
+- Periodic allowance resets spend limit after each period
+- Only one fee allowance can be active at a time per grantee
 
 ---
 
@@ -523,21 +1138,40 @@ xion-toolkit treasury fee-config remove <ADDRESS> --grantee <ADDRESS>
 
 **Options:**
 - `--grantee <ADDRESS>` - Grantee address to revoke allowance from (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury fee-config remove xion1abc123def456... \
+  --grantee xion1grantee789...
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "operation": "remove",
-  "tx_hash": "ABC123..."
+  "grantee": "xion1grantee789...",
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury fee-config remove xion1abc123... --grantee xion1grantee...
+Output (error - no allowance found):
+```json
+{
+  "success": false,
+  "error": "No fee allowance found for grantee: xion1grantee789...",
+  "code": "ALLOWANCE_NOT_FOUND",
+  "suggestion": "Use 'fee-config query' to check existing allowances"
+}
 ```
+
+**Notes:**
+- Removes fee allowance for specific grantee
+- Grantee will need new allowance to pay gas on behalf of treasury
 
 ---
 
@@ -553,22 +1187,57 @@ xion-toolkit treasury fee-config query <ADDRESS>
 **Arguments:**
 - `ADDRESS` - Treasury contract address (required)
 
-**Output:**
+**Options:**
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury fee-config query xion1abc123def456...
+```
+
+Output (success - basic allowance):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "fee_config": {
     "allowance_type": "BasicAllowance",
-    "spend_limit": [{"denom": "uxion", "amount": "1000000"}]
+    "spend_limit": [{"denom": "uxion", "amount": "10000000"}],
+    "description": "Basic fee allowance"
   }
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury fee-config query xion1abc123...
+Output (success - periodic allowance):
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "fee_config": {
+    "allowance_type": "PeriodicAllowance",
+    "basic_spend_limit": [{"denom": "uxion", "amount": "10000000"}],
+    "period_seconds": 86400,
+    "period_spend_limit": [{"denom": "uxion", "amount": "1000000"}],
+    "description": "Daily fee allowance"
+  }
+}
 ```
+
+Output (no fee config):
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "fee_config": null,
+  "message": "No fee allowance configured"
+}
+```
+
+**Notes:**
+- Shows current fee allowance configuration
+- Use `chain-query allowances` for on-chain state
 
 ---
 
@@ -586,22 +1255,51 @@ xion-toolkit treasury admin propose <ADDRESS> --new-admin <ADDRESS>
 
 **Options:**
 - `--new-admin <ADDRESS>` - New admin address (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
-**Output:**
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury admin propose xion1abc123def456... \
+  --new-admin xion1newadmin789...
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "operation": "propose_admin",
-  "new_admin": "xion1newadmin...",
-  "tx_hash": "ABC123..."
+  "new_admin": "xion1newadmin789...",
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury admin propose xion1abc123... --new-admin xion1newadmin...
+Output (error - invalid address):
+```json
+{
+  "success": false,
+  "error": "Invalid admin address format",
+  "code": "INVALID_ADDRESS",
+  "suggestion": "Admin address must be a valid xion bech32 address"
+}
 ```
+
+Output (error - already pending):
+```json
+{
+  "success": false,
+  "error": "Admin proposal already pending for this treasury",
+  "code": "PENDING_PROPOSAL",
+  "suggestion": "Cancel existing proposal with 'admin cancel' first"
+}
+```
+
+**Notes:**
+- Creates a pending admin proposal
+- New admin must call `admin accept` to complete transfer
+- Current admin can cancel with `admin cancel`
 
 ---
 
@@ -617,20 +1315,51 @@ xion-toolkit treasury admin accept <ADDRESS>
 **Arguments:**
 - `ADDRESS` - Treasury contract address (required)
 
-**Output:**
+**Options:**
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury admin accept xion1abc123def456...
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "operation": "accept_admin",
-  "tx_hash": "ABC123..."
+  "new_admin": "xion1newadmin789...",
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury admin accept xion1abc123...
+Output (error - not pending admin):
+```json
+{
+  "success": false,
+  "error": "No pending admin proposal for this address",
+  "code": "NO_PENDING_PROPOSAL",
+  "suggestion": "Ask current admin to run 'admin propose' first"
+}
 ```
+
+Output (error - wrong caller):
+```json
+{
+  "success": false,
+  "error": "Only the pending admin can accept the proposal",
+  "code": "UNAUTHORIZED",
+  "suggestion": "The proposed admin must call this command"
+}
+```
+
+**Notes:**
+- Must be called by the pending admin (not current admin)
+- Completes the admin transfer
+- Previous admin loses admin privileges
 
 ---
 
@@ -646,20 +1375,40 @@ xion-toolkit treasury admin cancel <ADDRESS>
 **Arguments:**
 - `ADDRESS` - Treasury contract address (required)
 
-**Output:**
+**Options:**
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit treasury admin cancel xion1abc123def456...
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
+  "treasury_address": "xion1abc123def456...",
   "operation": "cancel_proposed_admin",
-  "tx_hash": "ABC123..."
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Example:**
-```bash
-xion-toolkit treasury admin cancel xion1abc123...
+Output (error - no pending proposal):
+```json
+{
+  "success": false,
+  "error": "No pending admin proposal to cancel",
+  "code": "NO_PENDING_PROPOSAL",
+  "suggestion": "Use 'admin propose' to create a new proposal first"
+}
 ```
+
+**Notes:**
+- Can only be called by current admin
+- Removes pending admin proposal
+- Proposed admin will no longer be able to accept
 
 ---
 
@@ -679,32 +1428,55 @@ xion-toolkit treasury params update <ADDRESS> [options]
 - `--redirect-url <URL>` - OAuth redirect URL
 - `--icon-url <URL>` - Treasury icon URL
 - `--metadata <JSON>` - Metadata as JSON string
+- `--network <NETWORK>` - Network override (testnet, mainnet)
 
-**Output:**
+**Examples:**
+
+Update redirect URL:
+```bash
+xion-toolkit treasury params update xion1abc123def456... \
+  --redirect-url "https://newurl.com/callback"
+```
+
+Output (success):
 ```json
 {
   "success": true,
-  "treasury_address": "xion1abc123...",
-  "tx_hash": "ABC123..."
+  "treasury_address": "xion1abc123def456...",
+  "operation": "update_params",
+  "updated_fields": ["redirect_url"],
+  "tx_hash": "A1B2C3D4E5F6..."
 }
 ```
 
-**Examples:**
+Update metadata:
 ```bash
-# Update redirect URL
-xion-toolkit treasury params update xion1abc123... \
-  --redirect-url "https://example.com/callback"
+xion-toolkit treasury params update xion1abc123def456... \
+  --metadata '{"name":"Updated Treasury","archived":false}'
+```
 
-# Update metadata
-xion-toolkit treasury params update xion1abc123... \
-  --metadata '{"name":"Updated Treasury"}'
-
-# Update multiple params
-xion-toolkit treasury params update xion1abc123... \
+Update multiple params:
+```bash
+xion-toolkit treasury params update xion1abc123def456... \
   --redirect-url "https://app.com/callback" \
   --icon-url "https://app.com/icon.png" \
-  --metadata '{"name":"My App"}'
+  --metadata '{"name":"My App Treasury"}'
 ```
+
+Output (error - invalid JSON):
+```json
+{
+  "success": false,
+  "error": "Invalid JSON in metadata: unexpected token",
+  "code": "INVALID_INPUT",
+  "suggestion": "Ensure metadata is valid JSON string"
+}
+```
+
+**Notes:**
+- Only admin can update parameters
+- Partial updates supported (only provide fields to change)
+- Metadata must be valid JSON
 
 ---
 

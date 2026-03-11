@@ -1,6 +1,32 @@
+---
+name: xion-oauth2
+description: |
+  OAuth2 authentication for Xion MetaAccount. Use this skill whenever the user needs to login to Xion, authenticate with MetaAccount, check authentication status, refresh tokens, or before any Treasury/contract operations that require authentication.
+  
+  This skill provides GASLESS authentication through MetaAccount - no gas fees required for authentication.
+  
+  Triggers on: MetaAccount 登录, MetaAccount login, browser login, gasless auth, gasless authentication, session key, OAuth2 登录, xion 认证, xion auth, xion login, access token, refresh token, OAuth2 xion, authenticate xion, login to xion, browser authentication.
+  
+  Use this skill BEFORE xion-treasury - authentication is required for all Treasury operations. Make sure to use this skill whenever the user mentions logging into Xion, even if they don't explicitly say "OAuth2" or "MetaAccount".
+metadata:
+  author: burnt-labs
+  version: "1.1.0"
+  requires:
+    - xion-toolkit-init
+compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
+---
+
 # xion-oauth2
 
-OAuth2 authentication skill for Xion blockchain development. This skill enables AI agents to authenticate with Xion's MetaAccount system using browser-based OAuth2 flow with PKCE security.
+OAuth2 authentication skill for Xion blockchain development. This skill enables AI agents to authenticate with Xion's **MetaAccount** system using browser-based OAuth2 flow with PKCE security.
+
+## Why MetaAccount?
+
+MetaAccount authentication provides:
+- **Gasless transactions** - No need to hold XION for gas fees
+- **Browser-based login** - Familiar OAuth2 flow, no mnemonic management
+- **Session keys** - Secure, revocable access tokens
+- **30-day refresh tokens** - Long-lived sessions for automation
 
 ## Overview
 
@@ -16,6 +42,8 @@ This skill wraps the `xion-toolkit` CLI tool to provide Agent-friendly OAuth2 au
 - `xion-toolkit` CLI tool installed and in PATH
 - Browser available for OAuth2 authorization
 - Network connectivity to Xion OAuth2 API
+
+> **Note**: If `xion-toolkit` is not installed, use the `xion-toolkit-init` skill first.
 
 ## Quick Start
 
@@ -252,12 +280,14 @@ which xion-toolkit
 
 ## Related Skills
 
+- **xion-dev** - Unified entry point for Xion development
 - **xion-treasury** - Treasury management (requires authentication)
-- **xion-deploy** - Smart contract deployment (future)
+- **xion-toolkit-init** - CLI installation (use if CLI not found)
+- **xiond-usage** (xion-skills) - Chain-level queries
 
 ## Version
 
-- Skill Version: 1.0.0
+- Skill Version: 1.1.0
 - Compatible CLI Version: >=0.1.0
 
 ## License
