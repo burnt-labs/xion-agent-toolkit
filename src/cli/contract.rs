@@ -12,6 +12,9 @@ pub enum ContractCommands {
 
     /// Execute a message on a deployed smart contract
     Execute(ExecuteArgs),
+
+    /// Query a smart contract (read-only, no authentication required)
+    Query(QueryArgs),
 }
 
 #[derive(Debug, Args)]
@@ -71,11 +74,23 @@ pub struct ExecuteArgs {
     pub funds: Option<String>,
 }
 
+#[derive(Debug, Args)]
+pub struct QueryArgs {
+    /// Contract address to query
+    #[arg(long)]
+    pub contract: String,
+
+    /// Path to JSON file containing the query message
+    #[arg(short, long)]
+    pub msg: PathBuf,
+}
+
 pub async fn handle_command(cmd: ContractCommands) -> Result<()> {
     match cmd {
         ContractCommands::Instantiate(args) => handle_instantiate(args).await,
         ContractCommands::Instantiate2(args) => handle_instantiate2(args).await,
         ContractCommands::Execute(args) => handle_execute(args).await,
+        ContractCommands::Query(args) => handle_query(args).await,
     }
 }
 
@@ -319,6 +334,72 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                     )
                 } else {
                     ("EXECUTE_FAILED", "Check the error message for details")
+                };
+
+            let result = serde_json::json!({
+                "success": false,
+                "code": code,
+                "error": e.to_string(),
+                "suggestion": suggestion
+            });
+            print_json(&result)
+        }
+    }
+}
+
+async fn handle_query(args: QueryArgs) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!("Querying contract {}...", args.contract));
+
+    // Load query message from file
+    let content = std::fs::read_to_string(&args.msg)
+        .map_err(|e| anyhow::anyhow!("Failed to read msg file: {}", e))?;
+    let msg: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("Invalid JSON in msg file: {}", e))?;
+
+    // Create manager (for config access - no auth required for query)
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config);
+
+    // Note: Query is read-only and doesn't require authentication
+
+    // Call manager to query contract
+    match manager.query_contract(&args.contract, &msg).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "contract": args.contract,
+                "query": msg,
+                "result": result
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let (code, suggestion) =
+                if error_msg.contains("not found") || error_msg.contains("unknown") {
+                    (
+                        "CONTRACT_NOT_FOUND",
+                        "Check that the contract address is correct",
+                    )
+                } else if error_msg.contains("invalid") || error_msg.contains("format") {
+                    (
+                        "INVALID_QUERY",
+                        "Check your query message format matches the contract's query schema",
+                    )
+                } else if error_msg.contains("query failed") {
+                    (
+                        "QUERY_FAILED",
+                        "The contract may have returned an error, check the query message",
+                    )
+                } else {
+                    ("QUERY_ERROR", "Check the error message for details")
                 };
 
             let result = serde_json::json!({

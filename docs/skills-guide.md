@@ -280,6 +280,8 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 | `fee-config.sh` | Configure Fee Grants (set, remove, query) |
 | `admin.sh` | Admin management (propose, accept, cancel) |
 | `update-params.sh` | Update Treasury parameters |
+| `export.sh` | Export Treasury configuration for backup/migration |
+| `import.sh` | Import configuration to existing Treasury |
 
 > **Note**: For chain-level queries (transaction status, block info), use `xiond-usage` from [xion-skills](https://github.com/burnt-labs/xion-skills).
 
@@ -485,6 +487,60 @@ xion-toolkit treasury admin xion1abc123... cancel
   "operation": "propose_admin",
   "new_admin": "xion1newadmin...",
   "tx_hash": "ABC123..."
+}
+```
+
+**Export Treasury:**
+
+```bash
+xion-toolkit treasury export xion1abc123... --output treasury-backup.json
+```
+
+**Output (Success):**
+
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123...",
+  "file": "treasury-backup.json",
+  "export": {
+    "admin": "xion1admin...",
+    "params": {
+      "redirect_url": "https://example.com/callback",
+      "icon_url": "https://example.com/icon.png",
+      "metadata": { "name": "My Treasury", "archived": false }
+    },
+    "fee_config": { ... },
+    "grant_configs": [ ... ]
+  }
+}
+```
+
+**Import Treasury:**
+
+```bash
+# Preview first
+xion-toolkit treasury import xion1abc123... \
+  --from-file treasury-backup.json \
+  --dry-run
+
+# Execute import
+xion-toolkit treasury import xion1abc123... \
+  --from-file treasury-backup.json
+```
+
+**Output (Success):**
+
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123...",
+  "operations": [
+    { "action": "update_fee_config", "tx_hash": "A1B2C3...", "status": "success" },
+    { "action": "add_grant_config", "tx_hash": "B2C3D4...", "status": "success" }
+  ],
+  "completed": 2,
+  "failed": 0
 }
 ```
 

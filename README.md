@@ -3,7 +3,7 @@
 A CLI-driven, Agent-oriented toolkit for developing on the Xion blockchain.
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Test Coverage](https://img.shields.io/badge/tests-330%20passing-green)]()
+[![Test Coverage](https://img.shields.io/badge/tests-369%20passing-green)]()
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 ## Overview
@@ -12,11 +12,12 @@ Xion Agent Toolkit provides a command-line interface for interacting with Xion's
 
 **Key Features:**
 - 🔐 OAuth2 authentication with PKCE security
-- 💰 Treasury management (list, query, fund, withdraw)
+- 💰 Treasury management (list, query, fund, withdraw, export, import)
 - ⚙️ Grant & fee configuration
 - 👤 Admin management (propose, accept, cancel)
 - 🔧 Treasury parameter updates
 - 🚀 Generic contract instantiation
+- 🔍 Smart contract queries (read-only)
 - 🤖 Agent-friendly JSON output
 - 🔒 Encrypted credential storage
 
@@ -291,6 +292,11 @@ xion-toolkit contract execute \
   --contract xion1abc123... \
   --msg execute-msg.json \
   --funds "1000000uxion"
+
+# Query a smart contract (read-only, no auth required)
+xion-toolkit contract query \
+  --contract xion1abc123... \
+  --msg query.json
 ```
 
 ## CLI Reference
@@ -314,6 +320,10 @@ xion-toolkit treasury list                       # List treasuries
 xion-toolkit treasury query <address>            # Query details
 xion-toolkit treasury fund <address> --amount N  # Fund treasury
 xion-toolkit treasury withdraw <address> --amount N --to <recipient>  # Withdraw
+
+# Export/Import (backup & migration)
+xion-toolkit treasury export <address> [--output file.json]  # Export config
+xion-toolkit treasury import <address> --from-file config.json [--dry-run]  # Import config
 
 # Grant configuration
 xion-toolkit treasury grant-config add <address> [options]     # Add grant
@@ -343,6 +353,9 @@ xion-toolkit contract instantiate2 --code-id <id> --label <label> --msg <file> [
 
 # Contract execution
 xion-toolkit contract execute --contract <address> --msg <file> [--funds <amount>]
+
+# Contract query (read-only, no auth required)
+xion-toolkit contract query --contract <address> --msg <file>
 ```
 
 ### Configuration

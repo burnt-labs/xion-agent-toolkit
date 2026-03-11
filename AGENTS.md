@@ -198,40 +198,25 @@ Each network uses a pre-configured OAuth client with the permissions needed for 
 
 ## Treasury Commands
 
-### Available Commands
-
-```bash
-xion-toolkit treasury list
-xion-toolkit treasury query <address>
-xion-toolkit treasury fund <address> --amount <amount>
-xion-toolkit treasury withdraw <address> --amount <amount> --to <recipient>
-xion-toolkit treasury grant-config <address> [options]
-xion-toolkit treasury fee-config <address> [options]
-```
-
-### Grant Configuration Options
-
-Typical patterns:
-
-```bash
-xion-toolkit treasury grant-config <address> --grant-type-url "/cosmos.bank.v1beta1.MsgSend" --grant-auth-type generic --grant-description "Generic permission"
-xion-toolkit treasury grant-config <address> --grant-type-url "/cosmos.bank.v1beta1.MsgSend" --grant-auth-type send --grant-spend-limit "1000000uxion" --grant-description "Allow sending funds"
-```
-
-### Fee Configuration Options
-
-Typical patterns:
-
-```bash
-xion-toolkit treasury fee-config <address> --fee-allowance-type basic --fee-spend-limit "1000000uxion" --fee-description "Basic fee allowance"
-xion-toolkit treasury fee-config <address> --fee-allowance-type periodic --fee-period-seconds 86400 --fee-period-spend-limit "100000uxion" --fee-description "Daily fee allowance"
-```
-
 ### Protected Treasury Contracts
 
-- For all development, testing, and automation, treat Treasury `xion17vg5l9za4768g0hnxezltgnu4h7eleqdcmwark2uuz2s4z5q4dfsr80vvm` as **write-protected**:
-  - Do **not** fund, withdraw from, modify grants/fees for, or otherwise mutate this Treasury via CLI, scripts, or skills.
-  - Tests and e2e scripts **must not** touch this Treasury address under any circumstance.
+For all development, testing, and automation, treat Treasury `xion17vg5l9za4768g0hnxezltgnu4h7eleqdcmwark2uuz2s4z5q4dfsr80vvm` as **write-protected**:
+- Do **not** fund, withdraw from, modify grants/fees for, or otherwise mutate this Treasury via CLI, scripts, or skills.
+- Tests and e2e scripts **must not** touch this Treasury address under any circumstance.
+
+### Grant & Fee Configuration Patterns
+
+When implementing grant/fee configuration in code:
+
+```bash
+# Grant configuration patterns
+xion-toolkit treasury grant-config <address> --grant-type-url "/cosmos.bank.v1beta1.MsgSend" --grant-auth-type send --grant-spend-limit "1000000uxion"
+
+# Fee configuration patterns
+xion-toolkit treasury fee-config <address> --fee-allowance-type periodic --fee-period-seconds 86400 --fee-period-spend-limit "100000uxion"
+```
+
+> For complete command reference, see [docs/cli-reference.md](./docs/cli-reference.md).
 
 ## Git Standards
 
@@ -272,7 +257,7 @@ cargo test test_pkce_challenge
 cargo test -- --nocapture
 ```
 
-Current status: **330 tests passing**
+Current status: **369 tests passing**
 
 ### Test Serialization Rules
 
