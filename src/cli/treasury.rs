@@ -58,6 +58,38 @@ pub enum TreasuryCommands {
     /// Query on-chain data (authz grants, fee allowances)
     #[command(subcommand)]
     ChainQuery(ChainQueryCommands),
+
+    /// Export treasury configuration for backup/migration
+    Export(ExportArgs),
+
+    /// Import configuration to an existing treasury
+    Import(ImportArgs),
+}
+
+/// Export treasury configuration arguments
+#[derive(Debug, Args)]
+pub struct ExportArgs {
+    /// Treasury contract address
+    pub address: String,
+
+    /// Output file path (optional, defaults to stdout)
+    #[arg(long)]
+    pub output: Option<String>,
+}
+
+/// Import treasury configuration arguments
+#[derive(Debug, Args)]
+pub struct ImportArgs {
+    /// Treasury contract address to import configuration to
+    pub address: String,
+
+    /// Path to JSON file containing the configuration to import
+    #[arg(long)]
+    pub from_file: String,
+
+    /// Preview actions without executing transactions
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 /// Admin management subcommands
@@ -301,6 +333,8 @@ pub async fn handle_command(cmd: TreasuryCommands) -> Result<()> {
         TreasuryCommands::Admin(sub) => handle_admin(sub).await,
         TreasuryCommands::Params(sub) => handle_params(sub).await,
         TreasuryCommands::ChainQuery(sub) => handle_chain_query(sub).await,
+        TreasuryCommands::Export(args) => handle_export(args).await,
+        TreasuryCommands::Import(args) => handle_import(args).await,
     }
 }
 
@@ -1642,6 +1676,163 @@ async fn handle_query_allowances(address: &str) -> Result<()> {
                 "success": false,
                 "error": format!("Failed to query fee allowances: {}", e),
                 "code": "QUERY_ALLOWANCES_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+// ============================================================================
+// Export Handlers
+// ============================================================================
+
+async fn handle_export(args: ExportArgs) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    print_info(&format!(
+        "Exporting treasury configuration for {}...",
+        args.address
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication (needed for indexer queries)
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Export treasury state
+    match manager.export_treasury(&args.address).await {
+        Ok(export_data) => {
+            // Build the output JSON
+            let output = serde_json::json!({
+                "success": true,
+                "data": export_data
+            });
+
+            // Output to file or stdout
+            if let Some(ref output_path) = args.output {
+                // Write to file
+                let json_string = serde_json::to_string_pretty(&output)?;
+                fs::write(output_path, json_string)?;
+                eprintln!("[INFO] Exported treasury config to: {}", output_path);
+                Ok(())
+            } else {
+                // Output to stdout
+                print_json(&output)
+            }
+        }
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to export treasury: {}", e),
+                "code": "EXPORT_FAILED"
+            });
+            print_json(&result)
+        }
+    }
+}
+
+// ============================================================================
+// Import Handlers
+// ============================================================================
+
+async fn handle_import(args: ImportArgs) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::types::TreasuryExportData;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_info, print_json};
+
+    if args.dry_run {
+        print_info(&format!(
+            "Previewing import to treasury {} (dry-run)...",
+            args.address
+        ));
+    } else {
+        print_info(&format!(
+            "Importing configuration to treasury {}...",
+            args.address
+        ));
+    }
+
+    // Load import data from file
+    let import_content = fs::read_to_string(&args.from_file)
+        .map_err(|e| anyhow::anyhow!("Failed to read import file: {}", e))?;
+
+    // Parse the import data
+    let import_json: serde_json::Value = serde_json::from_str(&import_content)
+        .map_err(|e| anyhow::anyhow!("Invalid JSON in import file: {}", e))?;
+
+    // Extract TreasuryExportData - handle both direct format and wrapped format
+    let export_data: TreasuryExportData = if import_json.is_object() {
+        if let Some(data) = import_json.get("data") {
+            // Wrapped format: {"success": true, "data": {...}}
+            serde_json::from_value(data.clone())
+                .map_err(|e| anyhow::anyhow!("Invalid import data format: {}", e))?
+        } else {
+            // Direct format: just the TreasuryExportData
+            serde_json::from_value(import_json)
+                .map_err(|e| anyhow::anyhow!("Invalid import data format: {}", e))?
+        }
+    } else {
+        return Err(anyhow::anyhow!("Import file must contain a JSON object"));
+    };
+
+    // Validate the import data
+    if export_data.address.is_empty() {
+        return Err(anyhow::anyhow!(
+            "Import data must contain a valid treasury address"
+        ));
+    }
+
+    // Warn if import target differs from export source
+    if !export_data.address.is_empty() && export_data.address != args.address {
+        eprintln!(
+            "[WARN] Import data is from treasury {} but applying to {}",
+            export_data.address, args.address
+        );
+    }
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication (required for transactions)
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Import treasury configuration
+    match manager
+        .import_treasury(&args.address, &export_data, args.dry_run)
+        .await
+    {
+        Ok(result) => print_json(&result),
+        Err(e) => {
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to import treasury: {}", e),
+                "code": "IMPORT_FAILED"
             });
             print_json(&result)
         }

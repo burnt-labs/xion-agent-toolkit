@@ -1290,11 +1290,385 @@ impl TreasuryManager {
         // Call API client to list fee allowances (no auth required for query)
         self.api_client.list_fee_allowances(address).await
     }
+
+    // ========================================================================
+    // Export Operations
+    // ========================================================================
+
+    /// Export treasury configuration for backup/migration
+    ///
+    /// Exports all treasury configuration data including admin, fee config,
+    /// grant configs, and params. This is a read-only operation.
+    ///
+    /// # Arguments
+    /// * `address` - Treasury contract address
+    ///
+    /// # Returns
+    /// Treasury export data with all configuration
+    #[instrument(skip(self))]
+    pub async fn export_treasury(&self, address: &str) -> Result<super::types::TreasuryExportData> {
+        debug!("Exporting treasury configuration for: {}", address);
+
+        // Get valid access token
+        let access_token = self.oauth_client.get_valid_token().await?;
+
+        // Call API client to export treasury state
+        self.api_client
+            .export_treasury_state(&access_token, address)
+            .await
+    }
+
+    /// Import treasury configuration to an existing treasury
+    ///
+    /// Imports configuration by executing a sequence of transactions:
+    /// 1. Update fee config (if present)
+    /// 2. Update grant configs (for each config)
+    ///
+    /// This is a client-side batching operation, NOT an on-chain batch.
+    ///
+    /// # Arguments
+    /// * `treasury_address` - Target treasury contract address
+    /// * `import_data` - Configuration to import
+    /// * `dry_run` - If true, only preview actions without executing
+    ///
+    /// # Returns
+    /// Import result with actions performed
+    #[instrument(skip(self, import_data))]
+    pub async fn import_treasury(
+        &self,
+        treasury_address: &str,
+        import_data: &super::types::TreasuryExportData,
+        dry_run: bool,
+    ) -> Result<super::types::ImportResult> {
+        debug!(
+            "Importing configuration to treasury: {} (dry_run={})",
+            treasury_address, dry_run
+        );
+
+        let mut actions = Vec::new();
+        let mut errors = Vec::new();
+
+        // Step 1: Update fee config if present
+        if let Some(ref fee_config) = import_data.fee_config {
+            eprintln!("[INFO] Planning fee config update...");
+
+            let action = if dry_run {
+                // Dry-run: just record the planned action
+                super::types::ImportAction {
+                    action_type: "update_fee_config".to_string(),
+                    index: None,
+                    success: true,
+                    tx_hash: None,
+                    error: None,
+                    config: Some(serde_json::to_value(fee_config)?),
+                }
+            } else {
+                // Execute: convert FeeConfigInfo to FeeConfigInput and update
+                eprintln!("[INFO] Updating fee config...");
+                match self.import_fee_config(treasury_address, fee_config).await {
+                    Ok(tx_hash) => {
+                        eprintln!("[INFO] Fee config updated: tx_hash={}", tx_hash);
+                        super::types::ImportAction {
+                            action_type: "update_fee_config".to_string(),
+                            index: None,
+                            success: true,
+                            tx_hash: Some(tx_hash),
+                            error: None,
+                            config: None,
+                        }
+                    }
+                    Err(e) => {
+                        let error_msg = format!("Failed to update fee config: {}", e);
+                        eprintln!("[ERROR] {}", error_msg);
+                        errors.push(error_msg.clone());
+                        super::types::ImportAction {
+                            action_type: "update_fee_config".to_string(),
+                            index: None,
+                            success: false,
+                            tx_hash: None,
+                            error: Some(error_msg),
+                            config: None,
+                        }
+                    }
+                }
+            };
+            actions.push(action);
+        }
+
+        // Step 2: Update grant configs
+        for (i, grant_config) in import_data.grant_configs.iter().enumerate() {
+            eprintln!(
+                "[INFO] Planning grant config update {}/{}...",
+                i + 1,
+                import_data.grant_configs.len()
+            );
+
+            let action = if dry_run {
+                // Dry-run: just record the planned action
+                super::types::ImportAction {
+                    action_type: "update_grant_config".to_string(),
+                    index: Some(i),
+                    success: true,
+                    tx_hash: None,
+                    error: None,
+                    config: Some(serde_json::to_value(grant_config)?),
+                }
+            } else {
+                // Execute: convert GrantConfigInfo to GrantConfigInput and update
+                eprintln!(
+                    "[INFO] Updating grant config {}/{}...",
+                    i + 1,
+                    import_data.grant_configs.len()
+                );
+                match self
+                    .import_grant_config(treasury_address, grant_config)
+                    .await
+                {
+                    Ok(tx_hash) => {
+                        eprintln!("[INFO] Grant config updated: tx_hash={}", tx_hash);
+                        super::types::ImportAction {
+                            action_type: "update_grant_config".to_string(),
+                            index: Some(i),
+                            success: true,
+                            tx_hash: Some(tx_hash),
+                            error: None,
+                            config: None,
+                        }
+                    }
+                    Err(e) => {
+                        let error_msg = format!("Failed to update grant config {}: {}", i, e);
+                        eprintln!("[ERROR] {}", error_msg);
+                        errors.push(error_msg.clone());
+                        super::types::ImportAction {
+                            action_type: "update_grant_config".to_string(),
+                            index: Some(i),
+                            success: false,
+                            tx_hash: None,
+                            error: Some(error_msg),
+                            config: None,
+                        }
+                    }
+                }
+            };
+            actions.push(action);
+        }
+
+        // Calculate total successful transactions
+        let total_transactions = actions
+            .iter()
+            .filter(|a| a.success && a.tx_hash.is_some())
+            .count();
+
+        if dry_run {
+            eprintln!("[INFO] Dry-run complete: {} actions planned", actions.len());
+        } else {
+            eprintln!(
+                "[INFO] Import complete: {} transactions executed",
+                total_transactions
+            );
+        }
+
+        Ok(super::types::ImportResult {
+            success: errors.is_empty(),
+            treasury_address: treasury_address.to_string(),
+            dry_run,
+            actions,
+            total_transactions,
+            errors,
+        })
+    }
+
+    /// Import fee config to treasury
+    ///
+    /// Converts FeeConfigInfo to FeeConfigInput and calls set_fee_config.
+    /// Preserves periodic allowance configuration if present in the export data.
+    async fn import_fee_config(
+        &self,
+        treasury_address: &str,
+        fee_config: &super::types::FeeConfigInfo,
+    ) -> Result<String> {
+        // Determine the fee config type based on available fields
+        let fee_input = if let (Some(period), Some(period_spend_limit)) =
+            (&fee_config.period, &fee_config.period_spend_limit)
+        {
+            // Periodic allowance - parse period duration
+            let period_seconds = parse_duration_string(period)?;
+            super::types::FeeConfigInput::Periodic {
+                basic_spend_limit: fee_config.spend_limit.clone(),
+                period_seconds,
+                period_spend_limit: period_spend_limit.clone(),
+                description: fee_config.description.clone(),
+            }
+        } else {
+            // Basic allowance
+            super::types::FeeConfigInput::Basic {
+                spend_limit: fee_config
+                    .spend_limit
+                    .clone()
+                    .unwrap_or_else(|| "0uxion".to_string()),
+                description: fee_config.description.clone(),
+            }
+        };
+
+        // Call set_fee_config
+        let result = self.set_fee_config(treasury_address, fee_input).await?;
+        Ok(result.tx_hash)
+    }
+
+    /// Import grant config to treasury
+    ///
+    /// Converts GrantConfigInfo to GrantConfigInput and calls add_grant_config.
+    /// Uses preserved authorization input if available, otherwise defaults to Generic.
+    async fn import_grant_config(
+        &self,
+        treasury_address: &str,
+        grant_config: &super::types::GrantConfigInfo,
+    ) -> Result<String> {
+        // Use preserved authorization input if available, otherwise default to Generic
+        let authorization = grant_config
+            .authorization_input
+            .clone()
+            .unwrap_or(super::types::AuthorizationInput::Generic);
+
+        let grant_input = super::types::GrantConfigInput {
+            type_url: grant_config.type_url.clone(),
+            description: grant_config.description.clone(),
+            authorization,
+            optional: grant_config.optional,
+        };
+
+        // Call add_grant_config
+        let result = self.add_grant_config(treasury_address, grant_input).await?;
+        Ok(result.tx_hash)
+    }
+
+    // ========================================================================
+    // Contract Query Operations
+    // ========================================================================
+
+    /// Query a CosmWasm smart contract
+    ///
+    /// Performs a read-only query on a CosmWasm smart contract.
+    /// This is a direct RPC call and does not require authentication.
+    ///
+    /// # Arguments
+    /// * `contract_address` - Contract address to query
+    /// * `query_msg` - Query message as JSON value
+    ///
+    /// # Returns
+    /// Query result as JSON value
+    ///
+    /// # Example
+    /// ```no_run
+    /// use xion_agent_toolkit::treasury::TreasuryManager;
+    /// use xion_agent_toolkit::oauth::OAuthClient;
+    /// use xion_agent_toolkit::config::NetworkConfig;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> anyhow::Result<()> {
+    /// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: 1260,
+    /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     callback_port: 54321,
+    /// # };
+    /// # let oauth_client = OAuthClient::new(config.clone())?;
+    /// let manager = TreasuryManager::new(oauth_client, config.clone());
+    /// let query = serde_json::json!({ "balance": {} });
+    /// let result = manager.query_contract("xion1contract...", &query).await?;
+    /// println!("Query result: {:?}", result);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[instrument(skip(self, query_msg))]
+    pub async fn query_contract(
+        &self,
+        contract_address: &str,
+        query_msg: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        debug!("Querying contract: {}", contract_address);
+
+        // Call API client to query contract (no auth required for query)
+        self.api_client
+            .query_contract_smart(contract_address, query_msg)
+            .await
+    }
 }
 
 // ============================================================================
 // Helper Functions for Encoding
 // ============================================================================
+
+/// Parse a duration string (e.g., "86400s", "24h", "3600") into seconds
+///
+/// Supports:
+/// - Protobuf Duration format: "86400s"
+/// - Simple number: "86400"
+/// - Human readable: "24h", "1d", "1h30m"
+fn parse_duration_string(s: &str) -> Result<u64> {
+    let s = s.trim();
+
+    // Handle empty string
+    if s.is_empty() {
+        anyhow::bail!("Empty duration string");
+    }
+
+    // Handle protobuf duration format (e.g., "86400s")
+    if s.ends_with('s') && !s.contains('h') && !s.contains('m') && !s.contains('d') {
+        let num_str = &s[..s.len() - 1];
+        return num_str
+            .parse::<u64>()
+            .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s));
+    }
+
+    // Handle simple number (assume seconds)
+    if s.chars().all(|c| c.is_ascii_digit()) {
+        return s
+            .parse::<u64>()
+            .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s));
+    }
+
+    // Handle human-readable format (e.g., "24h", "1d", "1h30m")
+    let mut total_seconds: u64 = 0;
+    let mut current_num = String::new();
+
+    for c in s.chars() {
+        if c.is_ascii_digit() {
+            current_num.push(c);
+        } else {
+            let num: u64 = current_num
+                .parse()
+                .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s))?;
+            current_num.clear();
+
+            match c {
+                'd' => total_seconds += num * 86400,
+                'h' => total_seconds += num * 3600,
+                'm' => total_seconds += num * 60,
+                's' => total_seconds += num,
+                _ => anyhow::bail!("Unknown duration unit: {}", c),
+            }
+        }
+    }
+
+    // Handle trailing number without unit (assume seconds)
+    if !current_num.is_empty() {
+        let num: u64 = current_num
+            .parse()
+            .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s))?;
+        total_seconds += num;
+    }
+
+    if total_seconds == 0 {
+        anyhow::bail!("Invalid duration: {}", s);
+    }
+
+    Ok(total_seconds)
+}
 
 /// Encode fee config input to chain format
 fn encode_fee_config_input(

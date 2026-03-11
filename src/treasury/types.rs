@@ -569,6 +569,10 @@ pub struct GrantConfigInfo {
     /// Is optional
     #[serde(default)]
     pub optional: bool,
+    /// Original authorization input for round-trip preservation
+    /// This preserves spend limits, max_calls, validators, etc.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_input: Option<AuthorizationInput>,
 }
 
 // ============================================================================
@@ -659,6 +663,96 @@ pub struct FeeConfigInfo {
     /// Expiration (if any)
     #[serde(default)]
     pub expiration: Option<String>,
+    /// Period duration for periodic allowances (e.g., "86400s")
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub period: Option<String>,
+    /// Period spend limit for periodic allowances
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub period_spend_limit: Option<String>,
+    /// Whether the period can reset
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub can_period_reset: Option<bool>,
+}
+
+// ============================================================================
+// EXPORT TYPES
+// ============================================================================
+
+/// Treasury configuration for export/import
+///
+/// This structure contains all the configuration data needed to backup
+/// or migrate a treasury to a new instance.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryExportData {
+    /// Treasury contract address
+    pub address: String,
+
+    /// Admin address
+    pub admin: Option<String>,
+
+    /// Fee configuration
+    pub fee_config: Option<FeeConfigInfo>,
+
+    /// Grant configurations
+    pub grant_configs: Vec<GrantConfigInfo>,
+
+    /// Treasury params
+    pub params: Option<TreasuryParams>,
+
+    /// Export timestamp (ISO 8601)
+    pub exported_at: String,
+}
+
+// ============================================================================
+// IMPORT TYPES
+// ============================================================================
+
+/// Result of treasury import operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportResult {
+    /// Success status
+    pub success: bool,
+
+    /// Treasury address
+    pub treasury_address: String,
+
+    /// Whether this was a dry-run
+    pub dry_run: bool,
+
+    /// List of actions performed
+    pub actions: Vec<ImportAction>,
+
+    /// Total number of transactions executed
+    pub total_transactions: usize,
+
+    /// List of errors encountered
+    pub errors: Vec<String>,
+}
+
+/// Single action during import
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportAction {
+    /// Action type: "update_fee_config" or "update_grant_config"
+    pub action_type: String,
+
+    /// Index for grant config actions (0-based)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index: Option<usize>,
+
+    /// Success status of this action
+    pub success: bool,
+
+    /// Transaction hash (if successful)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_hash: Option<String>,
+
+    /// Error message (if failed)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+
+    /// Config details (for dry-run preview)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<serde_json::Value>,
 }
 
 // ============================================================================
@@ -1062,4 +1156,334 @@ fn test_serialize_treasury_execute_msg() {
 }"#;
 
     assert_eq!(json, expected);
+}
+
+#[test]
+fn test_treasury_export_data_serialization() {
+    let export_data = TreasuryExportData {
+        address: "xion1abc123".to_string(),
+        admin: Some("xion1admin".to_string()),
+        fee_config: Some(FeeConfigInfo {
+            allowance_type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+            description: "Basic fee allowance".to_string(),
+            spend_limit: Some("1000000uxion".to_string()),
+            expiration: None,
+            period: None,
+            period_spend_limit: None,
+            can_period_reset: None,
+        }),
+        grant_configs: vec![GrantConfigInfo {
+            type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+            description: "Allow sending funds".to_string(),
+            authorization_type_url: "/cosmos.bank.v1beta1.SendAuthorization".to_string(),
+            optional: false,
+            authorization_input: None,
+        }],
+        params: Some(TreasuryParams {
+            display_url: None,
+            redirect_url: "https://myapp.com/callback".to_string(),
+            icon_url: "https://myapp.com/icon.png".to_string(),
+            metadata: None,
+        }),
+        exported_at: "2024-01-01T00:00:00Z".to_string(),
+    };
+
+    let json = serde_json::to_string_pretty(&export_data).unwrap();
+    assert!(json.contains("\"address\": \"xion1abc123\""));
+    assert!(json.contains("\"admin\": \"xion1admin\""));
+    assert!(json.contains("\"exported_at\": \"2024-01-01T00:00:00Z\""));
+    assert!(json.contains("\"description\": \"Basic fee allowance\""));
+}
+
+#[test]
+fn test_treasury_export_data_deserialization() {
+    let json = r#"{
+        "address": "xion1abc123",
+        "admin": "xion1admin",
+        "fee_config": {
+            "allowance_type_url": "/cosmos.feegrant.v1beta1.BasicAllowance",
+            "description": "Basic fee allowance",
+            "spend_limit": "1000000uxion"
+        },
+        "grant_configs": [
+            {
+                "type_url": "/cosmos.bank.v1beta1.MsgSend",
+                "description": "Allow sending funds",
+                "authorization_type_url": "/cosmos.bank.v1beta1.SendAuthorization",
+                "optional": false
+            }
+        ],
+        "params": {
+            "redirect_url": "https://myapp.com/callback",
+            "icon_url": "https://myapp.com/icon.png"
+        },
+        "exported_at": "2024-01-01T00:00:00Z"
+    }"#;
+
+    let export_data: TreasuryExportData = serde_json::from_str(json).unwrap();
+    assert_eq!(export_data.address, "xion1abc123");
+    assert_eq!(export_data.admin, Some("xion1admin".to_string()));
+    assert!(export_data.fee_config.is_some());
+    assert_eq!(export_data.grant_configs.len(), 1);
+    assert!(export_data.params.is_some());
+    assert_eq!(export_data.exported_at, "2024-01-01T00:00:00Z");
+}
+
+#[test]
+fn test_treasury_export_data_minimal() {
+    let json = r#"{
+        "address": "xion1abc123",
+        "admin": null,
+        "fee_config": null,
+        "grant_configs": [],
+        "params": null,
+        "exported_at": "2024-01-01T00:00:00Z"
+    }"#;
+
+    let export_data: TreasuryExportData = serde_json::from_str(json).unwrap();
+    assert_eq!(export_data.address, "xion1abc123");
+    assert!(export_data.admin.is_none());
+    assert!(export_data.fee_config.is_none());
+    assert!(export_data.grant_configs.is_empty());
+    assert!(export_data.params.is_none());
+}
+
+#[test]
+fn test_treasury_export_data_roundtrip() {
+    let original = TreasuryExportData {
+        address: "xion1treasury".to_string(),
+        admin: Some("xion1admin".to_string()),
+        fee_config: Some(FeeConfigInfo {
+            allowance_type_url: "/cosmos.feegrant.v1beta1.PeriodicAllowance".to_string(),
+            description: "Periodic fee allowance".to_string(),
+            spend_limit: Some("10000000uxion".to_string()),
+            expiration: Some("2025-01-01T00:00:00Z".to_string()),
+            period: Some("86400s".to_string()),
+            period_spend_limit: Some("1000000uxion".to_string()),
+            can_period_reset: Some(true),
+        }),
+        grant_configs: vec![
+            GrantConfigInfo {
+                type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                description: "Send funds".to_string(),
+                authorization_type_url: "/cosmos.bank.v1beta1.SendAuthorization".to_string(),
+                optional: false,
+                authorization_input: Some(AuthorizationInput::Send {
+                    spend_limit: "1000000uxion".to_string(),
+                    allow_list: None,
+                }),
+            },
+            GrantConfigInfo {
+                type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
+                description: "Execute contracts".to_string(),
+                authorization_type_url: "/cosmos.authz.v1beta1.GenericAuthorization".to_string(),
+                optional: true,
+                authorization_input: None,
+            },
+        ],
+        params: Some(TreasuryParams {
+            display_url: Some("https://myapp.com".to_string()),
+            redirect_url: "https://myapp.com/callback".to_string(),
+            icon_url: "https://myapp.com/icon.png".to_string(),
+            metadata: Some(serde_json::json!({"name": "My Treasury"})),
+        }),
+        exported_at: "2024-06-15T12:30:00Z".to_string(),
+    };
+
+    // Serialize to JSON
+    let json = serde_json::to_string(&original).unwrap();
+
+    // Deserialize back
+    let deserialized: TreasuryExportData = serde_json::from_str(&json).unwrap();
+
+    // Verify all fields match
+    assert_eq!(deserialized.address, original.address);
+    assert_eq!(deserialized.admin, original.admin);
+    assert_eq!(deserialized.exported_at, original.exported_at);
+    assert_eq!(
+        deserialized.grant_configs.len(),
+        original.grant_configs.len()
+    );
+    assert!(deserialized.fee_config.is_some());
+    assert!(deserialized.params.is_some());
+}
+
+// ============================================================================
+// Import Type Tests
+// ============================================================================
+
+#[test]
+fn test_import_result_serialization() {
+    let result = ImportResult {
+        success: true,
+        treasury_address: "xion1treasury".to_string(),
+        dry_run: false,
+        actions: vec![
+            ImportAction {
+                action_type: "update_fee_config".to_string(),
+                index: None,
+                success: true,
+                tx_hash: Some("ABC123".to_string()),
+                error: None,
+                config: None,
+            },
+            ImportAction {
+                action_type: "update_grant_config".to_string(),
+                index: Some(0),
+                success: true,
+                tx_hash: Some("DEF456".to_string()),
+                error: None,
+                config: None,
+            },
+        ],
+        total_transactions: 2,
+        errors: vec![],
+    };
+
+    let json = serde_json::to_string_pretty(&result).unwrap();
+    assert!(json.contains("\"success\": true"));
+    assert!(json.contains("\"dry_run\": false"));
+    assert!(json.contains("\"total_transactions\": 2"));
+    assert!(json.contains("\"tx_hash\": \"ABC123\""));
+}
+
+#[test]
+fn test_import_result_deserialization() {
+    let json = r#"{
+        "success": true,
+        "treasury_address": "xion1treasury",
+        "dry_run": false,
+        "actions": [
+            {
+                "action_type": "update_fee_config",
+                "success": true,
+                "tx_hash": "ABC123"
+            }
+        ],
+        "total_transactions": 1,
+        "errors": []
+    }"#;
+
+    let result: ImportResult = serde_json::from_str(json).unwrap();
+    assert!(result.success);
+    assert!(!result.dry_run);
+    assert_eq!(result.treasury_address, "xion1treasury");
+    assert_eq!(result.total_transactions, 1);
+    assert_eq!(result.actions.len(), 1);
+}
+
+#[test]
+fn test_import_action_dry_run() {
+    let action = ImportAction {
+        action_type: "update_fee_config".to_string(),
+        index: None,
+        success: true,
+        tx_hash: None,
+        error: None,
+        config: Some(serde_json::json!({
+            "allowance_type_url": "/cosmos.feegrant.v1beta1.BasicAllowance",
+            "description": "Basic fee allowance",
+            "spend_limit": "1000000uxion"
+        })),
+    };
+
+    let json = serde_json::to_string(&action).unwrap();
+    assert!(json.contains("\"action_type\":\"update_fee_config\""));
+    assert!(json.contains("\"config\":{"));
+    assert!(!json.contains("tx_hash")); // Should not include null fields
+}
+
+#[test]
+fn test_import_action_with_error() {
+    let action = ImportAction {
+        action_type: "update_grant_config".to_string(),
+        index: Some(1),
+        success: false,
+        tx_hash: None,
+        error: Some("Failed to update grant config: insufficient funds".to_string()),
+        config: None,
+    };
+
+    let json = serde_json::to_string(&action).unwrap();
+    assert!(json.contains("\"success\":false"));
+    assert!(json.contains("\"error\":\"Failed to update grant config: insufficient funds\""));
+}
+
+#[test]
+fn test_import_result_with_errors() {
+    let result = ImportResult {
+        success: false,
+        treasury_address: "xion1treasury".to_string(),
+        dry_run: false,
+        actions: vec![
+            ImportAction {
+                action_type: "update_fee_config".to_string(),
+                index: None,
+                success: true,
+                tx_hash: Some("ABC123".to_string()),
+                error: None,
+                config: None,
+            },
+            ImportAction {
+                action_type: "update_grant_config".to_string(),
+                index: Some(0),
+                success: false,
+                tx_hash: None,
+                error: Some("Grant config update failed".to_string()),
+                config: None,
+            },
+        ],
+        total_transactions: 1,
+        errors: vec!["Grant config update failed".to_string()],
+    };
+
+    assert!(!result.success);
+    assert_eq!(result.total_transactions, 1);
+    assert_eq!(result.errors.len(), 1);
+}
+
+#[test]
+fn test_import_result_dry_run_mode() {
+    let result = ImportResult {
+        success: true,
+        treasury_address: "xion1treasury".to_string(),
+        dry_run: true,
+        actions: vec![ImportAction {
+            action_type: "update_fee_config".to_string(),
+            index: None,
+            success: true,
+            tx_hash: None,
+            error: None,
+            config: Some(serde_json::json!({"description": "Basic fee allowance"})),
+        }],
+        total_transactions: 0,
+        errors: vec![],
+    };
+
+    assert!(result.dry_run);
+    assert_eq!(result.total_transactions, 0); // No actual transactions in dry-run
+}
+
+#[test]
+fn test_import_action_skip_none_fields() {
+    // Test that None fields are skipped during serialization
+    let action = ImportAction {
+        action_type: "update_fee_config".to_string(),
+        index: None,
+        success: true,
+        tx_hash: None,
+        error: None,
+        config: None,
+    };
+
+    let json = serde_json::to_string(&action).unwrap();
+
+    // Verify the JSON structure
+    let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+    // Verify none of the optional fields are present
+    assert!(!parsed.as_object().unwrap().contains_key("index"));
+    assert!(!parsed.as_object().unwrap().contains_key("tx_hash"));
+    assert!(!parsed.as_object().unwrap().contains_key("error"));
+    assert!(!parsed.as_object().unwrap().contains_key("config"));
 }

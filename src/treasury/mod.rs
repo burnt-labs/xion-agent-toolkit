@@ -22,6 +22,6 @@ pub use types::{
     BroadcastRequest, BroadcastResponse, CreateTreasuryRequest, ExecuteResult, FeeConfig,
     FeeConfigInput, FeeConfigMessage, FeeGrantRequest, FundResult, GrantConfig, GrantConfigInput,
     GrantConfigMessage, GrantConfigRequest, QueryOptions, TransactionMessage,
-    TreasuryCreateRequest, TreasuryInfo, TreasuryListItem, TreasuryParams, TreasuryParamsInput,
-    TreasuryParamsMessage, TypeUrlValue, WithdrawResult,
+    TreasuryCreateRequest, TreasuryExportData, TreasuryInfo, TreasuryListItem, TreasuryParams,
+    TreasuryParamsInput, TreasuryParamsMessage, TypeUrlValue, WithdrawResult,
 };

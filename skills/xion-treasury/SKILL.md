@@ -43,6 +43,8 @@ This skill provides complete Treasury lifecycle management:
 | `fee-config.sh` | Manage Fee grants |
 | `admin.sh` | Admin operations |
 | `update-params.sh` | Update Treasury params |
+| `export.sh` | Export Treasury configuration |
+| `import.sh` | Import configuration to Treasury |
 
 ## Prerequisites
 
@@ -144,6 +146,19 @@ xion-toolkit treasury fee-config set xion1treasury... \
 
 # Query fee config
 xion-toolkit treasury fee-config query xion1treasury...
+```
+
+### Export and Import
+
+```bash
+# Export treasury configuration for backup
+xion-toolkit treasury export xion1treasury... --output treasury-backup.json
+
+# Preview import (dry run)
+xion-toolkit treasury import xion1treasury... --from-file treasury-backup.json --dry-run
+
+# Execute import
+xion-toolkit treasury import xion1treasury... --from-file treasury-backup.json
 ```
 
 ## Treasury Concepts

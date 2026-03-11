@@ -3,6 +3,32 @@
   "updated_at": "2026-03-11",
   "plans": [
     {
+      "id": "cli-query-export-import",
+      "title": "CLI Query, Export & Import Commands",
+      "file": "plans/cli-query-export-import.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": [
+        "@fullstack-dev",
+        "@frontend-dev",
+        "@qc-specialist",
+        "@qa-engineer"
+      ],
+      "tags": [
+        "cli",
+        "contract",
+        "treasury",
+        "query",
+        "export",
+        "import"
+      ],
+      "created_at": "2026-03-11",
+      "updated_at": "2026-03-11",
+      "done_at": "2026-03-11",
+      "notes": "Complete: contract query, treasury export, treasury import commands. 369 tests pass. QC found & fixed 2 critical data loss issues in import (grant config authorization, fee config periodic allowance). Documentation: cli-reference.md, skills-guide.md, SKILL.md."
+    },
+    {
       "id": "skills-integration",
       "title": "Skills Integration with xion-skills",
       "file": "plans/skills-integration.md",

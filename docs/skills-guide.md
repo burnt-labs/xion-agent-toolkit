@@ -95,31 +95,6 @@ burnt-labs/xion-skills (optional, for advanced operations)
 | OAuth2 authentication | Mnemonic wallet management |
 | Authz/Fee grant configuration | Validator operations |
 
-### Manual Installation (Alternative)
-
-If skills.sh is not available, you can install skills manually:
-
-```bash
-# Install xion-toolkit CLI first
-curl --proto '=https' --tlsv1.2 -LsSf \
-  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
-cp -r "${SKILLS_DIR}/repo/skills/"* "$SKILLS_DIR/"
-
-# Remove the cloned repo
-rm -rf "${SKILLS_DIR}/repo"
-
-# Make all scripts executable
-chmod +x "$SKILLS_DIR"/*/scripts/*.sh
-
-echo "Skills installed to: $SKILLS_DIR"
-```
-
-Or use the init script:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/burnt-labs/xion-agent-toolkit/main/skills/xion-toolkit-init/scripts/install.sh | bash
-```
-
 ---
 
 ## Available Skills
@@ -200,8 +175,6 @@ OAuth2 authentication skill for Xion blockchain development. Enables AI agents t
 
 ```bash
 xion-toolkit auth login
-# Or via skill script:
-./skills/xion-oauth2/scripts/login.sh
 ```
 
 **Output (Success):**
@@ -220,7 +193,7 @@ xion-toolkit auth login
 **Check Status:**
 
 ```bash
-./skills/xion-oauth2/scripts/status.sh
+xion-toolkit auth status
 ```
 
 **Output (Success):**
@@ -241,7 +214,7 @@ xion-toolkit auth login
 **Logout:**
 
 ```bash
-./skills/xion-oauth2/scripts/logout.sh --network testnet
+xion-toolkit auth logout --network testnet
 ```
 
 **Output (Success):**
@@ -256,7 +229,7 @@ xion-toolkit auth login
 **Refresh Token:**
 
 ```bash
-./skills/xion-oauth2/scripts/refresh.sh
+xion-toolkit auth refresh
 ```
 
 **Output (Success):**
@@ -307,6 +280,8 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 | `fee-config.sh` | Configure Fee Grants (set, remove, query) |
 | `admin.sh` | Admin management (propose, accept, cancel) |
 | `update-params.sh` | Update Treasury parameters |
+| `export.sh` | Export Treasury configuration for backup/migration |
+| `import.sh` | Import configuration to existing Treasury |
 
 > **Note**: For chain-level queries (transaction status, block info), use `xiond-usage` from [xion-skills](https://github.com/burnt-labs/xion-skills).
 
@@ -315,7 +290,7 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **List Treasuries:**
 
 ```bash
-./skills/xion-treasury/scripts/list.sh
+xion-toolkit treasury list
 ```
 
 **Output (Success):**
@@ -340,7 +315,7 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **Query Treasury:**
 
 ```bash
-./skills/xion-treasury/scripts/query.sh xion1abc123... --include-grants --include-fee
+xion-toolkit treasury query xion1abc123... --include-grants --include-fee
 ```
 
 **Output (Success):**
@@ -378,10 +353,10 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **Create Treasury:**
 
 ```bash
-./skills/xion-treasury/scripts/create.sh \
+xion-toolkit treasury create \
   --name "My Treasury" \
   --redirect-url "https://example.com/callback" \
-  --fee-allowance basic \
+  --fee-allowance-type basic \
   --fee-spend-limit "1000000uxion" \
   --grant-auth-type send \
   --grant-spend-limit "1000000uxion"
@@ -414,7 +389,7 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **Fund Treasury:**
 
 ```bash
-./skills/xion-treasury/scripts/fund.sh xion1abc123... 1000000uxion
+xion-toolkit treasury fund xion1abc123... --amount 1000000uxion
 ```
 
 **Output (Success):**
@@ -432,7 +407,7 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **Withdraw from Treasury:**
 
 ```bash
-./skills/xion-treasury/scripts/withdraw.sh xion1abc123... 500000uxion
+xion-toolkit treasury withdraw xion1abc123... --amount 500000uxion
 ```
 
 **Output (Success):**
@@ -451,7 +426,7 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **Configure Authz Grant:**
 
 ```bash
-./skills/xion-treasury/scripts/grant-config.sh xion1abc123... \
+xion-toolkit treasury grant-config xion1abc123... \
   --action add \
   --config grant-config.json
 ```
@@ -474,7 +449,7 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 **Configure Fee Allowance:**
 
 ```bash
-./skills/xion-treasury/scripts/fee-config.sh xion1abc123... \
+xion-toolkit treasury fee-config xion1abc123... \
   --action set \
   --config fee-config.json
 ```
@@ -494,13 +469,13 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
 
 ```bash
 # Propose new admin
-./skills/xion-treasury/scripts/admin.sh xion1abc123... propose --new-admin xion1newadmin...
+xion-toolkit treasury admin xion1abc123... propose --new-admin xion1newadmin...
 
 # Accept admin (by pending admin)
-./skills/xion-treasury/scripts/admin.sh xion1abc123... accept
+xion-toolkit treasury admin xion1abc123... accept
 
 # Cancel proposed admin
-./skills/xion-treasury/scripts/admin.sh xion1abc123... cancel
+xion-toolkit treasury admin xion1abc123... cancel
 ```
 
 **Output (Propose Success):**
@@ -512,6 +487,60 @@ Treasury management skill for Xion blockchain development. Enables AI agents to 
   "operation": "propose_admin",
   "new_admin": "xion1newadmin...",
   "tx_hash": "ABC123..."
+}
+```
+
+**Export Treasury:**
+
+```bash
+xion-toolkit treasury export xion1abc123... --output treasury-backup.json
+```
+
+**Output (Success):**
+
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123...",
+  "file": "treasury-backup.json",
+  "export": {
+    "admin": "xion1admin...",
+    "params": {
+      "redirect_url": "https://example.com/callback",
+      "icon_url": "https://example.com/icon.png",
+      "metadata": { "name": "My Treasury", "archived": false }
+    },
+    "fee_config": { ... },
+    "grant_configs": [ ... ]
+  }
+}
+```
+
+**Import Treasury:**
+
+```bash
+# Preview first
+xion-toolkit treasury import xion1abc123... \
+  --from-file treasury-backup.json \
+  --dry-run
+
+# Execute import
+xion-toolkit treasury import xion1abc123... \
+  --from-file treasury-backup.json
+```
+
+**Output (Success):**
+
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123...",
+  "operations": [
+    { "action": "update_fee_config", "tx_hash": "A1B2C3...", "status": "success" },
+    { "action": "add_grant_config", "tx_hash": "B2C3D4...", "status": "success" }
+  ],
+  "completed": 2,
+  "failed": 0
 }
 ```
 
@@ -542,43 +571,24 @@ See the [xion-skills documentation](https://github.com/burnt-labs/xion-skills) f
 
 #### Installation
 
-Add skills to your Claude Code configuration:
+**Recommended**: Install via skills.sh:
 
-```json
-{
-  "tools": [
-    {
-      "name": "xion_login",
-      "description": "Authenticate with Xion blockchain using OAuth2",
-      "command": "~/.xion-toolkit/skills/xion-oauth2/scripts/login.sh",
-      "output": "json"
-    },
-    {
-      "name": "xion_status",
-      "description": "Check current authentication status",
-      "command": "~/.xion-toolkit/skills/xion-oauth2/scripts/status.sh",
-      "output": "json"
-    },
-    {
-      "name": "xion_treasury_list",
-      "description": "List all Treasury contracts",
-      "command": "~/.xion-toolkit/skills/xion-treasury/scripts/list.sh",
-      "output": "json"
-    },
-    {
-      "name": "xion_treasury_query",
-      "description": "Query Treasury details by address",
-      "command": "~/.xion-toolkit/skills/xion-treasury/scripts/query.sh ${args.address}",
-      "output": "json"
-    },
-    {
-      "name": "xion_treasury_create",
-      "description": "Create a new Treasury contract",
-      "command": "~/.xion-toolkit/skills/xion-treasury/scripts/create.sh ${args.name} ${args.options}",
-      "output": "json"
-    }
-  ]
-}
+```bash
+npx skills add burnt-labs/xion-agent-toolkit
+```
+
+This automatically installs skills to the appropriate directory for your AI agent tool.
+
+#### Usage
+
+After installation, skills are automatically available. Use the CLI directly:
+
+```bash
+# Login
+xion-toolkit auth login
+
+# List treasuries
+xion-toolkit treasury list
 ```
 
 #### Example Prompts
@@ -602,14 +612,30 @@ Query the treasury at xion1abc123... and tell me:
 
 ### Cursor / Windsurf / Other Agents
 
-#### General Integration Approach
+#### Installation
 
-1. **Install skills** using Git clone or curl method
-2. **Configure tool definitions** in your agent's tool registry
-3. **Parse JSON output** from stdout
-4. **Monitor stderr** for progress messages
+```bash
+npx skills add burnt-labs/xion-agent-toolkit
+```
+
+#### Usage
+
+After installation, skills are automatically available. Use the CLI directly:
+
+```bash
+# Login
+xion-toolkit auth login
+
+# List treasuries
+xion-toolkit treasury list
+
+# Query a treasury
+xion-toolkit treasury query <ADDRESS>
+```
 
 #### Example Integration (TypeScript)
+
+If you need to integrate skills programmatically in your application:
 
 ```typescript
 import { exec } from 'child_process';
@@ -617,41 +643,14 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-interface SkillResult<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorCode?: string;
-}
-
-async function runSkill<T>(script: string, args: string[] = []): Promise<SkillResult<T>> {
-  try {
-    const { stdout, stderr } = await execAsync(
-      `~/.xion-toolkit/skills/${script} ${args.join(' ')}`
-    );
-
-    // Log progress messages
-    if (stderr) {
-      console.error('[Skill Progress]', stderr);
-    }
-
-    // Parse JSON output
-    const result = JSON.parse(stdout);
-    return result;
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      errorCode: 'EXECUTION_FAILED'
-    };
-  }
+async function runCLI(command: string): Promise<any> {
+  const { stdout } = await execAsync(`xion-toolkit ${command}`);
+  return JSON.parse(stdout);
 }
 
 // Usage
-const treasuries = await runSkill('xion-treasury/scripts/list.sh');
-if (treasuries.success) {
-  console.log('Treasuries:', treasuries.data);
-}
+const treasuries = await runCLI('treasury list --output json');
+console.log('Treasuries:', treasuries);
 ```
 
 #### Example Integration (Python)
@@ -659,50 +658,20 @@ if (treasuries.success) {
 ```python
 import subprocess
 import json
-from typing import Optional, Dict, Any
 
-def run_skill(skill_path: str, args: list = None) -> Dict[str, Any]:
-    """Run a skill script and return parsed JSON result."""
-    args = args or []
-    cmd = [skill_path] + args
-
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-
-        # Log progress to stderr
-        if result.stderr:
-            print(f"[Skill Progress] {result.stderr}", file=sys.stderr)
-
-        # Parse JSON from stdout
-        return json.loads(result.stdout)
-
-    except subprocess.CalledProcessError as e:
-        return {
-            "success": False,
-            "error": e.stderr,
-            "errorCode": "EXECUTION_FAILED"
-        }
-    except json.JSONDecodeError as e:
-        return {
-            "success": False,
-            "error": f"Invalid JSON output: {e}",
-            "errorCode": "PARSE_ERROR"
-        }
+def run_cli(command: str) -> dict:
+    """Run xion-toolkit CLI command and return parsed JSON result."""
+    result = subprocess.run(
+        ['xion-toolkit'] + command.split(),
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    return json.loads(result.stdout)
 
 # Usage
-treasuries = run_skill(
-    "~/.xion-toolkit/skills/xion-treasury/scripts/list.sh"
-)
-
-if treasuries["success"]:
-    print(f"Found {treasuries['count']} treasuries")
-else:
-    print(f"Error: {treasuries['error']}")
+treasuries = run_cli('treasury list --output json')
+print(f"Found {treasuries.get('count', 0)} treasuries")
 ```
 
 ---
@@ -762,7 +731,7 @@ All skills return JSON with a `success` field set to `false`:
   "success": false,
   "error": "Not authenticated. Please login first.",
   "error_code": "NOT_AUTHENTICATED",
-  "hint": "Run './skills/xion-oauth2/scripts/login.sh' to authenticate"
+  "hint": "Run 'xion-toolkit auth login' to authenticate"
 }
 ```
 
@@ -771,7 +740,7 @@ All skills return JSON with a `success` field set to `false`:
   "success": false,
   "error": "Treasury xion1abc... not found",
   "error_code": "TREASURY_NOT_FOUND",
-  "hint": "Use 'list.sh' to see your treasuries"
+  "hint": "Use 'xion-toolkit treasury list' to see your treasuries"
 }
 ```
 
@@ -789,8 +758,8 @@ All skills return JSON with a `success` field set to `false`:
 | Error Code | Description | Resolution |
 |------------|-------------|------------|
 | `CLI_NOT_FOUND` | xion-toolkit CLI not installed | Install CLI using installer script |
-| `NOT_AUTHENTICATED` | User not logged in | Run `login.sh` to authenticate |
-| `TOKEN_EXPIRED` | Access token has expired | Run `refresh.sh` or `login.sh` |
+| `NOT_AUTHENTICATED` | User not logged in | Run `xion-toolkit auth login` |
+| `TOKEN_EXPIRED` | Access token has expired | Run `xion-toolkit auth refresh` |
 | `TREASURY_NOT_FOUND` | Treasury address not found | Verify address, check network |
 | `INVALID_ADDRESS` | Invalid address format | Use valid bech32 address |
 | `NETWORK_ERROR` | Cannot connect to API | Check internet, firewall |
@@ -802,59 +771,42 @@ All skills return JSON with a `success` field set to `false`:
 
 ## Best Practices
 
-### 1. Parse JSON from stdout Only
+### 1. Parse JSON Output
 
-Skills write JSON to stdout and progress messages to stderr. Always separate them:
+All CLI commands support `--output json` flag for machine-readable output:
 
 ```bash
-# Correct: Parse only stdout
-RESULT=$(./skills/xion-treasury/scripts/list.sh 2>/dev/null)
+# Get JSON output
+xion-toolkit treasury list --output json | jq '.treasuries'
+
+# Or capture and process
+RESULT=$(xion-toolkit treasury list --output json)
 echo "$RESULT" | jq '.treasuries'
-
-# Or capture both separately
-OUTPUT=$(./skills/xion-treasury/scripts/list.sh)
-STATUS=$?
-# OUTPUT contains JSON from stdout
-# stderr was printed to terminal
 ```
 
-### 2. Always Check stderr for Progress
-
-Progress messages, warnings, and hints go to stderr:
-
-```bash
-# Capture both stdout and stderr
-OUTPUT=$(./skills/xion-oauth2/scripts/login.sh 2>&1)
-STDOUT=$(echo "$OUTPUT" | grep -v '^\[')
-STDERR=$(echo "$OUTPUT" | grep '^\[')
-
-echo "Progress: $STDERR"
-echo "Result: $STDOUT" | jq '.'
-```
-
-### 3. Handle Both Success and Error Responses
+### 2. Handle Errors Gracefully
 
 Always check the `success` field before using result data:
 
 ```python
-result = run_skill('xion-treasury/scripts/list.sh')
+import subprocess
+import json
 
-if result.get('success'):
-    # Process successful result
-    for treasury in result.get('treasuries', []):
+result = subprocess.run(
+    ['xion-toolkit', 'treasury', 'list', '--output', 'json'],
+    capture_output=True,
+    text=True
+)
+data = json.loads(result.stdout)
+
+if data.get('success'):
+    for treasury in data.get('treasuries', []):
         print(f"Treasury: {treasury['address']}")
 else:
-    # Handle error
-    error_code = result.get('error_code', 'UNKNOWN')
-    error_msg = result.get('error', 'Unknown error')
-    hint = result.get('hint', '')
-
-    print(f"Error [{error_code}]: {error_msg}")
-    if hint:
-        print(f"Hint: {hint}")
+    print(f"Error: {data.get('error', 'Unknown error')}")
 ```
 
-### 4. Check Authentication Before Operations
+### 3. Check Authentication Before Operations
 
 Most Treasury operations require authentication. Check first:
 
@@ -862,49 +814,44 @@ Most Treasury operations require authentication. Check first:
 #!/bin/bash
 set -e
 
-SKILLS_DIR="$HOME/.xion-toolkit/skills"
-
 # Check authentication
-AUTH_STATUS=$("$SKILLS_DIR/xion-oauth2/scripts/status.sh" 2>/dev/null)
+AUTH_STATUS=$(xion-toolkit auth status --output json)
 AUTHENTICATED=$(echo "$AUTH_STATUS" | jq -r '.authenticated')
 
 if [[ "$AUTHENTICATED" != "true" ]]; then
-    echo "Not authenticated. Please login..."
-    "$SKILLS_DIR/xion-oauth2/scripts/login.sh"
+    echo "Not authenticated. Logging in..."
+    xion-toolkit auth login
 fi
 
 # Now safe to use treasury operations
-"$SKILLS_DIR/xion-treasury/scripts/list.sh"
+xion-toolkit treasury list
 ```
 
-### 5. Use Network Flag Consistently
+### 4. Use Network Flag Consistently
 
 When working with multiple networks:
 
 ```bash
 # Testnet (default)
-./skills/xion-treasury/scripts/list.sh
+xion-toolkit treasury list
 
 # Mainnet
-./skills/xion-treasury/scripts/list.sh --network mainnet
-
-# Local development
-./skills/xion-treasury/scripts/list.sh --network local
+xion-toolkit treasury list --network mainnet
 ```
 
-### 6. Bypass Cache When Needed
+### 5. Bypass Cache When Needed
 
-Skills cache data for 5 minutes. Use `--no-cache` for fresh data:
+The CLI caches data for better performance. Use `--no-cache` for fresh data:
 
 ```bash
 # Use cached data (faster)
-./skills/xion-treasury/scripts/list.sh
+xion-toolkit treasury list
 
 # Force fresh data
-./skills/xion-treasury/scripts/list.sh --no-cache
+xion-toolkit treasury list --no-cache
 ```
 
-### 7. Use Config Files for Complex Operations
+### 6. Use Config Files for Complex Operations
 
 For Treasury creation with multiple options, use config files:
 
@@ -939,7 +886,7 @@ cat > treasury-config.json <<EOF
 EOF
 
 # Use config file
-./skills/xion-treasury/scripts/create.sh --config treasury-config.json
+xion-toolkit treasury create --config treasury-config.json
 ```
 
 ---
@@ -961,7 +908,7 @@ EOF
 
 **Solution:**
 ```bash
-./skills/xion-oauth2/scripts/login.sh
+xion-toolkit auth login
 ```
 
 #### Issue 2: CLI Not Found
@@ -1002,7 +949,7 @@ which xion-toolkit
 **Solution:**
 ```bash
 # Use different port
-./skills/xion-oauth2/scripts/login.sh --port 54322
+xion-toolkit auth login --port 54322
 
 # Or find and kill the process
 lsof -i :54321
@@ -1026,10 +973,10 @@ kill <PID>
 # Treasury addresses start with 'xion1'
 
 # List your treasuries to confirm
-./skills/xion-treasury/scripts/list.sh
+xion-toolkit treasury list
 
 # Check you're on the right network
-./skills/xion-treasury/scripts/list.sh --network testnet
+xion-toolkit treasury list --network testnet
 ```
 
 #### Issue 5: Stale Cache
@@ -1039,7 +986,7 @@ kill <PID>
 **Solution:**
 ```bash
 # Bypass cache
-./skills/xion-treasury/scripts/list.sh --no-cache
+xion-toolkit treasury list --no-cache
 ```
 
 #### Issue 6: Token Expired
@@ -1056,23 +1003,30 @@ kill <PID>
 **Solution:**
 ```bash
 # Refresh token
-./skills/xion-oauth2/scripts/refresh.sh
+xion-toolkit auth refresh
 
 # Or re-login
-./skills/xion-oauth2/scripts/login.sh
+xion-toolkit auth login
 ```
 
 #### Issue 7: Permission Denied
 
 **Error:**
 ```
-bash: ./skills/xion-oauth2/scripts/login.sh: Permission denied
+bash: xion-toolkit: command not found
 ```
 
 **Solution:**
 ```bash
-# Make scripts executable
-chmod +x ~/.xion-toolkit/skills/*/scripts/*.sh
+# Check if xion-toolkit is in PATH
+which xion-toolkit
+
+# Add to PATH if needed
+export PATH="$HOME/.local/bin:$PATH"
+
+# Or reinstall the CLI
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
 ```
 
 ---

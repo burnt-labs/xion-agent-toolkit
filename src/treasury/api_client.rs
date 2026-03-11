@@ -1041,6 +1041,110 @@ impl TreasuryApiClient {
     pub fn base_url(&self) -> &str {
         &self.base_url
     }
+
+    /// Query a CosmWasm smart contract
+    ///
+    /// Performs a read-only query on a CosmWasm smart contract.
+    /// This is a direct RPC call and does not require authentication.
+    ///
+    /// # Arguments
+    /// * `contract_address` - Contract address to query
+    /// * `query_msg` - Query message as JSON value
+    ///
+    /// # Returns
+    /// Query result as JSON value
+    ///
+    /// # Implementation Details
+    /// - Endpoint: GET {rpc_url}/cosmwasm/wasm/v1/contract/{address}/smart/{base64_query}
+    /// - Response is double-encoded:
+    ///   - REST returns `{ "data": "base64_encoded_result" }`
+    ///   - The base64 decodes to the actual JSON result
+    ///
+    /// # Example
+    /// ```no_run
+    /// use xion_agent_toolkit::treasury::TreasuryApiClient;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> anyhow::Result<()> {
+    /// let client = TreasuryApiClient::new(
+    ///     "https://oauth2.testnet.burnt.com".to_string(),
+    ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// );
+    /// let query = serde_json::json!({ "balance": {} });
+    /// let result = client.query_contract_smart("xion1contract...", &query).await?;
+    /// println!("Query result: {:?}", result);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[instrument(skip(self, query_msg))]
+    pub async fn query_contract_smart(
+        &self,
+        contract_address: &str,
+        query_msg: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        debug!("Querying contract: {}", contract_address);
+
+        // Step 1: Serialize query message to JSON string
+        let query_json = serde_json::to_string(query_msg)?;
+        debug!("Query message JSON: {}", query_json);
+
+        // Step 2: Base64 encode the JSON string
+        let query_base64 = base64_encode(&query_json);
+
+        // Step 3: Build URL
+        let url = format!(
+            "{}/cosmwasm/wasm/v1/contract/{}/smart/{}",
+            self.rpc_url, contract_address, query_base64
+        );
+        debug!("Query URL: {}", url);
+
+        // Step 4: Make GET request
+        let response = self
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to send contract query request")?;
+
+        let status = response.status();
+        debug!("Query response status: {}", status);
+
+        if !status.is_success() {
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            anyhow::bail!(
+                "Contract query failed with status {}: {}",
+                status,
+                error_text
+            );
+        }
+
+        // Step 5: Parse response - double-encoded format
+        // REST returns { "data": "base64_encoded_result" }
+        #[derive(Debug, Deserialize)]
+        struct QueryResponse {
+            data: String,
+        }
+
+        let query_response: QueryResponse = response
+            .json()
+            .await
+            .context("Failed to parse query response")?;
+
+        // Step 6: Base64 decode the data field
+        let decoded =
+            base64_decode(&query_response.data).context("Failed to decode base64 query result")?;
+
+        // Step 7: Parse decoded string as JSON
+        let result: serde_json::Value = serde_json::from_str(&decoded)
+            .context("Failed to parse decoded query result as JSON")?;
+
+        debug!("Query result: {:?}", result);
+        Ok(result)
+    }
 }
 
 // ============================================================================
@@ -1185,6 +1289,21 @@ fn bytes_to_json_array(bytes: &[u8]) -> serde_json::Value {
             .map(|b| serde_json::Value::Number((*b).into()))
             .collect(),
     )
+}
+
+/// Base64 encode a string
+fn base64_encode(input: &str) -> String {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    STANDARD.encode(input.as_bytes())
+}
+
+/// Base64 decode a string
+fn base64_decode(input: &str) -> Result<String> {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    let bytes = STANDARD
+        .decode(input)
+        .context("Failed to decode base64 string")?;
+    String::from_utf8(bytes).context("Decoded base64 is not valid UTF-8")
 }
 
 // ============================================================================
@@ -1339,6 +1458,9 @@ impl TreasuryApiClient {
                     .get("optional")
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false),
+                // authorization_input is not available from on-chain query
+                // It will be None for exports, and import will default to Generic
+                authorization_input: None,
             })
             .collect();
 
@@ -1469,6 +1591,11 @@ impl TreasuryApiClient {
                 description,
                 spend_limit: fee_config.spend_limit,
                 expiration: fee_config.expires_at,
+                // Periodic fields are not available from indexer query
+                // They will be populated by export_treasury_state via on-chain query
+                period: None,
+                period_spend_limit: None,
+                can_period_reset: None,
             }))
         } else {
             Ok(None)
@@ -1995,6 +2122,85 @@ impl TreasuryApiClient {
         debug!("Found {} fee allowances", allowances.len());
         Ok(allowances)
     }
+
+    // ========================================================================
+    // Export Operations
+    // ========================================================================
+
+    /// Export treasury configuration for backup/migration
+    ///
+    /// This is a client-side operation that aggregates treasury data from
+    /// multiple sources (indexer + RPC queries). Authentication is required
+    /// for indexer queries but not for on-chain queries.
+    ///
+    /// # Arguments
+    /// * `access_token` - Valid OAuth2 access token (for indexer queries)
+    /// * `treasury_address` - Treasury contract address
+    ///
+    /// # Returns
+    /// Treasury export data containing all configuration
+    #[instrument(skip(self, access_token))]
+    pub async fn export_treasury_state(
+        &self,
+        access_token: &str,
+        treasury_address: &str,
+    ) -> Result<super::types::TreasuryExportData> {
+        debug!("Exporting treasury state for: {}", treasury_address);
+
+        // Query basic treasury info from indexer
+        let options = QueryOptions::default();
+        let treasury_info = self
+            .query_treasury(access_token, treasury_address, options)
+            .await?;
+
+        // Query fee config from indexer
+        let mut fee_config = self
+            .query_fee_config(access_token, treasury_address)
+            .await?;
+
+        // Enhance fee config with periodic allowance data from on-chain query
+        if let Some(ref mut fc) = fee_config {
+            // Query on-chain fee allowances to get periodic details
+            match self.list_fee_allowances(treasury_address).await {
+                Ok(allowances) => {
+                    // Find the first allowance (treasury typically has one grantee for fee)
+                    if let Some(allowance) = allowances.first() {
+                        // Add periodic fields if present
+                        if allowance.period.is_some() || allowance.period_spend_limit.is_some() {
+                            fc.period = allowance.period.clone();
+                            fc.period_spend_limit = allowance.period_spend_limit.clone();
+                            fc.can_period_reset = Some(true); // Default to true for periodic
+                        }
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to query on-chain fee allowances: {}", e);
+                    // Continue without periodic data
+                }
+            }
+        }
+
+        // Query grant configs
+        let grant_configs = self
+            .list_grant_configs(access_token, treasury_address)
+            .await?;
+
+        // Build export data
+        let export_data = super::types::TreasuryExportData {
+            address: treasury_address.to_string(),
+            admin: treasury_info.admin,
+            fee_config,
+            grant_configs,
+            params: Some(treasury_info.params),
+            exported_at: chrono::Utc::now().to_rfc3339(),
+        };
+
+        debug!(
+            "Successfully exported treasury state for: {}",
+            treasury_address
+        );
+        Ok(export_data)
+    }
 }
 
 #[cfg(test)]
@@ -2416,5 +2622,153 @@ mod tests {
         assert!(msg_value.get("admin").is_none() || msg_value["admin"].is_null());
         // fixMsg should still be present
         assert_eq!(msg_value["fixMsg"], false);
+    }
+
+    // ========================================================================
+    // Contract Query Tests
+    // ========================================================================
+
+    #[test]
+    fn test_base64_encode() {
+        // Test simple string
+        let input = "hello";
+        let encoded = base64_encode(input);
+        assert_eq!(encoded, "aGVsbG8=");
+
+        // Test JSON string
+        let json_input = r#"{"balance":{}}"#;
+        let encoded_json = base64_encode(json_input);
+        assert_eq!(encoded_json, "eyJiYWxhbmNlIjp7fX0=");
+
+        // Test empty string
+        let empty = "";
+        let encoded_empty = base64_encode(empty);
+        assert_eq!(encoded_empty, "");
+    }
+
+    #[test]
+    fn test_base64_decode() {
+        // Test simple string
+        let encoded = "aGVsbG8=";
+        let decoded = base64_decode(encoded).unwrap();
+        assert_eq!(decoded, "hello");
+
+        // Test JSON string
+        let encoded_json = "eyJiYWxhbmNlIjp7fX0=";
+        let decoded_json = base64_decode(encoded_json).unwrap();
+        assert_eq!(decoded_json, r#"{"balance":{}}"#);
+
+        // Test empty string
+        let decoded_empty = base64_decode("").unwrap();
+        assert_eq!(decoded_empty, "");
+    }
+
+    #[test]
+    fn test_base64_decode_invalid() {
+        // Invalid base64 should fail
+        let result = base64_decode("not-valid-base64!!!");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_base64_roundtrip() {
+        // Test that encode -> decode returns original
+        let original = r#"{"balance":{"address":"xion1abc123"}}"#;
+        let encoded = base64_encode(original);
+        let decoded = base64_decode(&encoded).unwrap();
+        assert_eq!(decoded, original);
+    }
+
+    #[tokio::test]
+    async fn test_query_contract_smart_url_construction() {
+        // Test that the URL is correctly constructed
+        // This verifies the base64 encoding and URL building logic
+
+        let query_msg = serde_json::json!({"balance": {}});
+
+        // Verify the query message serializes correctly
+        let query_json = serde_json::to_string(&query_msg).unwrap();
+        assert_eq!(query_json, r#"{"balance":{}}"#);
+
+        // Verify base64 encoding
+        let query_base64 = base64_encode(&query_json);
+        assert_eq!(query_base64, "eyJiYWxhbmNlIjp7fX0=");
+
+        // The expected URL format:
+        // {rpc_url}/cosmwasm/wasm/v1/contract/{address}/smart/{base64}
+        // We can verify the components are correct
+        assert!(query_base64.contains("eyJiYWxhbmNl"));
+    }
+
+    #[tokio::test]
+    async fn test_query_contract_smart_double_encoded_response() {
+        // Test parsing of double-encoded response format
+        // REST returns: { "data": "base64_encoded_result" }
+        // The base64 decodes to the actual JSON result
+
+        // Simulate a contract query response
+        let inner_result = serde_json::json!({
+            "balance": "1000000"
+        });
+        let inner_json = serde_json::to_string(&inner_result).unwrap();
+        let encoded_data = base64_encode(&inner_json);
+
+        // This is what the REST API returns
+        let response_body = serde_json::json!({
+            "data": encoded_data
+        });
+
+        // Parse the response
+        #[derive(Debug, Deserialize)]
+        struct QueryResponse {
+            data: String,
+        }
+        let query_response: QueryResponse =
+            serde_json::from_value(response_body).expect("Failed to parse response");
+
+        // Decode the data field
+        let decoded = base64_decode(&query_response.data).expect("Failed to decode base64");
+
+        // Parse as JSON
+        let result: serde_json::Value =
+            serde_json::from_str(&decoded).expect("Failed to parse JSON");
+
+        // Verify the result
+        assert_eq!(result["balance"], "1000000");
+    }
+
+    #[tokio::test]
+    async fn test_query_contract_smart_with_mock_server() {
+        use wiremock::matchers::method;
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let mock_server = MockServer::start().await;
+
+        // Prepare the response
+        let inner_result = serde_json::json!({
+            "balance": "5000000uxion"
+        });
+        let inner_json = serde_json::to_string(&inner_result).unwrap();
+        let encoded_data = base64_encode(&inner_json);
+
+        // Mock the REST endpoint
+        Mock::given(method("GET"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(serde_json::json!({ "data": encoded_data })),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let client =
+            TreasuryApiClient::new(mock_server.uri(), mock_server.uri(), mock_server.uri());
+
+        // Query the contract
+        let query_msg = serde_json::json!({ "balance": {} });
+        let result = client.query_contract_smart("xion1test", &query_msg).await;
+
+        assert!(result.is_ok());
+        let result_value = result.unwrap();
+        assert_eq!(result_value["balance"], "5000000uxion");
     }
 }

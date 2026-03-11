@@ -8,7 +8,10 @@ Complete reference for the Xion Agent Toolkit CLI commands.
 - [Global Options](#global-options)
 - [Authentication Commands](#authentication-commands)
 - [Treasury Commands](#treasury-commands)
+  - [`treasury export`](#treasury-export)
+  - [`treasury import`](#treasury-import)
 - [Contract Commands](#contract-commands)
+  - [`contract query`](#contract-query)
 - [Configuration Commands](#configuration-commands)
 - [Output Format](#output-format)
 
@@ -45,6 +48,7 @@ xion-toolkit treasury create \
 | [Authentication Flow](#authentication-flow) | login → status → refresh |
 | [Grant and Fee Setup](#grant-and-fee-setup-workflow) | grant-config add → fee-config set → verify |
 | [Contract Deployment](#contract-deployment-workflow) | instantiate → execute → query |
+| [Treasury Backup & Migration](#treasury-backup--migration-workflow) | export → (edit if needed) → import |
 
 ### Example Outputs
 
@@ -189,6 +193,27 @@ xion-toolkit contract execute \
   --contract xion1contract... \
   --msg '{"buy_item": {"id": 1}}' \
   --funds "1000000uxion"
+```
+
+### Treasury Backup & Migration Workflow
+
+Export treasury configuration for backup or migration:
+
+```bash
+# Step 1: Export treasury configuration
+xion-toolkit treasury export xion1treasury... --output treasury-backup.json
+
+# Step 2: (Optional) Edit configuration file
+# Modify grant_configs, fee_config, or params as needed
+
+# Step 3: Preview import (dry run)
+xion-toolkit treasury import xion1newtreasury... \
+  --from-file treasury-backup.json \
+  --dry-run
+
+# Step 4: Execute import
+xion-toolkit treasury import xion1newtreasury... \
+  --from-file treasury-backup.json
 ```
 
 ---
@@ -1555,6 +1580,170 @@ xion-toolkit treasury chain-query allowances xion1abc123...
 
 ---
 
+### `treasury export`
+
+Export treasury configuration for backup or migration.
+
+**Usage:**
+```bash
+xion-toolkit treasury export <ADDRESS> [--output <FILE>]
+```
+
+**Arguments:**
+- `ADDRESS` - Treasury contract address (required)
+
+**Options:**
+- `--output <FILE>` - Output file path (optional, default: stdout)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Export to stdout:
+```bash
+xion-toolkit treasury export xion1abc123def456...
+```
+
+Output:
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "export": {
+    "admin": "xion1admin789...",
+    "params": {
+      "redirect_url": "https://example.com/callback",
+      "icon_url": "https://example.com/icon.png",
+      "metadata": {
+        "name": "My Treasury",
+        "archived": false
+      }
+    },
+    "fee_config": {
+      "allowance_type": "BasicAllowance",
+      "spend_limit": [{"denom": "uxion", "amount": "10000000"}],
+      "description": "Basic fee allowance"
+    },
+    "grant_configs": [
+      {
+        "type_url": "/cosmos.bank.v1beta1.MsgSend",
+        "description": "Allow sending funds",
+        "authorization": {
+          "type": "SendAuthorization",
+          "spend_limit": [{"denom": "uxion", "amount": "1000000"}]
+        }
+      }
+    ]
+  }
+}
+```
+
+Export to file:
+```bash
+xion-toolkit treasury export xion1abc123def456... --output treasury-backup.json
+```
+
+Output:
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "file": "treasury-backup.json",
+  "message": "Configuration exported successfully"
+}
+```
+
+**Notes:**
+- Exports admin, params, fee_config, and grant_configs
+- Use for backup, migration, or configuration sharing
+- Output is compatible with `treasury import`
+
+---
+
+### `treasury import`
+
+Import configuration to an existing treasury.
+
+**Usage:**
+```bash
+xion-toolkit treasury import <ADDRESS> --from-file <FILE> [--dry-run]
+```
+
+**Arguments:**
+- `ADDRESS` - Treasury contract address (required)
+
+**Options:**
+- `--from-file <FILE>` - Path to JSON file containing configuration (required)
+- `--dry-run` - Preview actions without executing (optional)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Preview import (no changes):
+```bash
+xion-toolkit treasury import xion1abc123def456... \
+  --from-file treasury-backup.json \
+  --dry-run
+```
+
+Output:
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "dry_run": true,
+  "planned_actions": [
+    {
+      "action": "update_fee_config",
+      "allowance_type": "BasicAllowance",
+      "spend_limit": "10000000uxion"
+    },
+    {
+      "action": "add_grant_config",
+      "type_url": "/cosmos.bank.v1beta1.MsgSend",
+      "description": "Allow sending funds"
+    }
+  ],
+  "estimated_transactions": 2
+}
+```
+
+Execute import:
+```bash
+xion-toolkit treasury import xion1abc123def456... \
+  --from-file treasury-backup.json
+```
+
+Output:
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456...",
+  "operations": [
+    {
+      "action": "update_fee_config",
+      "tx_hash": "A1B2C3D4E5F6...",
+      "status": "success"
+    },
+    {
+      "action": "add_grant_config",
+      "type_url": "/cosmos.bank.v1beta1.MsgSend",
+      "tx_hash": "B2C3D4E5F6G7...",
+      "status": "success"
+    }
+  ],
+  "completed": 2,
+  "failed": 0
+}
+```
+
+**Notes:**
+- Imports fee_config and grant_configs (admin and params not modified)
+- Uses client-side batching of existing commands
+- Supports `--dry-run` to preview actions
+- Progress messages written to stderr
+
+---
+
 ## Contract Commands
 
 ### `contract instantiate`
@@ -1671,6 +1860,92 @@ xion-toolkit contract execute \
   --msg execute-msg.json \
   --funds "1000000uxion"
 ```
+
+---
+
+### `contract query`
+
+Query a CosmWasm smart contract (read-only operation, no authentication required).
+
+**Usage:**
+```bash
+xion-toolkit contract query --contract <ADDRESS> --msg <QUERY_FILE>
+```
+
+**Options:**
+- `--contract <ADDRESS>` - Contract address to query (required)
+- `--msg <FILE>` - Path to JSON file containing query message (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+
+**Examples:**
+
+Basic query:
+```bash
+# Create query file
+echo '{"get_config": {}}' > query.json
+
+# Query contract
+xion-toolkit contract query --contract xion1contract... --msg query.json
+```
+
+Output:
+```json
+{
+  "success": true,
+  "contract": "xion1contract...",
+  "query": {"get_config": {}},
+  "result": {
+    "config": {
+      "admin": "xion1admin...",
+      "threshold": 3
+    }
+  }
+}
+```
+
+Query with parameters:
+```bash
+echo '{"get_balance": {"address": "xion1user..."}}' > balance-query.json
+xion-toolkit contract query --contract xion1contract... --msg balance-query.json
+```
+
+Output:
+```json
+{
+  "success": true,
+  "contract": "xion1contract...",
+  "query": {"get_balance": {"address": "xion1user..."}},
+  "result": {
+    "balance": "1000000",
+    "denom": "uxion"
+  }
+}
+```
+
+Output (error - contract not found):
+```json
+{
+  "success": false,
+  "error": "Contract not found: xion1invalid...",
+  "code": "CONTRACT_NOT_FOUND",
+  "suggestion": "Check the contract address and ensure the contract exists on this network"
+}
+```
+
+Output (error - invalid query):
+```json
+{
+  "success": false,
+  "error": "Query failed: unknown variant",
+  "code": "QUERY_FAILED",
+  "suggestion": "Check the query message format matches the contract's expected schema"
+}
+```
+
+**Notes:**
+- Read-only operation - no authentication required
+- Uses direct RPC call to `/cosmwasm/wasm/v1/contract/{address}/smart/{query}`
+- Query message is base64-encoded before sending
 
 ---
 
