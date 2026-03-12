@@ -1538,7 +1538,17 @@ async fn handle_params(cmd: ParamsCommands) -> Result<()> {
             name,
             is_oauth2_app,
             metadata,
-        } => handle_params_update(&address, redirect_url, icon_url, name, is_oauth2_app, metadata).await,
+        } => {
+            handle_params_update(
+                &address,
+                redirect_url,
+                icon_url,
+                name,
+                is_oauth2_app,
+                metadata,
+            )
+            .await
+        }
     }
 }
 

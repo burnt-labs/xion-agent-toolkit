@@ -1775,7 +1775,15 @@ impl TreasuryApiClient {
 
         // Build metadata by merging provided fields
         // Priority: explicit name/is_oauth2_app > metadata object values > defaults
-        let mut metadata_obj = params.metadata.clone().unwrap_or(serde_json::json!({}));
+        let mut metadata_obj = match params.metadata.clone() {
+            Some(v) if v.is_object() => v,
+            Some(_) => {
+                anyhow::bail!(
+                    "--metadata must be a JSON object (e.g., '{{\"key\": \"value\"}}'), not a primitive or array"
+                );
+            }
+            None => serde_json::json!({}),
+        };
 
         // Merge name into metadata (if provided)
         if let Some(name) = &params.name {
@@ -1787,7 +1795,10 @@ impl TreasuryApiClient {
         // Merge is_oauth2_app into metadata (if provided)
         if let Some(is_oauth2_app) = params.is_oauth2_app {
             if let Some(obj) = metadata_obj.as_object_mut() {
-                obj.insert("is_oauth2_app".to_string(), serde_json::json!(is_oauth2_app));
+                obj.insert(
+                    "is_oauth2_app".to_string(),
+                    serde_json::json!(is_oauth2_app),
+                );
             }
         }
 

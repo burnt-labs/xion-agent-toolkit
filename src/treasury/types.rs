@@ -1130,6 +1130,85 @@ fn test_parse_example_config_file() {
 }
 
 #[test]
+fn test_update_params_input_serialization() {
+    // Test with all fields
+    let input = UpdateParamsInput {
+        redirect_url: Some("https://example.com/callback".to_string()),
+        icon_url: Some("https://example.com/icon.png".to_string()),
+        name: Some("Updated Treasury".to_string()),
+        is_oauth2_app: Some(true),
+        metadata: Some(serde_json::json!({"custom": "value", "existing": true})),
+    };
+
+    let json = serde_json::to_string(&input).unwrap();
+    assert!(json.contains("\"redirect_url\":\"https://example.com/callback\""));
+    assert!(json.contains("\"icon_url\":\"https://example.com/icon.png\""));
+    assert!(json.contains("\"name\":\"Updated Treasury\""));
+    assert!(json.contains("\"is_oauth2_app\":true"));
+    assert!(json.contains("\"custom\":\"value\""));
+
+    // Test roundtrip
+    let deserialized: UpdateParamsInput = serde_json::from_str(&json).unwrap();
+    assert_eq!(
+        deserialized.redirect_url,
+        Some("https://example.com/callback".to_string())
+    );
+    assert_eq!(
+        deserialized.icon_url,
+        Some("https://example.com/icon.png".to_string())
+    );
+    assert_eq!(deserialized.name, Some("Updated Treasury".to_string()));
+    assert_eq!(deserialized.is_oauth2_app, Some(true));
+}
+
+#[test]
+fn test_update_params_input_partial() {
+    // Test with only some fields
+    let input = UpdateParamsInput {
+        redirect_url: None,
+        icon_url: Some("https://example.com/new-icon.png".to_string()),
+        name: None,
+        is_oauth2_app: Some(false),
+        metadata: None,
+    };
+
+    let json = serde_json::to_string(&input).unwrap();
+    assert!(!json.contains("\"redirect_url\""));
+    assert!(json.contains("\"icon_url\":\"https://example.com/new-icon.png\""));
+    assert!(!json.contains("\"name\""));
+    assert!(json.contains("\"is_oauth2_app\":false"));
+
+    // Test roundtrip
+    let deserialized: UpdateParamsInput = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized.redirect_url, None);
+    assert_eq!(
+        deserialized.icon_url,
+        Some("https://example.com/new-icon.png".to_string())
+    );
+    assert_eq!(deserialized.name, None);
+    assert_eq!(deserialized.is_oauth2_app, Some(false));
+}
+
+#[test]
+fn test_update_params_input_minimal() {
+    // Test with minimal fields
+    let input = UpdateParamsInput {
+        redirect_url: Some("https://example.com/callback".to_string()),
+        icon_url: None,
+        name: None,
+        is_oauth2_app: None,
+        metadata: None,
+    };
+
+    let json = serde_json::to_string(&input).unwrap();
+    assert!(json.contains("\"redirect_url\""));
+    assert!(!json.contains("\"icon_url\""));
+    assert!(!json.contains("\"name\""));
+    assert!(!json.contains("\"is_oauth2_app\""));
+    assert!(!json.contains("\"metadata\""));
+}
+
+#[test]
 fn test_serialize_treasury_execute_msg() {
     let msg = TreasuryExecuteMsg::UpdateGrantConfig {
         msg_type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
