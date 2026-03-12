@@ -1454,7 +1454,9 @@ xion-toolkit treasury params update <ADDRESS> [options]
 **Options:**
 - `--redirect-url <URL>` - OAuth redirect URL
 - `--icon-url <URL>` - Treasury icon URL
-- `--metadata <JSON>` - Metadata as JSON string
+- `--name <NAME>` - Display name (stored in metadata.name)
+- `--is-oauth2-app` - Mark as OAuth2 application (stored in metadata.is_oauth2_app)
+- `--metadata <JSON>` - Additional metadata as JSON object
 - `--network <NETWORK>` - Network override (testnet, mainnet)
 
 **Examples:**
@@ -1471,15 +1473,21 @@ Output (success):
   "success": true,
   "treasury_address": "xion1abc123def456...",
   "operation": "update_params",
-  "updated_fields": ["redirect_url"],
   "tx_hash": "A1B2C3D4E5F6..."
 }
+```
+
+Update name and OAuth2 app flag:
+```bash
+xion-toolkit treasury params update xion1abc123def456... \
+  --name "My Updated Treasury" \
+  --is-oauth2-app
 ```
 
 Update metadata:
 ```bash
 xion-toolkit treasury params update xion1abc123def456... \
-  --metadata '{"name":"Updated Treasury","archived":false}'
+  --metadata '{"description":"Updated description","custom_field":"value"}'
 ```
 
 Update multiple params:
@@ -1487,7 +1495,8 @@ Update multiple params:
 xion-toolkit treasury params update xion1abc123def456... \
   --redirect-url "https://app.com/callback" \
   --icon-url "https://app.com/icon.png" \
-  --metadata '{"name":"My App Treasury"}'
+  --name "My App Treasury" \
+  --is-oauth2-app
 ```
 
 Output (error - invalid JSON):
@@ -1500,10 +1509,21 @@ Output (error - invalid JSON):
 }
 ```
 
+Output (error - metadata not object):
+```json
+{
+  "success": false,
+  "error": "--metadata must be a JSON object (e.g., '{\"key\": \"value\"}'), not a primitive or array",
+  "code": "INVALID_INPUT",
+  "suggestion": "Provide metadata as a JSON object"
+}
+```
+
 **Notes:**
 - Only admin can update parameters
 - Partial updates supported (only provide fields to change)
-- Metadata must be valid JSON
+- Metadata must be a valid JSON object
+- `name` and `is_oauth2_app` are stored in metadata on-chain but exposed as CLI flags for convenience
 
 ---
 
