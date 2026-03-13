@@ -1,0 +1,30 @@
+{
+  "_comment": "IMPORTANT: Replace all placeholder addresses with actual addresses before use",
+  "messages": [
+    {
+      "typeUrl": "/cosmos.bank.v1beta1.MsgSend",
+      "value": {
+        "toAddress": "xion1recipient-address-here",
+        "amount": [{ "denom": "uxion", "amount": "1000000" }]
+      }
+    },
+    {
+      "typeUrl": "/cosmwasm.wasm.v1.MsgExecuteContract",
+      "value": {
+        "sender": "xion1your-address-here",
+        "contract": "xion1treasury-contract-address-here",
+        "msg": { "update_params": { "params": {} } },
+        "funds": []
+      }
+    },
+    {
+      "typeUrl": "/cosmos.staking.v1beta1.MsgDelegate",
+      "value": {
+        "delegatorAddress": "xion1your-address-here",
+        "validatorAddress": "xionvaloper1validator-address-here",
+        "amount": { "denom": "uxion", "amount": "10000000" }
+      }
+    }
+  ],
+  "memo": "Batch transaction: send tokens, execute contract, and delegate"
+}

@@ -5,6 +5,7 @@
 
 pub mod account;
 pub mod api;
+pub mod batch;
 pub mod cli;
 pub mod config;
 pub mod oauth;

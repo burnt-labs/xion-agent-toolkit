@@ -1,5 +1,6 @@
 mod account;
 mod api;
+mod batch;
 mod cli;
 mod config;
 mod oauth;
@@ -33,6 +34,7 @@ async fn main() -> Result<()> {
         Commands::Config(config_cmd) => cli::handle_config_command(config_cmd)?,
         Commands::Status => cli::handle_status_command()?,
         Commands::Account(account_cmd) => cli::handle_account_command(account_cmd).await?,
+        Commands::Batch(batch_cmd) => cli::handle_batch_command(batch_cmd).await?,
     }
 
     Ok(())

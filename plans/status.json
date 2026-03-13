@@ -34,15 +34,15 @@
       "id": "batch-operations",
       "title": "Batch Operations",
       "file": "plans/batch-operations.md",
-      "status": "Todo",
-      "progress": 0,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@architect", "@fullstack-dev"],
-      "tags": ["feature", "p3", "research-needed"],
+      "agents": ["@architect", "@fullstack-dev", "@qa-engineer"],
+      "tags": ["feature", "p3", "batch"],
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",
-      "done_at": null,
-      "notes": "Support executing multiple messages in a single transaction - needs research on OAuth2 API support"
+      "done_at": "2026-03-13",
+      "notes": "QA VERIFIED: All test cases passed - CLI help accurate, validation working, error handling correct, unit tests passing (23 tests)."
     },
     {
       "id": "asset-builder",
