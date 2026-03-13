@@ -1,9 +1,7 @@
 //! Account Module
 //!
-//! MetaAccount (Smart Account) queries via DaoDao Indexer.
+//! MetaAccount (Smart Account) queries via OAuth2 API.
 
-pub mod client;
 pub mod types;
 
-pub use client::AccountClient;
-pub use types::{AccountInfoOutput, Authenticator, AuthenticatorDisplay, SmartAccount};
+pub use types::AccountInfoOutput;

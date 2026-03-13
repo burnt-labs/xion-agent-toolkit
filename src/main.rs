@@ -1,3 +1,4 @@
+mod account;
 mod api;
 mod cli;
 mod config;
@@ -32,8 +33,7 @@ async fn main() -> Result<()> {
         Commands::Config(config_cmd) => cli::handle_config_command(config_cmd)?,
         Commands::Status => cli::handle_status_command()?,
         Commands::Account(account_cmd) => cli::handle_account_command(account_cmd).await?,
-        Commands::Status => cli::handle_status_command()?,
-}
+    }
 
     Ok(())
 }

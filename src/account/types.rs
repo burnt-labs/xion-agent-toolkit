@@ -1,51 +1,11 @@
 //! Account Types
 //!
-//! Data structures for MetaAccount (Smart Account) queries.
+//! Data structures for MetaAccount (Smart Account) information.
+//! These types align with the OAuth2 API `/api/v1/me` response format.
 
 use serde::{Deserialize, Serialize};
 
-/// Smart Account (MetaAccount) information from DaoDao Indexer
-///
-/// Note: We indexer at da daodaoindexer.burnt.com may return either:
-/// - REST API: /contract/{address}/xion/account/smart/{account_id}
-/// - GraphQL: /graphql (but only REST is supported)
-///
-/// For simplicity, we use REST API first.
-
-/// Smart Account information from indexer REST API
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SmartAccount {
-    /// MetaAccount address (bech32)
-    pub id: String,
-    /// Latest authenticator ID
-    #[serde(rename = "latestAuthenticatorId")]
-    pub latest_authenticator_id: Option<String>,
-    /// Associated authenticators
-    pub authenticators: AuthenticatorsConnection,
-}
-
-/// Authenticators connection (pagination wrapper)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticatorsConnection {
-    /// List of authenticator nodes
-    pub nodes: Vec<Authenticator>,
-}
-/// Single authenticator entry
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Authenticator {
-    /// Unique authenticator ID
-    pub id: String,
-    /// Authenticator type (e.g., "secp256k1")
-    #[serde(rename = "type")]
-    pub auth_type: String,
-    /// Authenticator public key or identifier
-    pub authenticator: String,
-    /// Index of this authenticator
-    #[serde(rename = "authenticatorIndex")]
-    pub authenticator_index: i32,
-    /// Authenticator version
-    pub version: i32,
-}
+use crate::api::UserInfo;
 
 /// CLI output for account info command
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,136 +14,133 @@ pub struct AccountInfoOutput {
     pub success: bool,
     /// MetaAccount address
     pub address: String,
-    /// List of authenticators (display-friendly)
-    pub authenticators: Vec<AuthenticatorDisplay>,
-    /// Latest authenticator ID
-    pub latest_authenticator_id: Option<String>,
+    /// List of authenticators
+    pub authenticators: Vec<AuthenticatorOutput>,
+    /// Account balances
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub balances: Option<BalancesOutput>,
 }
-/// Display-friendly authenticator info (with truncated authenticator string)
+
+/// Authenticator output format
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticatorDisplay {
+pub struct AuthenticatorOutput {
     /// Unique authenticator ID
     pub id: String,
-    /// Authenticator type
+    /// Authenticator type (e.g., "secp256k1")
     #[serde(rename = "type")]
     pub auth_type: String,
-    /// Authenticator public key (truncated for display)
-    pub authenticator: String,
-    /// Index of this authenticator
-    #[serde(rename = "authenticatorIndex")]
-    pub authenticator_index: i32,
-    /// Authenticator version
-    pub version: i32,
+    /// Authenticator index
+    pub index: u32,
+    /// Authenticator data
+    pub data: serde_json::Value,
 }
 
-/// Maximum display length for authenticator strings
-const AUTHENTICATOR_DISPLAY_MAX_LEN: usize = 29;
+/// Balances output format
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BalancesOutput {
+    /// Xion balance
+    pub xion: BalanceOutput,
+    /// USDC balance
+    pub usdc: BalanceOutput,
+}
 
-impl From<SmartAccount> for AccountInfoOutput {
-    fn from(account: SmartAccount) -> Self {
-        let authenticators: Vec<AuthenticatorDisplay> = account
+/// Balance output format
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BalanceOutput {
+    /// Human-readable amount
+    pub amount: String,
+    /// Denomination
+    pub denom: String,
+    /// Micro amount (smallest unit)
+    pub micro_amount: String,
+}
+
+impl From<UserInfo> for AccountInfoOutput {
+    fn from(user_info: UserInfo) -> Self {
+        let authenticators: Vec<AuthenticatorOutput> = user_info
             .authenticators
-            .nodes
             .into_iter()
-            .map(|a| AuthenticatorDisplay {
+            .map(|a| AuthenticatorOutput {
                 id: a.id,
                 auth_type: a.auth_type,
-                authenticator: if a.authenticator.len() > AUTHENTICATOR_DISPLAY_MAX_LEN {
-                    format!("{}...", &a.authenticator[..AUTHENTICATOR_DISPLAY_MAX_LEN])
-                } else {
-                    a.authenticator
-                },
-                authenticator_index: a.authenticator_index,
-                version: a.version,
+                index: a.index,
+                data: a.data,
             })
             .collect();
 
+        let balances = user_info.balances.map(|b| BalancesOutput {
+            xion: BalanceOutput {
+                amount: b.xion.amount,
+                denom: b.xion.denom,
+                micro_amount: b.xion.micro_amount,
+            },
+            usdc: BalanceOutput {
+                amount: b.usdc.amount,
+                denom: b.usdc.denom,
+                micro_amount: b.usdc.micro_amount,
+            },
+        });
+
         Self {
             success: true,
-            address: account.id,
+            address: user_info.id,
             authenticators,
-            latest_authenticator_id: account.latest_authenticator_id,
+            balances,
         }
     }
-}
-
-/// GraphQL response for SingleSmartWalletQuery (only used as fallback)
-#[derive(Debug, Clone, Deserialize)]
-pub struct SmartAccountQueryResponse {
-    /// The smart account data
-    #[serde(rename = "smartAccount")]
-    pub smart_account: Option<SmartAccount>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api::{AccountBalances, AuthenticatorInfo, Balance};
 
     #[test]
-    fn test_smart_account_deserialization() {
-        let json = r#"{
-            "id": "xion1abc123",
-            "latestAuthenticatorId": "auth_001",
-            "authenticators": {
-                "nodes": [
-                    {
-                        "id": "auth_001",
-                        "type": "secp256k1",
-                        "authenticator": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE",
-                        "authenticatorIndex": 0,
-                        "version": 1
-                    }
-                ]
-            }
-        }"#;
-
-        let account: SmartAccount = serde_json::from_str(json).unwrap();
-        assert_eq!(account.id, "xion1abc123");
-        assert_eq!(account.authenticators.nodes.len(), 1);
-        assert_eq!(account.authenticators.nodes[0].auth_type, "secp256k1");
-    }
-
-    #[test]
-    fn test_account_info_output_from_smart_account() {
-        let account = SmartAccount {
-            id: "xion1abc".to_string(),
-            latest_authenticator_id: Some("auth_001".to_string()),
-            authenticators: AuthenticatorsConnection {
-                nodes: vec![Authenticator {
-                    id: "auth_001".to_string(),
-                    auth_type: "secp256k1".to_string(),
-                    authenticator: "short_key".to_string(),
-                    authenticator_index: 0,
-                    version: 1,
-                }],
-            },
+    fn test_user_info_to_account_info_output() {
+        let user_info = UserInfo {
+            id: "xion1abc123".to_string(),
+            authenticators: vec![AuthenticatorInfo {
+                id: "xion1abc123-0".to_string(),
+                auth_type: "secp256k1".to_string(),
+                index: 0,
+                data: serde_json::json!({}),
+            }],
+            balances: Some(AccountBalances {
+                xion: Balance {
+                    amount: "100.5".to_string(),
+                    denom: "uxion".to_string(),
+                    micro_amount: "100500000".to_string(),
+                },
+                usdc: Balance {
+                    amount: "50.0".to_string(),
+                    denom: "uusdc".to_string(),
+                    micro_amount: "50000000".to_string(),
+                },
+            }),
         };
 
-        let output: AccountInfoOutput = account.into();
+        let output: AccountInfoOutput = user_info.into();
         assert!(output.success);
-        assert_eq!(output.address, "xion1abc");
+        assert_eq!(output.address, "xion1abc123");
         assert_eq!(output.authenticators.len(), 1);
+        assert!(output.balances.is_some());
+        let balances = output.balances.unwrap();
+        assert_eq!(balances.xion.amount, "100.5");
+        assert_eq!(balances.usdc.amount, "50.0");
     }
 
     #[test]
-    fn test_authenticator_truncation() {
-        let account = SmartAccount {
-            id: "xion1abc".to_string(),
-            latest_authenticator_id: None,
-            authenticators: AuthenticatorsConnection {
-                nodes: vec![Authenticator {
-                    id: "auth_001".to_string(),
-                    auth_type: "secp256k1".to_string(),
-                    authenticator: "a".repeat(100),
-                    authenticator_index: 0,
-                    version: 1,
-                }],
-            },
+    fn test_user_info_minimal_to_account_info_output() {
+        let user_info = UserInfo {
+            id: "xion1abc123".to_string(),
+            authenticators: vec![],
+            balances: None,
         };
 
-        let output: AccountInfoOutput = account.into();
-        // Should be truncated to 29 chars + "..."
-        assert_eq!(output.authenticators[0].authenticator.len(), 32);
-        assert!(output.authenticators[0].authenticator.ends_with("..."));
+        let output: AccountInfoOutput = user_info.into();
+        assert!(output.success);
+        assert_eq!(output.address, "xion1abc123");
+        assert!(output.authenticators.is_empty());
+        assert!(output.balances.is_none());
     }
 }

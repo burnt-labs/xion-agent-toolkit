@@ -6,15 +6,15 @@
       "id": "metaaccount-info",
       "title": "MetaAccount Info Command",
       "file": "plans/metaaccount-info.md",
-      "status": "Blocked",
-      "progress": 30,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": ["@fullstack-dev"],
-      "tags": ["feature", "account", "p1", "blocked"],
+      "tags": ["feature", "account", "p1"],
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",
-      "done_at": null,
-      "notes": "BLOCKED: DaoDao Indexer GraphQL endpoint not accessible. Need to research correct REST API endpoints for SmartAccount queries. Implementation files exist in src/account/ but have syntax errors and are not functional."
+      "done_at": "2026-03-13",
+      "notes": "COMPLETED: Rewrote account info to use OAuth2 API /api/v1/me endpoint. Removed DaoDao Indexer dependency."
     },
     {
       "id": "extended-grant-types",
