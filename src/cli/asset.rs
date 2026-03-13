@@ -4,8 +4,13 @@
 
 use anyhow::Result;
 use clap::{Args, Subcommand};
+use std::path::Path;
 
-use crate::asset_builder::{AssetBuilderManager, AssetType, CreateCollectionInput, MintTokenInput};
+use crate::asset_builder::manager::AssetBuilderManager;
+use crate::asset_builder::{
+    AssetType, BatchMintInput, BatchMintToken, CreateCollectionInput, MintTokenInput,
+    PredictAddressInput,
+};
 use crate::config::ConfigManager;
 use crate::oauth::OAuthClient;
 use crate::utils::output::{print_info, print_json};
@@ -24,6 +29,12 @@ pub enum AssetCommands {
 
     /// List available asset types
     Types,
+
+    /// Predict contract address before deployment
+    Predict(PredictArgs),
+
+    /// Batch mint multiple NFT tokens
+    BatchMint(BatchMintArgs),
 }
 
 /// Create collection arguments
@@ -108,6 +119,60 @@ pub struct QueryArgs {
     pub msg: String,
 }
 
+/// Predict address arguments
+#[derive(Debug, Args)]
+pub struct PredictArgs {
+    /// Asset type (cw721-base, cw2981-royalties, etc.)
+    #[arg(
+        long = "type",
+        short = 't',
+        value_name = "TYPE",
+        default_value = "cw721-base"
+    )]
+    pub asset_type: String,
+
+    /// Collection name
+    #[arg(long, value_name = "NAME")]
+    pub name: String,
+
+    /// Collection symbol
+    #[arg(long, value_name = "SYMBOL")]
+    pub symbol: String,
+
+    /// Minter address (defaults to your address)
+    #[arg(long, value_name = "ADDRESS")]
+    pub minter: Option<String>,
+
+    /// Salt for predictable address (hex-encoded, required)
+    #[arg(long, value_name = "HEX")]
+    pub salt: String,
+
+    /// Custom code ID (overrides network default)
+    #[arg(long, value_name = "ID")]
+    pub code_id: Option<u64>,
+}
+
+/// Batch mint arguments
+#[derive(Debug, Args)]
+pub struct BatchMintArgs {
+    /// Contract address
+    #[arg(long, value_name = "ADDRESS")]
+    pub contract: String,
+
+    /// Asset type (cw721-base, cw2981-royalties, etc.)
+    #[arg(
+        long = "type",
+        short = 't',
+        value_name = "TYPE",
+        default_value = "cw721-base"
+    )]
+    pub asset_type: String,
+
+    /// JSON file containing tokens to mint
+    #[arg(long, value_name = "FILE")]
+    pub tokens_file: String,
+}
+
 /// Handle asset commands
 pub async fn handle_command(cmd: AssetCommands) -> Result<()> {
     match cmd {
@@ -115,6 +180,8 @@ pub async fn handle_command(cmd: AssetCommands) -> Result<()> {
         AssetCommands::Mint(args) => handle_mint(args).await,
         AssetCommands::Query(args) => handle_query(args).await,
         AssetCommands::Types => handle_types().await,
+        AssetCommands::Predict(args) => handle_predict(args).await,
+        AssetCommands::BatchMint(args) => handle_batch_mint(args).await,
     }
 }
 
@@ -131,16 +198,6 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
             valid_types.join(", ")
         )
     })?;
-
-    // Check for cw721-fixed-price (requires CW20)
-    if asset_type == AssetType::Cw721FixedPrice {
-        let result = serde_json::json!({
-            "success": false,
-            "error": "cw721-fixed-price requires CW20 token support (not yet implemented)",
-            "code": "CW20_REQUIRED"
-        });
-        return print_json(&result);
-    }
 
     // Create manager
     let config_manager = ConfigManager::new()?;
@@ -189,8 +246,6 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
                 "NOT_AUTHENTICATED"
             } else if error_msg.contains("Code ID not configured") {
                 "CODE_ID_NOT_FOUND"
-            } else if error_msg.contains("CW20") {
-                "CW20_REQUIRED"
             } else {
                 "CREATE_COLLECTION_FAILED"
             };
@@ -282,16 +337,6 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
         return print_json(&result);
     }
 
-    // Check unsupported types
-    if asset_type == AssetType::Cw721FixedPrice {
-        let result = serde_json::json!({
-            "success": false,
-            "error": "cw721-fixed-price requires CW20 token support (not yet implemented)",
-            "code": "CW20_REQUIRED"
-        });
-        return print_json(&result);
-    }
-
     // Create manager
     let config_manager = ConfigManager::new()?;
     let network_config = config_manager.get_network_config()?;
@@ -346,8 +391,6 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
                 "NOT_AUTHENTICATED"
             } else if error_msg.contains("unauthorized") || error_msg.contains("minter") {
                 "UNAUTHORIZED_MINTER"
-            } else if error_msg.contains("CW20") {
-                "CW20_REQUIRED"
             } else if error_msg.contains("royalty") {
                 "INVALID_ROYALTY"
             } else {
@@ -423,6 +466,185 @@ async fn handle_types() -> Result<()> {
     });
 
     print_json(&response)
+}
+
+/// Handle predict address command
+async fn handle_predict(args: PredictArgs) -> Result<()> {
+    print_info(&format!(
+        "Predicting address for {} collection...",
+        args.name
+    ));
+
+    // Parse asset type
+    let asset_type = AssetType::parse(&args.asset_type).ok_or_else(|| {
+        let valid_types: Vec<&'static str> = AssetType::all().iter().map(|t| t.as_str()).collect();
+        anyhow::anyhow!(
+            "Invalid asset type: '{}'. Valid types: {}",
+            args.asset_type,
+            valid_types.join(", ")
+        )
+    })?;
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = AssetBuilderManager::new(oauth_client, network_config);
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Build input
+    let input = PredictAddressInput {
+        asset_type,
+        name: args.name,
+        symbol: args.symbol,
+        minter: args.minter,
+        code_id: args.code_id,
+        salt: args.salt,
+    };
+
+    // Predict address
+    match manager.predict_address(input).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": true,
+                "contract_address": result.contract_address,
+                "code_id": result.code_id,
+                "salt": result.salt,
+                "creator": result.creator
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let code = if error_msg.contains("Not authenticated") {
+                "NOT_AUTHENTICATED"
+            } else if error_msg.contains("Code ID not configured") {
+                "CODE_ID_NOT_FOUND"
+            } else if error_msg.contains("Invalid salt") {
+                "INVALID_SALT"
+            } else {
+                "PREDICT_ADDRESS_FAILED"
+            };
+
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to predict address: {}", e),
+                "code": code
+            });
+            print_json(&result)
+        }
+    }
+}
+
+/// Handle batch mint command
+async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
+    print_info(&format!(
+        "Batch minting tokens to contract {}...",
+        args.contract
+    ));
+
+    // Parse asset type
+    let asset_type = AssetType::parse(&args.asset_type).ok_or_else(|| {
+        let valid_types: Vec<&'static str> = AssetType::all().iter().map(|t| t.as_str()).collect();
+        anyhow::anyhow!(
+            "Invalid asset type: '{}'. Valid types: {}",
+            args.asset_type,
+            valid_types.join(", ")
+        )
+    })?;
+
+    // Read tokens from file
+    let tokens_path = Path::new(&args.tokens_file);
+    if !tokens_path.exists() {
+        let result = serde_json::json!({
+            "success": false,
+            "error": format!("Tokens file not found: {}", args.tokens_file),
+            "code": "FILE_NOT_FOUND"
+        });
+        return print_json(&result);
+    }
+
+    let tokens_content = std::fs::read_to_string(tokens_path)?;
+    let tokens: Vec<BatchMintToken> = serde_json::from_str(&tokens_content).map_err(|e| {
+        anyhow::anyhow!(
+            "Failed to parse tokens file: {}. Expected JSON array of tokens",
+            e
+        )
+    })?;
+
+    if tokens.is_empty() {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "No tokens provided in file",
+            "code": "EMPTY_TOKENS"
+        });
+        return print_json(&result);
+    }
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = AssetBuilderManager::new(oauth_client, network_config);
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_json(&result);
+    }
+
+    // Build input
+    let input = BatchMintInput {
+        contract: args.contract,
+        asset_type,
+        tokens,
+    };
+
+    // Batch mint
+    match manager.batch_mint(input).await {
+        Ok(result) => {
+            let response = serde_json::json!({
+                "success": result.success,
+                "contract_address": result.contract_address,
+                "tx_hash": result.tx_hash,
+                "total": result.total,
+                "succeeded": result.succeeded,
+                "failed": result.failed,
+                "results": result.results
+            });
+            print_json(&response)
+        }
+        Err(e) => {
+            let error_msg = e.to_string();
+            let code = if error_msg.contains("Not authenticated") {
+                "NOT_AUTHENTICATED"
+            } else if error_msg.contains("No tokens") {
+                "EMPTY_TOKENS"
+            } else {
+                "BATCH_MINT_FAILED"
+            };
+
+            let result = serde_json::json!({
+                "success": false,
+                "error": format!("Failed to batch mint: {}", e),
+                "code": code
+            });
+            print_json(&result)
+        }
+    }
 }
 
 #[cfg(test)]

@@ -20,9 +20,11 @@ use crate::treasury::api_client::TreasuryApiClient;
 
 use super::code_ids::get_code_id;
 use super::types::{
-    AssetBuilderError, AssetType, CreateCollectionInput, CreateCollectionResult, Cw2981MintContent,
-    Cw2981MintMsg, Cw2981RoyaltyInfo, Cw721ExpirationMintContent, Cw721ExpirationMintMsg,
-    Cw721InstantiateMsg, Cw721MintMsg, MintContent, MintTokenInput, MintTokenResult, QueryResult,
+    AssetBuilderError, AssetType, BatchMintInput, BatchMintResult, BatchMintTokenResult,
+    CreateCollectionInput, CreateCollectionResult, Cw2981MintContent, Cw2981MintMsg,
+    Cw2981RoyaltyInfo, Cw721ExpirationMintContent, Cw721ExpirationMintMsg, Cw721InstantiateMsg,
+    Cw721MintMsg, MintContent, MintTokenInput, MintTokenResult, PredictAddressInput,
+    PredictAddressResult, QueryResult,
 };
 
 /// Asset Builder Manager
@@ -81,11 +83,6 @@ impl AssetBuilderManager {
         input: CreateCollectionInput,
     ) -> Result<CreateCollectionResult, AssetBuilderError> {
         debug!("Creating NFT collection: {} ({})", input.name, input.symbol);
-
-        // Check for unsupported asset types
-        if input.asset_type == AssetType::Cw721FixedPrice {
-            return Err(AssetBuilderError::Cw20Required);
-        }
 
         // Get user credentials
         let credentials = self
@@ -288,10 +285,6 @@ impl AssetBuilderManager {
                 };
                 Ok(serde_json::to_value(msg)?)
             }
-            AssetType::Cw721FixedPrice => {
-                // Fixed-price requires CW20 support (Phase 3)
-                Err(AssetBuilderError::Cw20Required)
-            }
         }
     }
 
@@ -357,6 +350,190 @@ impl AssetBuilderManager {
             success: true,
             contract_address: contract.to_string(),
             response,
+        })
+    }
+
+    /// Predict contract address before deployment
+    ///
+    /// Computes the deterministic contract address using instantiate2 algorithm.
+    /// This allows you to know the address before actually deploying the contract.
+    ///
+    /// # Arguments
+    /// * `input` - Prediction input with asset type, name, symbol, salt, etc.
+    ///
+    /// # Returns
+    /// Prediction result with the computed contract address
+    #[instrument(skip(self, input))]
+    pub async fn predict_address(
+        &self,
+        input: PredictAddressInput,
+    ) -> Result<PredictAddressResult, AssetBuilderError> {
+        debug!("Predicting address for {} ({})", input.name, input.symbol);
+
+        // Get user credentials to obtain sender address
+        let credentials = self
+            .oauth_client
+            .get_credentials()
+            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?
+            .ok_or(AssetBuilderError::NotAuthenticated)?;
+
+        let sender = credentials
+            .xion_address
+            .ok_or(AssetBuilderError::NotAuthenticated)?;
+
+        // Get code ID
+        let code_id = match input.code_id {
+            Some(id) => id,
+            None => get_code_id(input.asset_type, &self.config)?,
+        };
+
+        // Parse salt from hex string
+        let salt_bytes = hex::decode(&input.salt).map_err(|e| {
+            AssetBuilderError::ApiError(format!(
+                "Invalid salt format: {}. Expected hex-encoded string. Error: {}",
+                input.salt, e
+            ))
+        })?;
+
+        // Compute predicted address
+        let predicted_address = self
+            .compute_instantiate2_address(code_id, &sender, &salt_bytes)
+            .await?;
+
+        Ok(PredictAddressResult {
+            success: true,
+            contract_address: predicted_address,
+            code_id,
+            salt: input.salt,
+            creator: sender,
+        })
+    }
+
+    /// Batch mint multiple NFT tokens in a single transaction
+    ///
+    /// Mints multiple tokens in an existing NFT collection in one transaction.
+    /// This is more efficient than minting tokens individually.
+    ///
+    /// # Arguments
+    /// * `input` - Batch mint input with contract address, asset type, and tokens
+    ///
+    /// # Returns
+    /// Batch mint result with per-token status
+    #[instrument(skip(self, input))]
+    pub async fn batch_mint(
+        &self,
+        input: BatchMintInput,
+    ) -> Result<BatchMintResult, AssetBuilderError> {
+        debug!(
+            "Batch minting {} tokens in contract {}",
+            input.tokens.len(),
+            input.contract
+        );
+
+        if input.tokens.is_empty() {
+            return Err(AssetBuilderError::BatchMintError(
+                "No tokens provided for batch minting".to_string(),
+            ));
+        }
+
+        // Get user credentials
+        let credentials = self
+            .oauth_client
+            .get_credentials()
+            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?
+            .ok_or(AssetBuilderError::NotAuthenticated)?;
+
+        let sender = credentials
+            .xion_address
+            .ok_or(AssetBuilderError::NotAuthenticated)?;
+
+        // Build mint messages for each token
+        let mut messages: Vec<serde_json::Value> = Vec::new();
+        let mut results: Vec<BatchMintTokenResult> = Vec::new();
+
+        for token in &input.tokens {
+            // Build MintTokenInput for each token
+            let mint_input = MintTokenInput {
+                contract: input.contract.clone(),
+                token_id: token.token_id.clone(),
+                owner: token.owner.clone(),
+                token_uri: token.token_uri.clone(),
+                extension: token.extension.clone(),
+                royalty_address: token.royalty_address.clone(),
+                royalty_percentage: token.royalty_percentage,
+                expires_at: token.expires_at.clone(),
+                asset_type: Some(input.asset_type),
+            };
+
+            // Build mint message
+            match self.build_mint_msg(&mint_input, input.asset_type) {
+                Ok(mint_msg) => {
+                    messages.push(mint_msg);
+                    results.push(BatchMintTokenResult {
+                        token_id: token.token_id.clone(),
+                        success: true,
+                        error: None,
+                    });
+                }
+                Err(e) => {
+                    results.push(BatchMintTokenResult {
+                        token_id: token.token_id.clone(),
+                        success: false,
+                        error: Some(e.to_string()),
+                    });
+                }
+            }
+        }
+
+        // Check if any messages were built successfully
+        let successful_messages: Vec<_> = messages
+            .iter()
+            .zip(results.iter())
+            .filter(|(_, r)| r.success)
+            .map(|(m, _)| m.clone())
+            .collect();
+
+        if successful_messages.is_empty() {
+            return Ok(BatchMintResult {
+                success: false,
+                contract_address: input.contract.clone(),
+                tx_hash: String::new(),
+                total: input.tokens.len(),
+                succeeded: 0,
+                failed: input.tokens.len(),
+                results,
+            });
+        }
+
+        // Get valid access token
+        let access_token = self
+            .oauth_client
+            .get_valid_token()
+            .await
+            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?;
+
+        // Broadcast batch execute
+        let tx_hash = self
+            .broadcast_batch_execute(
+                &access_token,
+                &sender,
+                &input.contract,
+                &successful_messages,
+            )
+            .await?;
+
+        // Update results with transaction status
+        let succeeded_count = results.iter().filter(|r| r.success).count();
+        let failed_count = results.iter().filter(|r| !r.success).count();
+
+        Ok(BatchMintResult {
+            success: failed_count == 0,
+            contract_address: input.contract.clone(),
+            tx_hash,
+            total: input.tokens.len(),
+            succeeded: succeeded_count,
+            failed: failed_count,
+            results,
         })
     }
 
@@ -447,6 +624,58 @@ impl AssetBuilderManager {
             .broadcast_transaction(access_token, broadcast_request)
             .await
             .map_err(|e| AssetBuilderError::MintFailed(e.to_string()))?;
+
+        Ok(response.tx_hash)
+    }
+
+    /// Broadcast batch execute contract transaction
+    ///
+    /// Uses the OAuth2 API to broadcast multiple execute contract messages in one transaction.
+    async fn broadcast_batch_execute(
+        &self,
+        access_token: &str,
+        sender: &str,
+        contract: &str,
+        execute_msgs: &[serde_json::Value],
+    ) -> Result<String, AssetBuilderError> {
+        debug!(
+            "Batch executing {} messages on contract {}",
+            execute_msgs.len(),
+            contract
+        );
+
+        // Build multiple MsgExecuteContract messages
+        let messages: Vec<crate::treasury::types::TransactionMessage> = execute_msgs
+            .iter()
+            .map(|execute_msg| {
+                // Serialize execute message to JSON, then convert to number array
+                let msg_json = serde_json::to_string(execute_msg)?;
+                let msg_bytes = msg_json.as_bytes();
+
+                let msg_value = serde_json::json!({
+                    "sender": sender,
+                    "contract": contract,
+                    "msg": Self::bytes_to_json_array(msg_bytes),
+                    "funds": []
+                });
+
+                Ok(crate::treasury::types::TransactionMessage {
+                    type_url: "/cosmwasm.wasm.v1.MsgExecuteContract".to_string(),
+                    value: msg_value,
+                })
+            })
+            .collect::<Result<Vec<_>, AssetBuilderError>>()?;
+
+        let broadcast_request = crate::treasury::types::BroadcastRequest {
+            messages,
+            memo: Some("Batch mint NFT tokens via Xion Agent Toolkit".to_string()),
+        };
+
+        let response = self
+            .api_client
+            .broadcast_transaction(access_token, broadcast_request)
+            .await
+            .map_err(|e| AssetBuilderError::BatchMintError(e.to_string()))?;
 
         Ok(response.tx_hash)
     }

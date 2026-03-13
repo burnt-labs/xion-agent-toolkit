@@ -7,6 +7,8 @@
 //! - Create NFT collections (instantiate2 for predictable addresses)
 //! - Mint tokens in collections
 //! - Query contract state
+//! - Predict contract addresses before deployment
+//! - Batch mint multiple tokens in one transaction
 //!
 //! ## Supported Asset Types
 //!
@@ -15,7 +17,6 @@
 //! | cw721-base | 522 | Standard NFT |
 //! | cw721-metadata-onchain | 525 | On-chain metadata |
 //! | cw721-expiration | 523 | Time-based expiry |
-//! | cw721-fixed-price | 524 | Requires CW20 (deferred) |
 //! | cw721-non-transferable | 526 | Soulbound |
 //! | cw2981-royalties | 528 | Royalties at mint time |
 //!
@@ -70,5 +71,9 @@ pub mod manager;
 pub mod types;
 
 // Re-export commonly used types (public API)
-pub use manager::AssetBuilderManager;
-pub use types::{AssetType, CreateCollectionInput, MintTokenInput};
+#[allow(unused_imports)]
+pub use types::{
+    AssetType, BatchMintInput, BatchMintResult, BatchMintToken, CreateCollectionInput,
+    CreateCollectionResult, MintTokenInput, MintTokenResult, PredictAddressInput,
+    PredictAddressResult, QueryResult,
+};

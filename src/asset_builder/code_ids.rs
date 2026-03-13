@@ -9,7 +9,6 @@
 //! | cw721-base | 522 |
 //! | cw721-metadata-onchain | 525 |
 //! | cw721-expiration | 523 |
-//! | cw721-fixed-price | 524 |
 //! | cw721-non-transferable | 526 |
 //! | cw2981-royalties | 528 |
 
@@ -36,7 +35,6 @@ pub fn get_code_id(
         AssetType::Cw721Base => config.cw721_base_code_id,
         AssetType::Cw721MetadataOnchain => config.cw721_metadata_onchain_code_id,
         AssetType::Cw721Expiration => config.cw721_expiration_code_id,
-        AssetType::Cw721FixedPrice => config.cw721_fixed_price_code_id,
         AssetType::Cw721NonTransferable => config.cw721_non_transferable_code_id,
         AssetType::Cw2981Royalties => config.cw2981_royalties_code_id,
     };
@@ -63,7 +61,6 @@ pub fn get_checksum(asset_type: AssetType, _config: &NetworkConfig) -> Option<St
         AssetType::Cw721Base => None, // TODO: Add actual checksum
         AssetType::Cw721MetadataOnchain => None,
         AssetType::Cw721Expiration => None,
-        AssetType::Cw721FixedPrice => None,
         AssetType::Cw721NonTransferable => None,
         AssetType::Cw2981Royalties => None,
     }
@@ -95,7 +92,6 @@ fn get_testnet_code_id(asset_type: AssetType) -> u64 {
         AssetType::Cw721Base => 522,
         AssetType::Cw721MetadataOnchain => 525,
         AssetType::Cw721Expiration => 523,
-        AssetType::Cw721FixedPrice => 524,
         AssetType::Cw721NonTransferable => 526,
         AssetType::Cw2981Royalties => 528,
     }
@@ -109,7 +105,6 @@ fn get_mainnet_code_id(asset_type: AssetType) -> u64 {
         AssetType::Cw721Base => 0,
         AssetType::Cw721MetadataOnchain => 0,
         AssetType::Cw721Expiration => 0,
-        AssetType::Cw721FixedPrice => 0,
         AssetType::Cw721NonTransferable => 0,
         AssetType::Cw2981Royalties => 0,
     }
@@ -125,9 +120,6 @@ fn get_description(asset_type: AssetType) -> String {
             "NFT contract with on-chain metadata storage".to_string()
         }
         AssetType::Cw721Expiration => "NFT contract with time-based token expiration".to_string(),
-        AssetType::Cw721FixedPrice => {
-            "Fixed-price NFT sale contract (requires CW20 token)".to_string()
-        }
         AssetType::Cw721NonTransferable => "Non-transferable (soulbound) NFT contract".to_string(),
         AssetType::Cw2981Royalties => {
             "NFT contract with CW2981 royalty standard support".to_string()
@@ -198,7 +190,6 @@ mod tests {
         assert_eq!(get_testnet_code_id(AssetType::Cw721Base), 522);
         assert_eq!(get_testnet_code_id(AssetType::Cw721MetadataOnchain), 525);
         assert_eq!(get_testnet_code_id(AssetType::Cw721Expiration), 523);
-        assert_eq!(get_testnet_code_id(AssetType::Cw721FixedPrice), 524);
         assert_eq!(get_testnet_code_id(AssetType::Cw721NonTransferable), 526);
         assert_eq!(get_testnet_code_id(AssetType::Cw2981Royalties), 528);
     }
@@ -214,7 +205,7 @@ mod tests {
     fn test_get_asset_types_info() {
         let info = get_asset_types_info();
 
-        assert_eq!(info.len(), 6);
+        assert_eq!(info.len(), 5);
 
         // Check first entry (cw721-base)
         let base_info = &info[0];

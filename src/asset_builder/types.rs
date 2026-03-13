@@ -9,7 +9,6 @@
 //! | cw721-base | 522 | Standard NFT |
 //! | cw721-metadata-onchain | 525 | On-chain metadata |
 //! | cw721-expiration | 523 | Time-based expiry |
-//! | cw721-fixed-price | 524 | Requires CW20 (deferred) |
 //! | cw721-non-transferable | 526 | Soulbound NFT |
 //! | cw2981-royalties | 528 | Royalties at mint time |
 
@@ -26,8 +25,6 @@ pub enum AssetType {
     Cw721MetadataOnchain,
     /// NFT with time-based expiration
     Cw721Expiration,
-    /// Fixed-price NFT (requires CW20 token)
-    Cw721FixedPrice,
     /// Non-transferable (soulbound) NFT
     Cw721NonTransferable,
     /// NFT with CW2981 royalties
@@ -41,7 +38,6 @@ impl AssetType {
             AssetType::Cw721Base => "cw721-base",
             AssetType::Cw721MetadataOnchain => "cw721-metadata-onchain",
             AssetType::Cw721Expiration => "cw721-expiration",
-            AssetType::Cw721FixedPrice => "cw721-fixed-price",
             AssetType::Cw721NonTransferable => "cw721-non-transferable",
             AssetType::Cw2981Royalties => "cw2981-royalties",
         }
@@ -53,7 +49,6 @@ impl AssetType {
             AssetType::Cw721Base => "Standard NFT (CW721-Base)",
             AssetType::Cw721MetadataOnchain => "NFT with On-Chain Metadata",
             AssetType::Cw721Expiration => "NFT with Expiration",
-            AssetType::Cw721FixedPrice => "Fixed-Price NFT",
             AssetType::Cw721NonTransferable => "Soulbound NFT",
             AssetType::Cw2981Royalties => "NFT with Royalties",
         }
@@ -65,7 +60,6 @@ impl AssetType {
             "cw721-base" => Some(AssetType::Cw721Base),
             "cw721-metadata-onchain" => Some(AssetType::Cw721MetadataOnchain),
             "cw721-expiration" => Some(AssetType::Cw721Expiration),
-            "cw721-fixed-price" => Some(AssetType::Cw721FixedPrice),
             "cw721-non-transferable" => Some(AssetType::Cw721NonTransferable),
             "cw2981-royalties" => Some(AssetType::Cw2981Royalties),
             _ => None,
@@ -78,7 +72,6 @@ impl AssetType {
             AssetType::Cw721Base,
             AssetType::Cw721MetadataOnchain,
             AssetType::Cw721Expiration,
-            AssetType::Cw721FixedPrice,
             AssetType::Cw721NonTransferable,
             AssetType::Cw2981Royalties,
         ]
@@ -311,6 +304,116 @@ pub struct QueryResult {
     pub response: serde_json::Value,
 }
 
+// ============================================================================
+// Address Prediction Types
+// ============================================================================
+
+/// Input for predicting contract address
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PredictAddressInput {
+    /// Asset type to create
+    #[serde(rename = "type")]
+    pub asset_type: AssetType,
+    /// Collection name
+    pub name: String,
+    /// Collection symbol
+    pub symbol: String,
+    /// Optional minter address (defaults to sender)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub minter: Option<String>,
+    /// Optional custom code ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code_id: Option<u64>,
+    /// Salt for predictable address (required for prediction)
+    pub salt: String,
+}
+
+/// Result of address prediction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PredictAddressResult {
+    /// Success status
+    pub success: bool,
+    /// Predicted contract address
+    pub contract_address: String,
+    /// Code ID used
+    pub code_id: u64,
+    /// Salt used (hex-encoded)
+    pub salt: String,
+    /// Creator address (sender)
+    pub creator: String,
+}
+
+// ============================================================================
+// Batch Minting Types
+// ============================================================================
+
+/// Single token in a batch mint operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchMintToken {
+    /// Token ID
+    pub token_id: String,
+    /// Owner address
+    pub owner: String,
+    /// Optional token URI
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_uri: Option<String>,
+    /// Extension data
+    #[serde(default)]
+    pub extension: serde_json::Value,
+    /// Royalty address (CW2981 only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub royalty_address: Option<String>,
+    /// Royalty percentage (CW2981 only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub royalty_percentage: Option<f64>,
+    /// Expiration timestamp (cw721-expiration only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<String>,
+}
+
+/// Input for batch minting tokens
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchMintInput {
+    /// Contract address
+    pub contract: String,
+    /// Asset type (determines mint message format)
+    #[serde(rename = "type")]
+    pub asset_type: AssetType,
+    /// Tokens to mint
+    pub tokens: Vec<BatchMintToken>,
+}
+
+/// Result of a single token mint in batch
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchMintTokenResult {
+    /// Token ID
+    pub token_id: String,
+    /// Success status
+    pub success: bool,
+    /// Error message (if failed)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Result of batch minting
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchMintResult {
+    /// Success status (true if all succeeded)
+    pub success: bool,
+    /// Contract address
+    pub contract_address: String,
+    /// Transaction hash
+    pub tx_hash: String,
+    /// Total tokens attempted
+    pub total: usize,
+    /// Successful mints
+    pub succeeded: usize,
+    /// Failed mints
+    pub failed: usize,
+    /// Per-token results
+    pub results: Vec<BatchMintTokenResult>,
+}
+
 /// Asset type information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetTypeInfo {
@@ -347,10 +450,6 @@ pub enum AssetBuilderError {
     #[error("Missing required field: {0}")]
     MissingRequiredField(String),
 
-    /// CW20 token required for fixed-price
-    #[error("CW20 token address required for fixed-price NFT")]
-    Cw20Required,
-
     /// Invalid royalty percentage
     #[error("Invalid royalty percentage: {0}. Must be between 0.0 and 1.0")]
     InvalidRoyaltyPercentage(f64),
@@ -382,6 +481,10 @@ pub enum AssetBuilderError {
     /// API error
     #[error("API error: {0}")]
     ApiError(String),
+
+    /// Batch minting error
+    #[error("Batch minting failed: {0}")]
+    BatchMintError(String),
 }
 
 // ============================================================================
@@ -497,7 +600,7 @@ mod tests {
     #[test]
     fn test_asset_type_all() {
         let all = AssetType::all();
-        assert_eq!(all.len(), 6);
+        assert_eq!(all.len(), 5);
         assert!(all.contains(&AssetType::Cw721Base));
         assert!(all.contains(&AssetType::Cw2981Royalties));
     }
@@ -699,5 +802,221 @@ mod tests {
         assert_eq!(input.asset_type, Some(AssetType::Cw2981Royalties));
         assert_eq!(input.royalty_address, Some("xion1artist".to_string()));
         assert_eq!(input.royalty_percentage, Some(0.05));
+    }
+
+    // ========================================================================
+    // Address Prediction Tests
+    // ========================================================================
+
+    #[test]
+    fn test_predict_address_input_serialization() {
+        let input = PredictAddressInput {
+            asset_type: AssetType::Cw721Base,
+            name: "My Collection".to_string(),
+            symbol: "NFT".to_string(),
+            minter: Some("xion1abc123".to_string()),
+            code_id: Some(522),
+            salt: "6162636465666768696a6b6c6d6e6f707172737475767778797a303132333435".to_string(),
+        };
+
+        let json = serde_json::to_string(&input).unwrap();
+        assert!(json.contains("\"type\":\"cw721-base\""));
+        assert!(json.contains("\"name\":\"My Collection\""));
+        assert!(json.contains("\"symbol\":\"NFT\""));
+        assert!(json.contains("\"salt\":\"616263"));
+    }
+
+    #[test]
+    fn test_predict_address_result_serialization() {
+        let result = PredictAddressResult {
+            success: true,
+            contract_address: "xion1predicted".to_string(),
+            code_id: 522,
+            salt: "616263".to_string(),
+            creator: "xion1creator".to_string(),
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+        assert!(json.contains("\"success\":true"));
+        assert!(json.contains("\"contract_address\":\"xion1predicted\""));
+        assert!(json.contains("\"code_id\":522"));
+    }
+
+    // ========================================================================
+    // Batch Minting Tests
+    // ========================================================================
+
+    #[test]
+    fn test_batch_mint_token_serialization() {
+        let token = BatchMintToken {
+            token_id: "1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: Some("ipfs://hash".to_string()),
+            extension: serde_json::json!({"name": "NFT #1"}),
+            royalty_address: None,
+            royalty_percentage: None,
+            expires_at: None,
+        };
+
+        let json = serde_json::to_string(&token).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["token_id"], "1");
+        assert_eq!(parsed["owner"], "xion1owner");
+        assert_eq!(parsed["token_uri"], "ipfs://hash");
+    }
+
+    #[test]
+    fn test_batch_mint_token_with_royalty() {
+        let token = BatchMintToken {
+            token_id: "royalty-1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: None,
+            extension: serde_json::json!({}),
+            royalty_address: Some("xion1artist".to_string()),
+            royalty_percentage: Some(0.05),
+            expires_at: None,
+        };
+
+        let json = serde_json::to_string(&token).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["royalty_address"], "xion1artist");
+        assert_eq!(parsed["royalty_percentage"], 0.05);
+    }
+
+    #[test]
+    fn test_batch_mint_token_with_expiration() {
+        let token = BatchMintToken {
+            token_id: "exp-1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: None,
+            extension: serde_json::json!({}),
+            royalty_address: None,
+            royalty_percentage: None,
+            expires_at: Some("2025-12-31T23:59:59Z".to_string()),
+        };
+
+        let json = serde_json::to_string(&token).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["expires_at"], "2025-12-31T23:59:59Z");
+    }
+
+    #[test]
+    fn test_batch_mint_input_serialization() {
+        let input = BatchMintInput {
+            contract: "xion1contract".to_string(),
+            asset_type: AssetType::Cw721Base,
+            tokens: vec![
+                BatchMintToken {
+                    token_id: "1".to_string(),
+                    owner: "xion1owner1".to_string(),
+                    token_uri: Some("ipfs://hash1".to_string()),
+                    extension: serde_json::json!({}),
+                    royalty_address: None,
+                    royalty_percentage: None,
+                    expires_at: None,
+                },
+                BatchMintToken {
+                    token_id: "2".to_string(),
+                    owner: "xion1owner2".to_string(),
+                    token_uri: Some("ipfs://hash2".to_string()),
+                    extension: serde_json::json!({}),
+                    royalty_address: None,
+                    royalty_percentage: None,
+                    expires_at: None,
+                },
+            ],
+        };
+
+        let json = serde_json::to_string(&input).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["contract"], "xion1contract");
+        assert_eq!(parsed["type"], "cw721-base");
+        assert_eq!(parsed["tokens"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_batch_mint_result_serialization() {
+        let result = BatchMintResult {
+            success: true,
+            contract_address: "xion1contract".to_string(),
+            tx_hash: "ABC123".to_string(),
+            total: 2,
+            succeeded: 2,
+            failed: 0,
+            results: vec![
+                BatchMintTokenResult {
+                    token_id: "1".to_string(),
+                    success: true,
+                    error: None,
+                },
+                BatchMintTokenResult {
+                    token_id: "2".to_string(),
+                    success: true,
+                    error: None,
+                },
+            ],
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["success"], true);
+        assert_eq!(parsed["total"], 2);
+        assert_eq!(parsed["succeeded"], 2);
+        assert_eq!(parsed["failed"], 0);
+    }
+
+    #[test]
+    fn test_batch_mint_result_with_failures() {
+        let result = BatchMintResult {
+            success: false,
+            contract_address: "xion1contract".to_string(),
+            tx_hash: "ABC123".to_string(),
+            total: 2,
+            succeeded: 1,
+            failed: 1,
+            results: vec![
+                BatchMintTokenResult {
+                    token_id: "1".to_string(),
+                    success: true,
+                    error: None,
+                },
+                BatchMintTokenResult {
+                    token_id: "2".to_string(),
+                    success: false,
+                    error: Some("Duplicate token ID".to_string()),
+                },
+            ],
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["success"], false);
+        assert_eq!(parsed["failed"], 1);
+        assert_eq!(parsed["results"][1]["error"], "Duplicate token ID");
+    }
+
+    // ========================================================================
+    // Asset Type Cleanup Tests
+    // ========================================================================
+
+    #[test]
+    fn test_asset_type_fixed_price_removed() {
+        // Verify that cw721-fixed-price is no longer a valid type
+        assert_eq!(AssetType::parse("cw721-fixed-price"), None);
+
+        // Verify all() only returns 5 types
+        let all = AssetType::all();
+        assert_eq!(all.len(), 5);
+
+        // Verify none of them is FixedPrice
+        for t in all {
+            assert_ne!(t.as_str(), "cw721-fixed-price");
+        }
     }
 }

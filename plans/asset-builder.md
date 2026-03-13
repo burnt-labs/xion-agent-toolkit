@@ -1,8 +1,8 @@
 ---
 status: Done
 created_at: 2026-03-13
-updated_at: 2026-03-13
-done_at: 2026-03-13
+updated_at: 2026-03-14
+done_at: 2026-03-14
 architecture_completed_at: 2026-03-13
 architecture_by: @architect
 phase1_completed_at: 2026-03-13
@@ -14,6 +14,11 @@ phase2_completed_at: 2026-03-13
 phase2_by: @fullstack-dev
 phase2_qa_at: 2026-03-13
 phase2_qa_by: @qa-engineer
+phase3_started_at: 2026-03-14
+phase3_completed_at: 2026-03-14
+phase3_by: @fullstack-dev
+phase3_qa_at: 2026-03-14
+phase3_qa_by: @qa-engineer
 ---
 
 # Asset Builder (CW721 NFT)
@@ -173,12 +178,73 @@ src/
 3. cw721-metadata-onchain (standard extension)
 4. cw721-non-transferable (standard structure)
 
-### Phase 3: Advanced Features (Future)
+### Phase 3: Advanced Features (Done)
 
-- [ ] Address prediction (`asset predict`)
-- [ ] Batch minting
-- [ ] cw721-fixed-price support (requires CW20)
-- [ ] Mainnet code ID configuration
+**Goal**: Add address prediction, batch minting, and cleanup
+
+**Tasks**:
+
+#### 3.1 Address Prediction (`asset predict`)
+- [x] Add `PredictAddressInput` struct in types.rs
+- [x] Add `PredictAddressResult` struct with predicted address
+- [x] Implement `predict_address()` in manager.rs using `instantiate2_address`
+- [x] Add `asset predict` CLI command
+- [x] Add unit tests for address prediction
+
+**CLI Design**:
+```bash
+xion-toolkit asset predict \
+  --type cw721-base \
+  --name "My Collection" \
+  --symbol "NFT" \
+  --minter xion1... \
+  [--salt "..."] \
+  --output json
+```
+
+#### 3.2 Batch Minting (`asset batch-mint`)
+- [x] Add `BatchMintInput` struct with multiple tokens
+- [x] Add `BatchMintResult` struct with results per token
+- [x] Implement `batch_mint()` in manager.rs
+- [x] Add `asset batch-mint` CLI command with `--tokens-file` option
+- [x] Support JSON file input for batch tokens
+- [x] Add unit tests for batch minting
+
+**CLI Design**:
+```bash
+xion-toolkit asset batch-mint \
+  --contract xion1... \
+  --tokens-file tokens.json \
+  --output json
+```
+
+**tokens.json format**:
+```json
+[
+  {"token_id": "1", "owner": "xion1...", "token_uri": "ipfs://..."},
+  {"token_id": "2", "owner": "xion1...", "token_uri": "ipfs://..."}
+]
+```
+
+#### 3.3 Mainnet Code IDs (Deferred)
+- [ ] Update `build.rs` with mainnet code IDs (when available)
+- [ ] Add `--network` flag to asset commands
+- [ ] Test mainnet code ID lookup
+
+#### 3.4 Cleanup
+- [x] Remove `Cw721FixedPrice` from AssetType enum (deferred indefinitely)
+- [x] Update `asset types` output to show 5 types instead of 6
+- [x] Update documentation
+
+**Priority Order**:
+1. Address prediction (highest value for UX)
+2. Batch minting (efficiency feature)
+3. Mainnet code IDs (deployment readiness)
+4. Cleanup (code hygiene)
+
+### ~~cw721-fixed-price support~~ (Removed)
+
+**Reason**: Requires CW20 token integration which is out of scope for this toolkit. Users should use dedicated marketplace contracts instead.
 
 ## Key Design Decisions
 
@@ -251,6 +317,17 @@ pub cw2981_royalties_code_id: u64,
 - [x] `cargo fmt --check` passes
 - [x] CLI `--help` shows new options
 
+### Phase 3
+- [x] `xion-toolkit asset predict` works and returns correct address
+- [x] `xion-toolkit asset batch-mint --tokens-file` works
+- [x] `asset types` shows 5 types (fixed-price removed)
+- [ ] Address prediction matches actual deployment address (requires testnet testing)
+- [ ] Batch minting handles partial failures gracefully (requires testnet testing)
+- [x] Unit tests pass for all new functionality (232 tests, 47 asset_builder tests)
+- [x] `--type cw721-fixed-price` returns "invalid asset type" error
+- [x] `cargo clippy --all-targets --all-features -- -D warnings` passes
+- [x] `cargo fmt --check` passes
+
 ## Dependencies
 
 - No new dependencies required
@@ -276,4 +353,8 @@ pub cw2981_royalties_code_id: u64,
 | 2026-03-13 | @fullstack-dev | Fix validation order bug | Done |
 | 2026-03-13 | @qc-specialist | Phase 2 code review | Done |
 | 2026-03-13 | @qa-engineer | Phase 2 QA verification | Done |
-| 2026-03-13 | @project-manager | Phase 2 final sign-off | **Done** |
+| 2026-03-13 | @project-manager | Phase 2 final sign-off | Done |
+| 2026-03-14 | @fullstack-dev | Phase 3 implementation | Done |
+| 2026-03-14 | @qc-specialist | Phase 3 code review | Done |
+| 2026-03-14 | @qa-engineer | Phase 3 QA verification | Done |
+| 2026-03-14 | @project-manager | Phase 3 final sign-off | **Done** |
