@@ -48,15 +48,15 @@
       "id": "asset-builder",
       "title": "Asset Builder (CW721)",
       "file": "plans/asset-builder.md",
-      "status": "Todo",
-      "progress": 0,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@fullstack-dev"],
+      "agents": ["@architect", "@fullstack-dev", "@qa-engineer"],
       "tags": ["feature", "nft", "p4"],
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",
-      "done_at": null,
-      "notes": "CW721 NFT contract deployment and minting support"
+      "done_at": "2026-03-13",
+      "notes": "COMPLETED: Phase 1 QA verified - CLI help accurate, asset types command working (6 types), error handling correct, 22 unit tests passing. Testnet integration deferred to user (requires authentication)."
     }
   ],
   "_notes": {

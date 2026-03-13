@@ -5,6 +5,7 @@
 
 pub mod account;
 pub mod api;
+pub mod asset_builder;
 pub mod batch;
 pub mod cli;
 pub mod config;

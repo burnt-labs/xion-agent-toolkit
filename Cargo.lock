@@ -3776,6 +3776,7 @@ dependencies = [
  "anyhow",
  "axum",
  "base64 0.22.1",
+ "bech32",
  "chrono",
  "clap",
  "cosmwasm-std",

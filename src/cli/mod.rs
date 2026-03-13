@@ -1,4 +1,5 @@
 pub mod account;
+pub mod asset;
 pub mod auth;
 pub mod batch;
 pub mod config;
@@ -55,6 +56,10 @@ pub enum Commands {
     #[command(subcommand)]
     Batch(batch::BatchCommands),
 
+    /// Asset (NFT) management commands
+    #[command(subcommand)]
+    Asset(asset::AssetCommands),
+
     /// Show current status (network, auth, etc.)
     Status,
 }
@@ -81,6 +86,10 @@ pub async fn handle_account_command(cmd: account::AccountCommands) -> Result<()>
 
 pub async fn handle_batch_command(cmd: batch::BatchCommands) -> Result<()> {
     batch::handle_command(cmd).await
+}
+
+pub async fn handle_asset_command(cmd: asset::AssetCommands) -> Result<()> {
+    asset::handle_command(cmd).await
 }
 
 pub fn handle_status_command() -> Result<()> {

@@ -70,6 +70,9 @@ treasury = { git = "https://github.com/burnt-labs/contracts", branch = "main", f
 # Regex for parsing
 regex = "1.10"
 
+# Bech32 encoding for address conversion
+bech32 = "0.11"
+
 # Date/time
 chrono = { version = "0.4", features = ["serde"] }
 

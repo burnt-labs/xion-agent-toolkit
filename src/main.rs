@@ -1,5 +1,6 @@
 mod account;
 mod api;
+mod asset_builder;
 mod batch;
 mod cli;
 mod config;
@@ -35,6 +36,7 @@ async fn main() -> Result<()> {
         Commands::Status => cli::handle_status_command()?,
         Commands::Account(account_cmd) => cli::handle_account_command(account_cmd).await?,
         Commands::Batch(batch_cmd) => cli::handle_batch_command(batch_cmd).await?,
+        Commands::Asset(asset_cmd) => cli::handle_asset_command(asset_cmd).await?,
     }
 
     Ok(())

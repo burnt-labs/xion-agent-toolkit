@@ -34,6 +34,12 @@ fn create_test_config(server_url: &str) -> NetworkConfig {
         treasury_code_id: 1,
         callback_port: 54321,
         indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+        cw721_base_code_id: 522,
+        cw721_metadata_onchain_code_id: 525,
+        cw721_expiration_code_id: 523,
+        cw721_fixed_price_code_id: 524,
+        cw721_non_transferable_code_id: 526,
+        cw2981_royalties_code_id: 528,
     }
 }
 

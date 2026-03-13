@@ -24,17 +24,22 @@ use crate::oauth::{CallbackServer, PKCEChallenge, TokenManager};
 ///
 /// # #[tokio::main]
 /// # async fn main() -> anyhow::Result<()> {
-/// let config = NetworkConfig {
-///     network_name: "testnet".to_string(),
-///     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
-///     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
-///     chain_id: "xion-testnet-2".to_string(),
-///     oauth_client_id: "your-client-id".to_string(),
-///     treasury_code_id: 1260,
-///     callback_port: 54321,
-///     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-/// };
-///
+/// # let config = NetworkConfig {
+/// #     network_name: "testnet".to_string(),
+/// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+/// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+/// #     chain_id: "xion-testnet-2".to_string(),
+/// #     oauth_client_id: "your-client-id".to_string(),
+/// #     treasury_code_id: 1260,
+/// #     callback_port: 54321,
+/// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+/// #     cw721_base_code_id: 522,
+/// #     cw721_metadata_onchain_code_id: 525,
+/// #     cw721_expiration_code_id: 523,
+/// #     cw721_fixed_price_code_id: 524,
+/// #     cw721_non_transferable_code_id: 526,
+/// #     cw2981_royalties_code_id: 528,
+/// # };
 /// let client = OAuthClient::new(config)?;
 ///
 /// // Login
@@ -77,16 +82,22 @@ impl OAuthClient {
     /// use xion_agent_toolkit::config::NetworkConfig;
     /// use xion_agent_toolkit::oauth::OAuthClient;
     ///
-    /// let config = NetworkConfig {
-    ///     network_name: "testnet".to_string(),
-    ///     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
-    ///     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
-    ///     chain_id: "xion-testnet-2".to_string(),
-    ///     oauth_client_id: "client-id".to_string(),
-    ///     treasury_code_id: 1260,
-    ///     callback_port: 54321,
-    ///     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    /// };
+    /// # let config = NetworkConfig {
+    /// #     network_name: "testnet".to_string(),
+    /// #     oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+    /// #     rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// #     chain_id: "xion-testnet-2".to_string(),
+    /// #     oauth_client_id: "client-id".to_string(),
+    /// #     treasury_code_id: 1260,
+    /// #     callback_port: 54321,
+    /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
+    /// # };
     ///
     /// let client = OAuthClient::new(config)?;
     /// # Ok::<(), anyhow::Error>(())
@@ -188,6 +199,12 @@ impl OAuthClient {
     /// #     treasury_code_id: 1260,
     /// #     callback_port: 54321,
     /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
     /// let credentials = client.login().await?;
@@ -333,6 +350,12 @@ impl OAuthClient {
     /// #     treasury_code_id: 1260,
     /// #     callback_port: 54321,
     /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
     /// client.logout()?;
@@ -374,6 +397,12 @@ impl OAuthClient {
     /// #     treasury_code_id: 1260,
     /// #     callback_port: 54321,
     /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
     /// if client.is_authenticated()? {
@@ -416,6 +445,12 @@ impl OAuthClient {
     /// #     treasury_code_id: 1260,
     /// #     callback_port: 54321,
     /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
     /// if let Some(creds) = client.get_credentials()? {
@@ -461,6 +496,12 @@ impl OAuthClient {
     /// #     treasury_code_id: 1260,
     /// #     callback_port: 54321,
     /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
     /// let token = client.get_valid_token().await?;
@@ -505,6 +546,12 @@ impl OAuthClient {
     /// #     treasury_code_id: 1260,
     /// #     callback_port: 54321,
     /// #     indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    /// #     cw721_base_code_id: 522,
+    /// #     cw721_metadata_onchain_code_id: 525,
+    /// #     cw721_expiration_code_id: 523,
+    /// #     cw721_fixed_price_code_id: 524,
+    /// #     cw721_non_transferable_code_id: 526,
+    /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
     /// let new_creds = client.refresh_token().await?;
@@ -586,6 +633,12 @@ mod tests {
             treasury_code_id: 1260,
             callback_port: 54321,
             indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+            cw721_base_code_id: 522,
+            cw721_metadata_onchain_code_id: 525,
+            cw721_expiration_code_id: 523,
+            cw721_fixed_price_code_id: 524,
+            cw721_non_transferable_code_id: 526,
+            cw2981_royalties_code_id: 528,
         }
     }
 
