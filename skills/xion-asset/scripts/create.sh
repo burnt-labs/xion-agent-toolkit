@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+# Asset Create - Create NFT collection
+# Usage: create.sh --type <TYPE> --name <NAME> --symbol <SYMBOL> [options]
+
+# Parse arguments
+TYPE=""
+NAME=""
+SYMBOL=""
+MINTER=""
+SALT=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --type) TYPE="$2"; shift 2 ;;
+        --name) NAME="$2"; shift 2 ;;
+        --symbol) SYMBOL="$2"; shift 2 ;;
+        --minter) MINTER="$2"; shift 2 ;;
+        --salt) SALT="$2"; shift 2 ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
+
+# Validate required args
+if [[ -z "$TYPE" ]] || [[ -z "$NAME" ]] || [[ -z "$SYMBOL" ]]; then
+    echo '{"success": false, "error": "Missing required args: --type, --name, --symbol", "error_code": "MISSING_ARGS"}' >&2
+    exit 1
+fi
+
+# Build command
+CMD="xion-toolkit asset create --type $TYPE --name \"$NAME\" --symbol \"$SYMBOL\" --output json"
+
+if [[ -n "$MINTER" ]]; then
+    CMD="$CMD --minter $MINTER"
+fi
+
+if [[ -n "$SALT" ]]; then
+    CMD="$CMD --salt \"$SALT\""
+fi
+
+eval $CMD
