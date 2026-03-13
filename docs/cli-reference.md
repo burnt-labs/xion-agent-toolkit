@@ -849,7 +849,34 @@ xion-toolkit treasury grant-config add <ADDRESS> [options]
 - `--max-funds <AMOUNT>` - Maximum funds per contract (can be repeated)
 - `--filter-type <TYPE>` - Filter type: allow-all, accepted-keys
 - `--keys <KEYS>` - Comma-separated list of accepted message keys
-- `--preset <TYPE>` - Preset: send, execute, instantiate, delegate, vote
+- `--preset <TYPE>` - Preset shortcut (see Available Presets below)
+
+**Available Presets:**
+
+| Preset | Type URL | Auth Type |
+|--------|----------|-----------|
+| `send` | /cosmos.bank.v1beta1.MsgSend | send |
+| `execute` | /cosmwasm.wasm.v1.MsgExecuteContract | contract-execution |
+| `instantiate` | /cosmwasm.wasm.v1.MsgInstantiateContract | generic |
+| `instantiate2` | /cosmwasm.wasm.v1.MsgInstantiateContract2 | generic |
+| `delegate` | /cosmos.staking.v1beta1.MsgDelegate | generic |
+| `undelegate` | /cosmos.staking.v1beta1.MsgUndelegate | generic |
+| `redelegate` | /cosmos.staking.v1beta1.MsgBeginRedelegate | generic |
+| `withdraw-rewards` | /cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward | generic |
+| `vote` | /cosmos.gov.v1beta1.MsgVote | generic |
+| `gov-deposit` | /cosmos.gov.v1beta1.MsgDeposit | generic |
+| `gov-submit-proposal` | /cosmos.gov.v1beta1.MsgSubmitProposal | generic |
+| `ibc-transfer` | /ibc.applications.transfer.v1.MsgTransfer | ibc_transfer |
+| `authz-exec` | /cosmos.authz.v1beta1.MsgExec | generic |
+| `authz-revoke` | /cosmos.authz.v1beta1.MsgRevoke | generic |
+| `feegrant-grant` | /cosmos.feegrant.v1beta1.MsgGrantAllowance | generic |
+| `feegrant-revoke` | /cosmos.feegrant.v1beta1.MsgRevokeAllowance | generic |
+| `unjail` | /cosmos.slashing.v1beta1.MsgUnjail | generic |
+| `crisis-verify` | /cosmos.crisis.v1beta1.MsgVerifyInvariant | generic |
+| `evidence-submit` | /cosmos.evidence.v1beta1.MsgSubmitEvidence | generic |
+| `vesting-create` | /cosmos.vesting.v1beta1.MsgCreateVestingAccount | generic |
+| `tokenfactory-mint` | /osmosis.tokenfactory.v1beta1.MsgMint | generic |
+| `tokenfactory-burn` | /osmosis.tokenfactory.v1beta1.MsgBurn | generic |
 
 **Examples:**
 

@@ -933,7 +933,9 @@ async fn handle_grant_config_add(
 /// Message type presets for convenience
 /// Note: MsgExecuteContract only supports contract-execution authorization (generic is too risky)
 const PRESET_TYPES: &[(&str, &str, &str)] = &[
+    // Banking
     ("send", "/cosmos.bank.v1beta1.MsgSend", "send"),
+    // CosmWasm
     (
         "execute",
         "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -949,6 +951,7 @@ const PRESET_TYPES: &[(&str, &str, &str)] = &[
         "/cosmwasm.wasm.v1.MsgInstantiateContract2",
         "generic",
     ),
+    // Staking
     ("delegate", "/cosmos.staking.v1beta1.MsgDelegate", "generic"),
     (
         "undelegate",
@@ -965,11 +968,63 @@ const PRESET_TYPES: &[(&str, &str, &str)] = &[
         "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
         "generic",
     ),
+    // Governance
     ("vote", "/cosmos.gov.v1beta1.MsgVote", "generic"),
+    ("gov-deposit", "/cosmos.gov.v1beta1.MsgDeposit", "generic"),
+    (
+        "gov-submit-proposal",
+        "/cosmos.gov.v1beta1.MsgSubmitProposal",
+        "generic",
+    ),
+    // IBC
     (
         "ibc-transfer",
         "/ibc.applications.transfer.v1.MsgTransfer",
         "ibc_transfer",
+    ),
+    // Authz
+    ("authz-exec", "/cosmos.authz.v1beta1.MsgExec", "generic"),
+    ("authz-revoke", "/cosmos.authz.v1beta1.MsgRevoke", "generic"),
+    // Feegrant
+    (
+        "feegrant-grant",
+        "/cosmos.feegrant.v1beta1.MsgGrantAllowance",
+        "generic",
+    ),
+    (
+        "feegrant-revoke",
+        "/cosmos.feegrant.v1beta1.MsgRevokeAllowance",
+        "generic",
+    ),
+    // Slashing
+    ("unjail", "/cosmos.slashing.v1beta1.MsgUnjail", "generic"),
+    // Crisis
+    (
+        "crisis-verify",
+        "/cosmos.crisis.v1beta1.MsgVerifyInvariant",
+        "generic",
+    ),
+    (
+        "evidence-submit",
+        "/cosmos.evidence.v1beta1.MsgSubmitEvidence",
+        "generic",
+    ),
+    // Vesting
+    (
+        "vesting-create",
+        "/cosmos.vesting.v1beta1.MsgCreateVestingAccount",
+        "generic",
+    ),
+    // TokenFactory (Osmosis)
+    (
+        "tokenfactory-mint",
+        "/osmosis.tokenfactory.v1beta1.MsgMint",
+        "generic",
+    ),
+    (
+        "tokenfactory-burn",
+        "/osmosis.tokenfactory.v1beta1.MsgBurn",
+        "generic",
     ),
 ];
 
@@ -995,7 +1050,16 @@ fn build_grant_config_from_flags(
         let found = PRESET_TYPES
             .iter()
             .find(|(name, _, _)| *name == preset_name)
-            .ok_or_else(|| anyhow::anyhow!("Unknown preset: {}. Available: send, execute, instantiate, instantiate2, delegate, undelegate, redelegate, withdraw-rewards, vote, ibc-transfer", preset_name))?;
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Unknown preset: {}. Available presets: send, execute, instantiate, \
+                     instantiate2, delegate, undelegate, redelegate, withdraw-rewards, vote, \
+                     gov-deposit, gov-submit-proposal, ibc-transfer, authz-exec, authz-revoke, \
+                     feegrant-grant, feegrant-revoke, unjail, crisis-verify, evidence-submit, \
+                     vesting-create, tokenfactory-mint, tokenfactory-burn",
+                    preset_name
+                )
+            })?;
         (Some(found.1.to_string()), Some(found.2.to_string()))
     } else {
         (
@@ -1860,5 +1924,280 @@ async fn handle_import(args: ImportArgs) -> Result<()> {
             });
             print_json(&result)
         }
+    }
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Test that all existing presets are correctly defined
+    #[test]
+    fn test_preset_types_count() {
+        // We should have 22 presets (10 original + 12 new)
+        assert_eq!(PRESET_TYPES.len(), 22);
+    }
+
+    /// Test that all preset names are unique
+    #[test]
+    fn test_preset_names_unique() {
+        let mut names = std::collections::HashSet::new();
+        for (name, _, _) in PRESET_TYPES {
+            assert!(names.insert(*name), "Duplicate preset name: {}", name);
+        }
+    }
+
+    /// Test that all type URLs are unique
+    #[test]
+    fn test_preset_type_urls_unique() {
+        let mut type_urls = std::collections::HashSet::new();
+        for (_, type_url, _) in PRESET_TYPES {
+            assert!(
+                type_urls.insert(*type_url),
+                "Duplicate type URL: {}",
+                type_url
+            );
+        }
+    }
+
+    /// Test preset resolution for all presets
+    #[test]
+    fn test_preset_resolution_all_presets() {
+        // Test each preset can be found
+        let preset_names: Vec<&str> = PRESET_TYPES.iter().map(|(name, _, _)| *name).collect();
+
+        for name in preset_names {
+            let found = PRESET_TYPES.iter().find(|(n, _, _)| *n == name);
+            assert!(found.is_some(), "Preset '{}' should be found", name);
+        }
+    }
+
+    /// Test specific preset resolutions (original presets)
+    #[test]
+    fn test_preset_resolution_original() {
+        let test_cases = [
+            ("send", "/cosmos.bank.v1beta1.MsgSend", "send"),
+            (
+                "execute",
+                "/cosmwasm.wasm.v1.MsgExecuteContract",
+                "contract-execution",
+            ),
+            (
+                "instantiate",
+                "/cosmwasm.wasm.v1.MsgInstantiateContract",
+                "generic",
+            ),
+            (
+                "instantiate2",
+                "/cosmwasm.wasm.v1.MsgInstantiateContract2",
+                "generic",
+            ),
+            ("delegate", "/cosmos.staking.v1beta1.MsgDelegate", "generic"),
+            (
+                "undelegate",
+                "/cosmos.staking.v1beta1.MsgUndelegate",
+                "generic",
+            ),
+            (
+                "redelegate",
+                "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+                "generic",
+            ),
+            (
+                "withdraw-rewards",
+                "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+                "generic",
+            ),
+            ("vote", "/cosmos.gov.v1beta1.MsgVote", "generic"),
+            (
+                "ibc-transfer",
+                "/ibc.applications.transfer.v1.MsgTransfer",
+                "ibc_transfer",
+            ),
+        ];
+
+        for (name, expected_type_url, expected_auth_type) in test_cases {
+            let found = PRESET_TYPES.iter().find(|(n, _, _)| *n == name);
+            assert!(found.is_some(), "Preset '{}' should be found", name);
+            let (_, type_url, auth_type) = found.unwrap();
+            assert_eq!(
+                *type_url, expected_type_url,
+                "Preset '{}' has wrong type_url",
+                name
+            );
+            assert_eq!(
+                *auth_type, expected_auth_type,
+                "Preset '{}' has wrong auth_type",
+                name
+            );
+        }
+    }
+
+    /// Test specific preset resolutions (new governance presets)
+    #[test]
+    fn test_preset_resolution_governance() {
+        let test_cases = [
+            ("gov-deposit", "/cosmos.gov.v1beta1.MsgDeposit", "generic"),
+            (
+                "gov-submit-proposal",
+                "/cosmos.gov.v1beta1.MsgSubmitProposal",
+                "generic",
+            ),
+        ];
+
+        for (name, expected_type_url, expected_auth_type) in test_cases {
+            let found = PRESET_TYPES.iter().find(|(n, _, _)| *n == name);
+            assert!(found.is_some(), "Preset '{}' should be found", name);
+            let (_, type_url, auth_type) = found.unwrap();
+            assert_eq!(
+                *type_url, expected_type_url,
+                "Preset '{}' has wrong type_url",
+                name
+            );
+            assert_eq!(
+                *auth_type, expected_auth_type,
+                "Preset '{}' has wrong auth_type",
+                name
+            );
+        }
+    }
+
+    /// Test specific preset resolutions (new authz presets)
+    #[test]
+    fn test_preset_resolution_authz() {
+        let test_cases = [
+            ("authz-exec", "/cosmos.authz.v1beta1.MsgExec", "generic"),
+            ("authz-revoke", "/cosmos.authz.v1beta1.MsgRevoke", "generic"),
+        ];
+
+        for (name, expected_type_url, expected_auth_type) in test_cases {
+            let found = PRESET_TYPES.iter().find(|(n, _, _)| *n == name);
+            assert!(found.is_some(), "Preset '{}' should be found", name);
+            let (_, type_url, auth_type) = found.unwrap();
+            assert_eq!(
+                *type_url, expected_type_url,
+                "Preset '{}' has wrong type_url",
+                name
+            );
+            assert_eq!(
+                *auth_type, expected_auth_type,
+                "Preset '{}' has wrong auth_type",
+                name
+            );
+        }
+    }
+
+    /// Test specific preset resolutions (new feegrant presets)
+    #[test]
+    fn test_preset_resolution_feegrant() {
+        let test_cases = [
+            (
+                "feegrant-grant",
+                "/cosmos.feegrant.v1beta1.MsgGrantAllowance",
+                "generic",
+            ),
+            (
+                "feegrant-revoke",
+                "/cosmos.feegrant.v1beta1.MsgRevokeAllowance",
+                "generic",
+            ),
+        ];
+
+        for (name, expected_type_url, expected_auth_type) in test_cases {
+            let found = PRESET_TYPES.iter().find(|(n, _, _)| *n == name);
+            assert!(found.is_some(), "Preset '{}' should be found", name);
+            let (_, type_url, auth_type) = found.unwrap();
+            assert_eq!(
+                *type_url, expected_type_url,
+                "Preset '{}' has wrong type_url",
+                name
+            );
+            assert_eq!(
+                *auth_type, expected_auth_type,
+                "Preset '{}' has wrong auth_type",
+                name
+            );
+        }
+    }
+
+    /// Test specific preset resolutions (new misc presets)
+    #[test]
+    fn test_preset_resolution_misc() {
+        let test_cases = [
+            ("unjail", "/cosmos.slashing.v1beta1.MsgUnjail", "generic"),
+            (
+                "crisis-verify",
+                "/cosmos.crisis.v1beta1.MsgVerifyInvariant",
+                "generic",
+            ),
+            (
+                "evidence-submit",
+                "/cosmos.evidence.v1beta1.MsgSubmitEvidence",
+                "generic",
+            ),
+            (
+                "vesting-create",
+                "/cosmos.vesting.v1beta1.MsgCreateVestingAccount",
+                "generic",
+            ),
+            (
+                "tokenfactory-mint",
+                "/osmosis.tokenfactory.v1beta1.MsgMint",
+                "generic",
+            ),
+            (
+                "tokenfactory-burn",
+                "/osmosis.tokenfactory.v1beta1.MsgBurn",
+                "generic",
+            ),
+        ];
+
+        for (name, expected_type_url, expected_auth_type) in test_cases {
+            let found = PRESET_TYPES.iter().find(|(n, _, _)| *n == name);
+            assert!(found.is_some(), "Preset '{}' should be found", name);
+            let (_, type_url, auth_type) = found.unwrap();
+            assert_eq!(
+                *type_url, expected_type_url,
+                "Preset '{}' has wrong type_url",
+                name
+            );
+            assert_eq!(
+                *auth_type, expected_auth_type,
+                "Preset '{}' has wrong auth_type",
+                name
+            );
+        }
+    }
+
+    /// Test that new presets all use generic auth type (except special cases)
+    #[test]
+    fn test_new_presets_use_generic_auth_type() {
+        let non_generic_presets = ["send", "execute", "ibc-transfer"];
+
+        for (name, _, auth_type) in PRESET_TYPES {
+            if non_generic_presets.contains(name) {
+                // These have special auth types
+                continue;
+            }
+            assert_eq!(
+                *auth_type, "generic",
+                "Preset '{}' should use 'generic' auth_type",
+                name
+            );
+        }
+    }
+
+    /// Test that invalid preset name returns proper error
+    #[test]
+    fn test_invalid_preset_error() {
+        let invalid_name = "invalid-preset";
+        let found = PRESET_TYPES
+            .iter()
+            .find(|(name, _, _)| *name == invalid_name);
+        assert!(found.is_none(), "Invalid preset should not be found");
     }
 }

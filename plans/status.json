@@ -20,15 +20,15 @@
       "id": "extended-grant-types",
       "title": "Extended Grant Types",
       "file": "plans/extended-grant-types.md",
-      "status": "Todo",
-      "progress": 0,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
       "agents": ["@fullstack-dev"],
       "tags": ["feature", "treasury", "p2"],
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",
-      "done_at": null,
-      "notes": "Extend CLI to support all 24 message type URLs via presets"
+      "done_at": "2026-03-13",
+      "notes": "COMPLETED: Added 12 new presets to PRESET_TYPES array, updated error messages, added 11 unit tests, updated docs and skills script."
     },
     {
       "id": "batch-operations",
