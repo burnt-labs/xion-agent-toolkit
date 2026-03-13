@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "treasury_address": "xion1abc123def456ghi789jkl012mno345pqr678stu",
+  "export": {
+    "address": "xion1abc123def456ghi789jkl012mno345pqr678stu",
+    "admin": "xion1admin123def456ghi789jkl012mno345pqr678stu",
+    "params": {
+      "display_url": null,
+      "redirect_url": "https://example.com/callback",
+      "icon_url": "https://example.com/icon.png",
+      "metadata": {
+        "name": "My Treasury",
+        "archived": false
+      }
+    },
+    "fee_config": {
+      "allowance_type_url": "/cosmos.feegrant.v1beta1.BasicAllowance",
+      "description": "Basic fee allowance",
+      "spend_limit": "10000000uxion",
+      "expiration": null,
+      "period": null,
+      "period_spend_limit": null,
+      "can_period_reset": null
+    },
+    "grant_configs": [
+      {
+        "type_url": "/cosmos.bank.v1beta1.MsgSend",
+        "description": "Allow sending funds",
+        "authorization_type_url": "/cosmos.bank.v1beta1.SendAuthorization",
+        "optional": false,
+        "authorization_input": {
+          "auth_type": "send",
+          "spend_limit": "1000000uxion",
+          "allow_list": null
+        }
+      }
+    ],
+    "exported_at": "2024-06-15T12:00:00Z"
+  }
+}

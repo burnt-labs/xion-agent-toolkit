@@ -675,10 +675,12 @@ echo "  xion-toolkit auth login"
 
 ### Documentation
 
-- **CLI Reference**: See `docs/cli-reference.md` for complete command documentation
-- **OAuth2 Flow**: See `docs/oauth-flow.md` for authentication details
-- **Treasury Guide**: See `docs/treasury-guide.md` for Treasury management
-- **Contributing**: See `CONTRIBUTING.md` for development guidelines
+- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference for AI Agents (recommended)
+- **[ERROR-CODES.md](./docs/ERROR-CODES.md)** - Complete error code reference
+- [CLI Reference](./docs/cli-reference.md) - Complete command documentation
+- [Configuration Guide](./docs/configuration.md) - Configuration details
+- [Skills Guide](./docs/skills-guide.md) - Skills usage documentation
+- [Contributing](./CONTRIBUTING.md) - Development guidelines
 
 ### Quick Start Commands
 

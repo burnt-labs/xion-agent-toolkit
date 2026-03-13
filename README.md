@@ -417,12 +417,19 @@ Errors include actionable hints:
 - **Localhost Only** - Callback server only accepts localhost
 - **HTTPS Only** - All external communications encrypted
 
+## Documentation
+
+- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference for AI Agents
+- **[ERROR-CODES.md](./docs/ERROR-CODES.md)** - Complete error code reference
+- [CLI Reference](./docs/cli-reference.md) - Detailed command documentation
+- [Configuration Guide](./docs/configuration.md) - Setup and configuration
+- [Skills Guide](./docs/skills-guide.md) - AI Agent integration
+
 ## Resources
 
 - [Xion Documentation](https://docs.burnt.com/xion)
 - [Developer Portal](https://dev.testnet2.burnt.com)
 - [Agent Skills Format](https://agentskills.io/)
-- [CLI Reference](./docs/cli-reference.md)
 - [Contributing Guide](CONTRIBUTING.md)
 - [xion-skills](https://github.com/burnt-labs/xion-skills) - Advanced chain operations (xiond)
 

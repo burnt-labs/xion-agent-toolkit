@@ -1,0 +1,10 @@
+{
+  "type_url": "/cosmos.bank.v1beta1.MsgSend",
+  "description": "Allow sending funds with spend limit",
+  "authorization": {
+    "auth_type": "send",
+    "spend_limit": "1000000uxion",
+    "allow_list": []
+  },
+  "optional": false
+}

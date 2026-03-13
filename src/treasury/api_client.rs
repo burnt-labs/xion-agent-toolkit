@@ -1764,8 +1764,42 @@ impl TreasuryApiClient {
         debug!("Updating params for treasury: {}", treasury_address);
 
         // Validate that at least one parameter is provided
-        if params.redirect_url.is_none() && params.icon_url.is_none() && params.metadata.is_none() {
-            anyhow::bail!("At least one parameter must be provided for update (redirect_url, icon_url, or metadata)");
+        if params.redirect_url.is_none()
+            && params.icon_url.is_none()
+            && params.name.is_none()
+            && params.is_oauth2_app.is_none()
+            && params.metadata.is_none()
+        {
+            anyhow::bail!("At least one parameter must be provided for update (redirect_url, icon_url, name, is_oauth2_app, or metadata)");
+        }
+
+        // Build metadata by merging provided fields
+        // Priority: explicit name/is_oauth2_app > metadata object values > defaults
+        let mut metadata_obj = match params.metadata.clone() {
+            Some(v) if v.is_object() => v,
+            Some(_) => {
+                anyhow::bail!(
+                    "--metadata must be a JSON object (e.g., '{{\"key\": \"value\"}}'), not a primitive or array"
+                );
+            }
+            None => serde_json::json!({}),
+        };
+
+        // Merge name into metadata (if provided)
+        if let Some(name) = &params.name {
+            if let Some(obj) = metadata_obj.as_object_mut() {
+                obj.insert("name".to_string(), serde_json::json!(name));
+            }
+        }
+
+        // Merge is_oauth2_app into metadata (if provided)
+        if let Some(is_oauth2_app) = params.is_oauth2_app {
+            if let Some(obj) = metadata_obj.as_object_mut() {
+                obj.insert(
+                    "is_oauth2_app".to_string(),
+                    serde_json::json!(is_oauth2_app),
+                );
+            }
         }
 
         // Build params chain format
@@ -1773,10 +1807,7 @@ impl TreasuryApiClient {
         let params_chain = super::types::TreasuryParamsChain {
             redirect_url: params.redirect_url.unwrap_or_default(),
             icon_url: params.icon_url.unwrap_or_default(),
-            metadata: params
-                .metadata
-                .map(|m| m.to_string())
-                .unwrap_or_else(|| "{}".to_string()),
+            metadata: metadata_obj.to_string(),
         };
 
         // Create the update_params message (matches contract's ExecuteMsg)

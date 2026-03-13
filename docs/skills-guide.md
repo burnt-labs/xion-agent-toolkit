@@ -1,5 +1,7 @@
 # Skills Guide
 
+> **For AI Agents**: Skills are optimized for agent usage. For CLI command reference, see [QUICK-REFERENCE.md](./QUICK-REFERENCE.md) and [ERROR-CODES.md](./ERROR-CODES.md).
+
 ## Overview
 
 ### What are Skills

@@ -133,6 +133,14 @@ pub enum ParamsCommands {
         #[arg(long)]
         icon_url: Option<String>,
 
+        /// Treasury name
+        #[arg(long)]
+        name: Option<String>,
+
+        /// Mark as OAuth2 application
+        #[arg(long)]
+        is_oauth2_app: bool,
+
         /// Metadata as JSON string
         #[arg(long)]
         metadata: Option<String>,
@@ -1527,8 +1535,20 @@ async fn handle_params(cmd: ParamsCommands) -> Result<()> {
             address,
             redirect_url,
             icon_url,
+            name,
+            is_oauth2_app,
             metadata,
-        } => handle_params_update(&address, redirect_url, icon_url, metadata).await,
+        } => {
+            handle_params_update(
+                &address,
+                redirect_url,
+                icon_url,
+                name,
+                is_oauth2_app,
+                metadata,
+            )
+            .await
+        }
     }
 }
 
@@ -1536,6 +1556,8 @@ async fn handle_params_update(
     address: &str,
     redirect_url: Option<String>,
     icon_url: Option<String>,
+    name: Option<String>,
+    is_oauth2_app: bool,
     metadata: Option<String>,
 ) -> Result<()> {
     use crate::config::ConfigManager;
@@ -1553,6 +1575,8 @@ async fn handle_params_update(
     let params = crate::treasury::types::UpdateParamsInput {
         redirect_url,
         icon_url,
+        name,
+        is_oauth2_app: if is_oauth2_app { Some(true) } else { None },
         metadata: metadata_value,
     };
 

@@ -310,8 +310,10 @@ CI must pass:
 ## Documentation Standards
 
 - `README.md`: overview and quick start
-- `docs/`: detailed docs such as `cli-reference.md`, `oauth-flow.md`, `treasury-guide.md`
-- `examples/`: example code and scripts
+- `docs/QUICK-REFERENCE.md`: condensed CLI reference for AI Agents (~200 lines)
+- `docs/ERROR-CODES.md`: complete error code reference for error handling
+- `docs/cli-reference.md`: detailed CLI command documentation
+- `examples/`: example JSON config files for CLI commands
 
 ## Language Standards
 

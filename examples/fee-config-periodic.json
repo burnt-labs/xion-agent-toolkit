@@ -1,0 +1,7 @@
+{
+  "allowance_type": "periodic",
+  "basic_spend_limit": "10000000uxion",
+  "period_seconds": 86400,
+  "period_spend_limit": "1000000uxion",
+  "description": "Daily fee allowance - resets every 24 hours"
+}

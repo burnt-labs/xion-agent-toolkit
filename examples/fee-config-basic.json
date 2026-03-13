@@ -1,0 +1,5 @@
+{
+  "allowance_type": "basic",
+  "spend_limit": "10000000uxion",
+  "description": "Basic fee allowance for gasless transactions"
+}

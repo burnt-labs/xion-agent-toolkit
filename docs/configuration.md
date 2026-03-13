@@ -243,6 +243,8 @@ chmod 600 ~/.xion-toolkit/credentials/*.enc
 
 ## See Also
 
-- [CLI Reference](./cli-reference.md) - Complete command documentation
-- [INSTALL-FOR-AGENTS.md](../INSTALL-FOR-AGENTS.md) - AI Agent installation guide
+- **[QUICK-REFERENCE.md](./QUICK-REFERENCE.md)** - Condensed CLI reference for AI Agents
+- **[ERROR-CODES.md](./ERROR-CODES.md)** - Complete error code reference
+- [CLI Reference](./cli-reference.md) - Detailed command documentation
 - [Skills Guide](./skills-guide.md) - Skills usage documentation
+- [INSTALL-FOR-AGENTS.md](../INSTALL-FOR-AGENTS.md) - AI Agent installation guide

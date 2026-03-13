@@ -1,0 +1,17 @@
+{
+  "type_url": "/cosmwasm.wasm.v1.MsgExecuteContract",
+  "description": "Allow executing specific contract",
+  "authorization": {
+    "auth_type": "contract_execution",
+    "grants": [
+      {
+        "address": "xion1contract123def456ghi789jkl012mno345pqr678",
+        "max_calls": 100,
+        "max_funds": "1000000uxion",
+        "filter_type": "allow_all",
+        "keys": null
+      }
+    ]
+  },
+  "optional": false
+}
