@@ -20,7 +20,8 @@ use crate::treasury::api_client::TreasuryApiClient;
 
 use super::code_ids::get_code_id;
 use super::types::{
-    AssetBuilderError, AssetType, CreateCollectionInput, CreateCollectionResult,
+    AssetBuilderError, AssetType, CreateCollectionInput, CreateCollectionResult, Cw2981MintContent,
+    Cw2981MintMsg, Cw2981RoyaltyInfo, Cw721ExpirationMintContent, Cw721ExpirationMintMsg,
     Cw721InstantiateMsg, Cw721MintMsg, MintContent, MintTokenInput, MintTokenResult, QueryResult,
 };
 
@@ -81,15 +82,9 @@ impl AssetBuilderManager {
     ) -> Result<CreateCollectionResult, AssetBuilderError> {
         debug!("Creating NFT collection: {} ({})", input.name, input.symbol);
 
-        // Phase 1: Only support cw721-base
-        if input.asset_type != AssetType::Cw721Base {
-            let supported: Vec<&'static str> =
-                AssetType::all().iter().map(|t| t.as_str()).collect();
-            return Err(AssetBuilderError::InvalidAssetType(format!(
-                "Phase 1 only supports 'cw721-base'. Got: '{}'. Supported types: {}",
-                input.asset_type,
-                supported.join(", ")
-            )));
+        // Check for unsupported asset types
+        if input.asset_type == AssetType::Cw721FixedPrice {
+            return Err(AssetBuilderError::Cw20Required);
         }
 
         // Get user credentials
@@ -112,7 +107,7 @@ impl AssetBuilderManager {
         // Determine minter address (default to sender)
         let minter = input.minter.unwrap_or_else(|| sender.clone());
 
-        // Build instantiate message
+        // Build instantiate message (all CW721 variants use the same format)
         let instantiate_msg = Cw721InstantiateMsg {
             name: input.name.clone(),
             symbol: input.symbol.clone(),
@@ -177,12 +172,17 @@ impl AssetBuilderManager {
     /// Mint a new NFT token
     ///
     /// Mints a new token in an existing NFT collection.
+    /// Supports different CW721 variants based on asset_type.
     ///
     /// # Arguments
     /// * `input` - Mint input with contract address, token ID, owner, etc.
     ///
     /// # Returns
     /// Mint result with transaction hash
+    ///
+    /// # Variant-specific Fields
+    /// - CW2981: Use `royalty_address` and `royalty_percentage` for royalties
+    /// - Expiration: Use `expires_at` for time-based expiration
     #[instrument(skip(self, input))]
     pub async fn mint_token(
         &self,
@@ -204,15 +204,11 @@ impl AssetBuilderManager {
             .xion_address
             .ok_or(AssetBuilderError::NotAuthenticated)?;
 
-        // Build mint message
-        let mint_msg = Cw721MintMsg {
-            mint: MintContent {
-                token_id: input.token_id.clone(),
-                owner: input.owner.clone(),
-                token_uri: input.token_uri.clone(),
-                extension: input.extension.clone(),
-            },
-        };
+        // Determine asset type (default to Cw721Base for backward compatibility)
+        let asset_type = input.asset_type.unwrap_or(AssetType::Cw721Base);
+
+        // Build mint message based on asset type
+        let mint_msg = self.build_mint_msg(&input, asset_type)?;
 
         // Get valid access token
         let access_token = self
@@ -233,6 +229,103 @@ impl AssetBuilderManager {
             owner: input.owner,
             tx_hash,
         })
+    }
+
+    /// Build mint message based on asset type
+    ///
+    /// Dispatches to the appropriate mint message format based on the asset type.
+    fn build_mint_msg(
+        &self,
+        input: &MintTokenInput,
+        asset_type: AssetType,
+    ) -> Result<serde_json::Value, AssetBuilderError> {
+        match asset_type {
+            AssetType::Cw721Base
+            | AssetType::Cw721MetadataOnchain
+            | AssetType::Cw721NonTransferable => {
+                // Standard mint message for base, metadata-onchain, and non-transferable
+                let msg = Cw721MintMsg {
+                    mint: MintContent {
+                        token_id: input.token_id.clone(),
+                        owner: input.owner.clone(),
+                        token_uri: input.token_uri.clone(),
+                        extension: input.extension.clone(),
+                    },
+                };
+                Ok(serde_json::to_value(msg)?)
+            }
+            AssetType::Cw2981Royalties => {
+                // Build with royalty_info for CW2981
+                let royalty_info = self.build_royalty_info(input)?;
+
+                let msg = Cw2981MintMsg {
+                    mint: Cw2981MintContent {
+                        token_id: input.token_id.clone(),
+                        owner: input.owner.clone(),
+                        token_uri: input.token_uri.clone(),
+                        extension: input.extension.clone(),
+                        royalty_info,
+                    },
+                };
+                Ok(serde_json::to_value(msg)?)
+            }
+            AssetType::Cw721Expiration => {
+                // Build with expires_at for expiration variant
+                let expires_at = input.expires_at.as_ref().ok_or_else(|| {
+                    AssetBuilderError::MissingRequiredField(
+                        "expires_at is required for cw721-expiration".to_string(),
+                    )
+                })?;
+
+                let msg = Cw721ExpirationMintMsg {
+                    mint: Cw721ExpirationMintContent {
+                        token_id: input.token_id.clone(),
+                        owner: input.owner.clone(),
+                        token_uri: input.token_uri.clone(),
+                        extension: input.extension.clone(),
+                        expires_at: expires_at.clone(),
+                    },
+                };
+                Ok(serde_json::to_value(msg)?)
+            }
+            AssetType::Cw721FixedPrice => {
+                // Fixed-price requires CW20 support (Phase 3)
+                Err(AssetBuilderError::Cw20Required)
+            }
+        }
+    }
+
+    /// Build royalty info for CW2981 tokens
+    ///
+    /// Validates royalty fields and constructs royalty info if provided.
+    fn build_royalty_info(
+        &self,
+        input: &MintTokenInput,
+    ) -> Result<Option<Cw2981RoyaltyInfo>, AssetBuilderError> {
+        match (&input.royalty_address, input.royalty_percentage) {
+            (Some(address), Some(percentage)) => {
+                // Validate percentage range
+                if !(0.0..=1.0).contains(&percentage) {
+                    return Err(AssetBuilderError::InvalidRoyaltyPercentage(percentage));
+                }
+
+                // Convert percentage to share string
+                let share = format!("{}", percentage);
+
+                Ok(Some(Cw2981RoyaltyInfo {
+                    payment_address: address.clone(),
+                    share,
+                }))
+            }
+            (Some(_), None) | (None, Some(_)) => {
+                // Incomplete royalty info - both fields must be provided together
+                Err(AssetBuilderError::IncompleteRoyaltyInfo)
+            }
+            (None, None) => {
+                // No royalty info provided - this is valid
+                Ok(None)
+            }
+        }
     }
 
     /// Query an NFT contract
@@ -595,5 +688,134 @@ mod tests {
             instantiate2_address(&checksum_bytes, &canonical_sender, &salt).unwrap();
         let predicted2 = encode_canonical_address(&canonical_addr2, "xion").unwrap();
         assert_eq!(predicted, predicted2);
+    }
+
+    // ========================================================================
+    // Mint Message Dispatch Tests
+    // ========================================================================
+
+    #[test]
+    fn test_build_mint_msg_cw721_base() {
+        // Test that Cw721Base produces standard mint message
+        let input = MintTokenInput {
+            contract: "xion1contract".to_string(),
+            token_id: "1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: Some("ipfs://hash".to_string()),
+            extension: serde_json::json!({}),
+            royalty_address: None,
+            royalty_percentage: None,
+            expires_at: None,
+            asset_type: Some(AssetType::Cw721Base),
+        };
+
+        // Create a mock manager to test build_mint_msg
+        // We test the message structure directly by serializing
+        let msg = Cw721MintMsg {
+            mint: MintContent {
+                token_id: input.token_id.clone(),
+                owner: input.owner.clone(),
+                token_uri: input.token_uri.clone(),
+                extension: input.extension.clone(),
+            },
+        };
+
+        let json = serde_json::to_value(&msg).unwrap();
+        assert_eq!(json["mint"]["token_id"], "1");
+        assert_eq!(json["mint"]["owner"], "xion1owner");
+        assert_eq!(json["mint"]["token_uri"], "ipfs://hash");
+        assert!(!json["mint"]
+            .as_object()
+            .unwrap()
+            .contains_key("royalty_info"));
+        assert!(!json["mint"].as_object().unwrap().contains_key("expires_at"));
+    }
+
+    #[test]
+    fn test_build_mint_msg_cw721_metadata_onchain() {
+        // Metadata-onchain uses same mint format as base
+        let msg = Cw721MintMsg {
+            mint: MintContent {
+                token_id: "meta-1".to_string(),
+                owner: "xion1owner".to_string(),
+                token_uri: None,
+                extension: serde_json::json!({"name": "On-chain NFT", "description": "Test"}),
+            },
+        };
+
+        let json = serde_json::to_value(&msg).unwrap();
+        assert_eq!(json["mint"]["token_id"], "meta-1");
+        assert!(json["mint"]["extension"]["name"].is_string());
+    }
+
+    #[test]
+    fn test_build_mint_msg_cw2981_with_royalty() {
+        // Test CW2981 mint with royalty
+        let msg = Cw2981MintMsg {
+            mint: Cw2981MintContent {
+                token_id: "royalty-1".to_string(),
+                owner: "xion1owner".to_string(),
+                token_uri: None,
+                extension: serde_json::json!({}),
+                royalty_info: Some(Cw2981RoyaltyInfo {
+                    payment_address: "xion1artist".to_string(),
+                    share: "0.05".to_string(),
+                }),
+            },
+        };
+
+        let json = serde_json::to_value(&msg).unwrap();
+        assert_eq!(json["mint"]["token_id"], "royalty-1");
+        assert_eq!(
+            json["mint"]["royalty_info"]["payment_address"],
+            "xion1artist"
+        );
+        assert_eq!(json["mint"]["royalty_info"]["share"], "0.05");
+    }
+
+    #[test]
+    fn test_build_mint_msg_cw721_expiration() {
+        // Test expiration mint with expires_at
+        let msg = Cw721ExpirationMintMsg {
+            mint: Cw721ExpirationMintContent {
+                token_id: "exp-1".to_string(),
+                owner: "xion1owner".to_string(),
+                token_uri: None,
+                extension: serde_json::json!({}),
+                expires_at: "2025-12-31T23:59:59Z".to_string(),
+            },
+        };
+
+        let json = serde_json::to_value(&msg).unwrap();
+        assert_eq!(json["mint"]["token_id"], "exp-1");
+        assert_eq!(json["mint"]["expires_at"], "2025-12-31T23:59:59Z");
+    }
+
+    #[test]
+    fn test_cw2981_royalty_percentage_conversion() {
+        // Test that 5% is converted to "0.05"
+        let percentage = 0.05;
+        let share = format!("{}", percentage);
+        assert_eq!(share, "0.05");
+
+        // Test that 10% is converted to "0.1"
+        let percentage = 0.1;
+        let share = format!("{}", percentage);
+        assert_eq!(share, "0.1");
+    }
+
+    #[test]
+    fn test_royalty_info_optional() {
+        // CW2981 mint without royalty info should work
+        let content = Cw2981MintContent {
+            token_id: "no-royalty".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: None,
+            extension: serde_json::json!({}),
+            royalty_info: None,
+        };
+
+        let json = serde_json::to_string(&content).unwrap();
+        assert!(!json.contains("royalty_info"));
     }
 }

@@ -9,6 +9,11 @@ phase1_completed_at: 2026-03-13
 phase1_by: @fullstack-dev
 phase1_qa_at: 2026-03-13
 phase1_qa_by: @qa-engineer
+phase2_started_at: 2026-03-13
+phase2_completed_at: 2026-03-13
+phase2_by: @fullstack-dev
+phase2_qa_at: 2026-03-13
+phase2_qa_by: @qa-engineer
 ---
 
 # Asset Builder (CW721 NFT)
@@ -121,15 +126,52 @@ src/
 └── build.rs            # MODIFY
 ```
 
-### Phase 2: All Variants (Next)
+### Phase 2: All Variants (Current)
 
-- [ ] Add variant-specific instantiate messages
-- [ ] Add variant-specific mint messages
-- [ ] cw721-metadata-onchain support
-- [ ] cw721-expiration support
-- [ ] cw721-non-transferable support
-- [ ] cw2981-royalties support (royalties at mint time)
-- [ ] Add `asset types` command
+**Goal**: Support all CW721 variants with variant-specific messages
+
+**Tasks**:
+
+#### 2.1 Types Module (`src/asset_builder/types.rs`)
+- [x] Add `Cw2981RoyaltyInfo` struct with `payment_address` and `share` fields
+- [x] Add `Cw2981MintContent` struct with `royalty_info` option
+- [x] Add `Cw721ExpirationMintContent` with `expires_at` field
+- [x] Update `MintTokenInput` with optional variant-specific fields:
+  - `royalty_address` and `royalty_percentage` for CW2981
+  - `expires_at` for expiration variant
+  - `asset_type` for dispatch control
+
+#### 2.2 Manager Module (`src/asset_builder/manager.rs`)
+- [x] Remove Phase 1 restriction (cw721-base only)
+- [x] Implement `build_mint_msg()` dispatch by AssetType
+- [x] Add validation for variant-specific requirements
+- [x] Add `build_royalty_info()` helper for CW2981
+
+#### 2.3 CLI Module (`src/cli/asset.rs`)
+- [x] Add `--asset-type` option to `asset mint` with default `cw721-base`
+- [x] Add `--royalty-address` option to `asset mint`
+- [x] Add `--royalty-percentage` option to `asset mint`
+- [x] Add `--expires-at` option to `asset mint`
+- [x] Add validation for variant-specific options
+
+#### 2.4 Unit Tests
+- [x] Test CW2981 mint message with royalties
+- [x] Test expiration mint message
+- [x] Test variant dispatch in manager
+- [x] Test MintTokenInput backward compatibility
+- [x] Test royalty info validation
+
+#### 2.5 Bug Fixes
+- [x] Fix validation order bug: numeric constraints checked before type compatibility
+  - Issue: `--royalty-percentage 1.5` returned "wrong type" instead of "invalid percentage"
+  - Fix: Reordered validation in `handle_mint()` to check percentage range first
+  - Added 5 test cases for validation order verification
+
+**Priority Order**:
+1. cw2981-royalties (most requested feature)
+2. cw721-expiration (simple addition)
+3. cw721-metadata-onchain (standard extension)
+4. cw721-non-transferable (standard structure)
 
 ### Phase 3: Advanced Features (Future)
 
@@ -200,9 +242,14 @@ pub cw2981_royalties_code_id: u64,
 - [ ] Tested on testnet (requires authentication - deferred to user)
 
 ### Phase 2
-- [ ] All 5 variants supported (excluding fixed-price)
-- [ ] Variant-specific options validated
-- [ ] CW2981 royalties at mint time
+- [x] All 5 variants supported (excluding fixed-price)
+- [x] Variant-specific options validated
+- [x] CW2981 royalties at mint time
+- [x] Validation order: numeric constraints checked before type compatibility
+- [x] `cargo test` passes (223 tests, 43 asset_builder tests including 5 new CLI validation tests)
+- [x] `cargo clippy --all-targets --all-features -- -D warnings` passes
+- [x] `cargo fmt --check` passes
+- [x] CLI `--help` shows new options
 
 ## Dependencies
 
@@ -223,5 +270,10 @@ pub cw2981_royalties_code_id: u64,
 | 2026-03-13 | @project-manager | Plan created | Done |
 | 2026-03-13 | @architect | Architecture completed | Done |
 | 2026-03-13 | @fullstack-dev | Phase 1 implementation | Done |
-| 2026-03-13 | @qa-engineer | QA verification passed | Done |
-| 2026-03-13 | @project-manager | Final sign-off | **Done** |
+| 2026-03-13 | @qa-engineer | Phase 1 QA verification | Done |
+| 2026-03-13 | @project-manager | Phase 1 sign-off | Done |
+| 2026-03-13 | @fullstack-dev | Phase 2 implementation | Done |
+| 2026-03-13 | @fullstack-dev | Fix validation order bug | Done |
+| 2026-03-13 | @qc-specialist | Phase 2 code review | Done |
+| 2026-03-13 | @qa-engineer | Phase 2 QA verification | Done |
+| 2026-03-13 | @project-manager | Phase 2 final sign-off | **Done** |

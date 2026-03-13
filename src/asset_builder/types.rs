@@ -136,6 +136,76 @@ pub struct MintContent {
 }
 
 // ============================================================================
+// CW2981 Royalty Types
+// ============================================================================
+
+/// Royalty info for CW2981 tokens
+///
+/// Royalties are set at mint time for CW2981 compliant NFTs.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cw2981RoyaltyInfo {
+    /// Address to receive royalties
+    pub payment_address: String,
+    /// Royalty share as decimal string (e.g., "0.05" for 5%)
+    pub share: String,
+}
+
+/// Mint content for CW2981 with royalties
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cw2981MintContent {
+    /// Unique token ID
+    pub token_id: String,
+    /// Owner address
+    pub owner: String,
+    /// Optional token URI (e.g., IPFS URI)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_uri: Option<String>,
+    /// Extension data
+    #[serde(default)]
+    pub extension: serde_json::Value,
+    /// Optional royalty information
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub royalty_info: Option<Cw2981RoyaltyInfo>,
+}
+
+/// Mint message for CW2981 contract
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cw2981MintMsg {
+    /// Mint operation wrapper
+    pub mint: Cw2981MintContent,
+}
+
+// ============================================================================
+// CW721 Expiration Types
+// ============================================================================
+
+/// Mint content for cw721-expiration
+///
+/// Supports time-based token expiration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cw721ExpirationMintContent {
+    /// Unique token ID
+    pub token_id: String,
+    /// Owner address
+    pub owner: String,
+    /// Optional token URI (e.g., IPFS URI)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_uri: Option<String>,
+    /// Extension data
+    #[serde(default)]
+    pub extension: serde_json::Value,
+    /// Expiration timestamp (Unix seconds or ISO 8601)
+    pub expires_at: String,
+}
+
+/// Mint message for cw721-expiration contract
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cw721ExpirationMintMsg {
+    /// Mint operation wrapper
+    pub mint: Cw721ExpirationMintContent,
+}
+
+// ============================================================================
 // Input Types
 // ============================================================================
 
@@ -175,6 +245,19 @@ pub struct MintTokenInput {
     /// Extension data
     #[serde(default)]
     pub extension: serde_json::Value,
+    /// Royalty payment address (CW2981 only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub royalty_address: Option<String>,
+    /// Royalty percentage as decimal (CW2981 only, e.g., 0.05 for 5%)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub royalty_percentage: Option<f64>,
+    /// Expiration timestamp (cw721-expiration only)
+    /// Can be Unix timestamp or ISO 8601 format
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<String>,
+    /// Asset type for dispatch (optional, defaults to Cw721Base)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<AssetType>,
 }
 
 // ============================================================================
@@ -267,6 +350,14 @@ pub enum AssetBuilderError {
     /// CW20 token required for fixed-price
     #[error("CW20 token address required for fixed-price NFT")]
     Cw20Required,
+
+    /// Invalid royalty percentage
+    #[error("Invalid royalty percentage: {0}. Must be between 0.0 and 1.0")]
+    InvalidRoyaltyPercentage(f64),
+
+    /// Royalty info missing required fields
+    #[error("Royalty info incomplete: both royalty_address and royalty_percentage are required")]
+    IncompleteRoyaltyInfo,
 
     /// Contract instantiation failed
     #[error("Contract instantiation failed: {0}")]
@@ -409,5 +500,204 @@ mod tests {
         assert_eq!(all.len(), 6);
         assert!(all.contains(&AssetType::Cw721Base));
         assert!(all.contains(&AssetType::Cw2981Royalties));
+    }
+
+    // ========================================================================
+    // CW2981 Royalty Tests
+    // ========================================================================
+
+    #[test]
+    fn test_cw2981_royalty_info_serialization() {
+        let royalty = Cw2981RoyaltyInfo {
+            payment_address: "xion1abc123".to_string(),
+            share: "0.05".to_string(),
+        };
+
+        let json = serde_json::to_string(&royalty).unwrap();
+        assert!(json.contains("\"payment_address\":\"xion1abc123\""));
+        assert!(json.contains("\"share\":\"0.05\""));
+    }
+
+    #[test]
+    fn test_cw2981_mint_content_with_royalty() {
+        let content = Cw2981MintContent {
+            token_id: "1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: Some("ipfs://QmHash".to_string()),
+            extension: serde_json::json!({}),
+            royalty_info: Some(Cw2981RoyaltyInfo {
+                payment_address: "xion1royalty".to_string(),
+                share: "0.05".to_string(),
+            }),
+        };
+
+        let json = serde_json::to_string(&content).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["token_id"], "1");
+        assert_eq!(parsed["owner"], "xion1owner");
+        assert_eq!(parsed["royalty_info"]["payment_address"], "xion1royalty");
+        assert_eq!(parsed["royalty_info"]["share"], "0.05");
+    }
+
+    #[test]
+    fn test_cw2981_mint_content_without_royalty() {
+        let content = Cw2981MintContent {
+            token_id: "2".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: None,
+            extension: serde_json::json!({}),
+            royalty_info: None,
+        };
+
+        let json = serde_json::to_string(&content).unwrap();
+        assert!(!json.contains("royalty_info")); // Should be skipped
+    }
+
+    #[test]
+    fn test_cw2981_mint_msg_serialization() {
+        let msg = Cw2981MintMsg {
+            mint: Cw2981MintContent {
+                token_id: "royalty-1".to_string(),
+                owner: "xion1owner".to_string(),
+                token_uri: None,
+                extension: serde_json::json!({"name": "NFT with royalties"}),
+                royalty_info: Some(Cw2981RoyaltyInfo {
+                    payment_address: "xion1artist".to_string(),
+                    share: "0.10".to_string(),
+                }),
+            },
+        };
+
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["mint"]["token_id"], "royalty-1");
+        assert_eq!(parsed["mint"]["royalty_info"]["share"], "0.10");
+    }
+
+    // ========================================================================
+    // CW721 Expiration Tests
+    // ========================================================================
+
+    #[test]
+    fn test_cw721_expiration_mint_content() {
+        let content = Cw721ExpirationMintContent {
+            token_id: "exp-1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: Some("ipfs://QmHash".to_string()),
+            extension: serde_json::json!({}),
+            expires_at: "2025-12-31T23:59:59Z".to_string(),
+        };
+
+        let json = serde_json::to_string(&content).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["token_id"], "exp-1");
+        assert_eq!(parsed["expires_at"], "2025-12-31T23:59:59Z");
+    }
+
+    #[test]
+    fn test_cw721_expiration_mint_msg_serialization() {
+        let msg = Cw721ExpirationMintMsg {
+            mint: Cw721ExpirationMintContent {
+                token_id: "exp-2".to_string(),
+                owner: "xion1owner".to_string(),
+                token_uri: None,
+                extension: serde_json::json!({}),
+                expires_at: "1704067200".to_string(), // Unix timestamp
+            },
+        };
+
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["mint"]["token_id"], "exp-2");
+        assert_eq!(parsed["mint"]["expires_at"], "1704067200");
+    }
+
+    // ========================================================================
+    // MintTokenInput Tests
+    // ========================================================================
+
+    #[test]
+    fn test_mint_token_input_with_royalty() {
+        let input = MintTokenInput {
+            contract: "xion1contract".to_string(),
+            token_id: "1".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: Some("ipfs://hash".to_string()),
+            extension: serde_json::json!({}),
+            royalty_address: Some("xion1artist".to_string()),
+            royalty_percentage: Some(0.05),
+            expires_at: None,
+            asset_type: Some(AssetType::Cw2981Royalties),
+        };
+
+        let json = serde_json::to_string(&input).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["royalty_address"], "xion1artist");
+        assert_eq!(parsed["royalty_percentage"], 0.05);
+        assert!(!json.contains("expires_at")); // Should be skipped
+    }
+
+    #[test]
+    fn test_mint_token_input_with_expiration() {
+        let input = MintTokenInput {
+            contract: "xion1contract".to_string(),
+            token_id: "2".to_string(),
+            owner: "xion1owner".to_string(),
+            token_uri: None,
+            extension: serde_json::json!({}),
+            royalty_address: None,
+            royalty_percentage: None,
+            expires_at: Some("2025-12-31T23:59:59Z".to_string()),
+            asset_type: Some(AssetType::Cw721Expiration),
+        };
+
+        let json = serde_json::to_string(&input).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["expires_at"], "2025-12-31T23:59:59Z");
+        assert!(!json.contains("royalty_address")); // Should be skipped
+        assert!(!json.contains("royalty_percentage")); // Should be skipped
+    }
+
+    #[test]
+    fn test_mint_token_input_backward_compatible() {
+        // Test that old-style input without new fields still works
+        let json = r#"{
+            "contract": "xion1contract",
+            "token_id": "3",
+            "owner": "xion1owner"
+        }"#;
+
+        let input: MintTokenInput = serde_json::from_str(json).unwrap();
+        assert_eq!(input.contract, "xion1contract");
+        assert_eq!(input.token_id, "3");
+        assert_eq!(input.owner, "xion1owner");
+        assert_eq!(input.token_uri, None);
+        assert_eq!(input.royalty_address, None);
+        assert_eq!(input.royalty_percentage, None);
+        assert_eq!(input.expires_at, None);
+        assert_eq!(input.asset_type, None); // Defaults to None (will use Cw721Base)
+    }
+
+    #[test]
+    fn test_mint_token_input_with_asset_type() {
+        let json = r#"{
+            "contract": "xion1contract",
+            "token_id": "4",
+            "owner": "xion1owner",
+            "asset_type": "cw2981-royalties",
+            "royalty_address": "xion1artist",
+            "royalty_percentage": 0.05
+        }"#;
+
+        let input: MintTokenInput = serde_json::from_str(json).unwrap();
+        assert_eq!(input.asset_type, Some(AssetType::Cw2981Royalties));
+        assert_eq!(input.royalty_address, Some("xion1artist".to_string()));
+        assert_eq!(input.royalty_percentage, Some(0.05));
     }
 }
