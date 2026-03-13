@@ -13,7 +13,7 @@ metadata:
   version: "1.1.0"
   requires:
     - xion-toolkit-init
-compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
+  compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
 ---
 
 # xion-oauth2

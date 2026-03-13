@@ -15,7 +15,7 @@ metadata:
     - xion-toolkit CLI
   recommends:
     - burnt-labs/xion-skills
-compatibility: macOS (x64/ARM64), Linux (x64/ARM64), Windows (PowerShell)
+  compatibility: macOS (x64/ARM64), Linux (x64/ARM64), Windows (PowerShell)
 ---
 
 # xion-toolkit-init
