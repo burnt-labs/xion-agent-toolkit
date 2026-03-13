@@ -104,6 +104,22 @@
 | `CODE_ID_NOT_FOUND` | Code ID not found | Verify code ID exists on chain |
 | `INVALID_LABEL` | Invalid label | Use alphanumeric label |
 
+## Asset Builder Errors
+
+| Code | Message | Suggestion |
+|------|---------|------------|
+| `INVALID_ASSET_TYPE` | Unknown asset type | Use: cw721-base, cw2981-royalties, cw721-expiration, cw721-metadata-onchain, cw721-non-transferable |
+| `CODE_ID_NOT_FOUND` | Code ID not configured | Check network configuration |
+| `MISSING_REQUIRED_FIELD` | Required field missing | Check required arguments |
+| `INSTANTIATION_FAILED` | Contract instantiation failed | Check instantiate message format |
+| `MINT_FAILED` | Token minting failed | Check mint parameters |
+| `QUERY_FAILED` | Contract query failed | Verify contract address |
+| `INVALID_OPTION_FOR_TYPE` | Option not valid for asset type | Royalty options require cw2981-royalties, expires-at requires cw721-expiration |
+| `INVALID_ROYALTY_PERCENTAGE` | Royalty percentage must be 0.0-1.0 | Use decimal format (0.05 for 5%) |
+| `INCOMPLETE_ROYALTY_INFO` | Both royalty-address and royalty-percentage required | Provide both or neither |
+| `FILE_NOT_FOUND` | Tokens file not found | Check file path |
+| `FILE_PARSE_ERROR` | Failed to parse tokens file | Validate JSON format |
+
 ## OAuth2 API Errors
 
 | Code | Message | Suggestion |

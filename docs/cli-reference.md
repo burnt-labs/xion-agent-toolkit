@@ -14,6 +14,13 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`treasury import`](#treasury-import)
 - [Contract Commands](#contract-commands)
   - [`contract query`](#contract-query)
+- [Asset Commands](#asset-commands)
+  - [`asset types`](#asset-types)
+  - [`asset create`](#asset-create)
+  - [`asset mint`](#asset-mint)
+  - [`asset predict`](#asset-predict)
+  - [`asset batch-mint`](#asset-batch-mint)
+  - [`asset query`](#asset-query)
 - [Configuration Commands](#configuration-commands)
 - [Output Format](#output-format)
 
@@ -1995,6 +2002,201 @@ Output (error - invalid query):
 - Read-only operation - no authentication required
 - Uses direct RPC call to `/cosmwasm/wasm/v1/contract/{address}/smart/{query}`
 - Query message is base64-encoded before sending
+
+---
+
+## Asset Commands
+
+### `asset types`
+
+Lists all available NFT asset types with their code IDs.
+
+**Usage:**
+```bash
+xion-toolkit asset types
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "types": [
+    {
+      "type": "cw721-base",
+      "display_name": "Standard NFT (CW721-Base)",
+      "testnet_code_id": 522,
+      "mainnet_code_id": 0,
+      "description": "Standard CW721 NFT contract"
+    }
+  ],
+  "count": 5
+}
+```
+
+---
+
+### `asset create`
+
+Creates a new NFT collection.
+
+**Usage:**
+```bash
+xion-toolkit asset create --type <TYPE> --name <NAME> --symbol <SYMBOL> [options]
+```
+
+**Options:**
+- `--type <TYPE>` - Asset type (required): cw721-base, cw2981-royalties, cw721-expiration, cw721-metadata-onchain, cw721-non-transferable
+- `--name <NAME>` - Collection name (required)
+- `--symbol <SYMBOL>` - Collection symbol (required)
+- `--minter <ADDRESS>` - Minter address (defaults to sender)
+- `--code-id <ID>` - Custom code ID (overrides network default)
+- `--salt <SALT>` - Salt for predictable address (hex or string)
+
+**Examples:**
+
+```bash
+# Create standard NFT collection
+xion-toolkit asset create --type cw721-base --name "My Collection" --symbol "NFT"
+
+# Create with predictable address
+xion-toolkit asset create --type cw721-base --name "My Collection" \
+  --symbol "NFT" --salt "my-unique-salt"
+```
+
+---
+
+### `asset mint`
+
+Mints a new NFT token.
+
+**Usage:**
+```bash
+xion-toolkit asset mint --contract <ADDRESS> --token-id <ID> --owner <ADDRESS> [options]
+```
+
+**Options:**
+- `--contract <ADDRESS>` - Contract address (required)
+- `--token-id <ID>` - Token ID (required)
+- `--owner <ADDRESS>` - Owner address (required)
+- `--token-uri <URI>` - Token URI (optional, e.g., IPFS URI)
+- `--extension <JSON>` - Extension data as JSON (optional)
+- `--asset-type <TYPE>` - Asset type for variant-specific mint (default: cw721-base)
+- `--royalty-address <ADDRESS>` - Royalty payment address (CW2981 only)
+- `--royalty-percentage <DECIMAL>` - Royalty percentage 0.0-1.0 (CW2981 only)
+- `--expires-at <TIMESTAMP>` - Expiration timestamp (cw721-expiration only)
+
+**Examples:**
+
+```bash
+# Standard mint
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
+
+# Mint with token URI
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
+  --token-uri "ipfs://QmHash..."
+
+# Mint with royalties (5%)
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
+  --asset-type cw2981-royalties \
+  --royalty-address xion1... --royalty-percentage 0.05
+
+# Mint with expiration
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
+  --asset-type cw721-expiration \
+  --expires-at "2025-12-31T23:59:59Z"
+```
+
+---
+
+### `asset predict`
+
+Predicts the contract address before deployment.
+
+**Usage:**
+```bash
+xion-toolkit asset predict --type <TYPE> --name <NAME> --symbol <SYMBOL> --salt <SALT> [options]
+```
+
+**Options:**
+- `--type <TYPE>` - Asset type (required)
+- `--name <NAME>` - Collection name (required)
+- `--symbol <SYMBOL>` - Collection symbol (required)
+- `--salt <SALT>` - Salt for address prediction (required)
+- `--minter <ADDRESS>` - Minter address (optional)
+- `--code-id <ID>` - Custom code ID (optional)
+
+**Example:**
+```bash
+xion-toolkit asset predict --type cw721-base --name "My NFT" \
+  --symbol "NFT" --salt "my-unique-salt"
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "contract_address": "xion1...",
+  "code_id": 522,
+  "salt": "my-unique-salt"
+}
+```
+
+---
+
+### `asset batch-mint`
+
+Mints multiple NFT tokens from a JSON file.
+
+**Usage:**
+```bash
+xion-toolkit asset batch-mint --contract <ADDRESS> --tokens-file <FILE> [options]
+```
+
+**Options:**
+- `--contract <ADDRESS>` - Contract address (required)
+- `--tokens-file <FILE>` - JSON file with tokens to mint (required)
+- `--asset-type <TYPE>` - Asset type (default: cw721-base)
+
+**Tokens File Format:**
+```json
+[
+  {"token_id": "1", "owner": "xion1...", "token_uri": "ipfs://..."},
+  {"token_id": "2", "owner": "xion1...", "token_uri": "ipfs://..."},
+  {"token_id": "3", "owner": "xion1...", "token_uri": "ipfs://..."}
+]
+```
+
+**Example:**
+```bash
+xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
+```
+
+---
+
+### `asset query`
+
+Queries an NFT contract.
+
+**Usage:**
+```bash
+xion-toolkit asset query --contract <ADDRESS> --msg <JSON>
+```
+
+**Options:**
+- `--contract <ADDRESS>` - Contract address (required)
+- `--msg <JSON>` - Query message as JSON string (required)
+
+**Examples:**
+```bash
+# Get NFT info
+xion-toolkit asset query --contract xion1... --msg '{"nft_info": {"token_id": "1"}}'
+
+# Get owner
+xion-toolkit asset query --contract xion1... --msg '{"owner_of": {"token_id": "1"}}'
+
+# Get all tokens
+xion-toolkit asset query --contract xion1... --msg '{"all_tokens": {}}'
+```
 
 ---
 

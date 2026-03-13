@@ -3,7 +3,7 @@
 A CLI-driven, Agent-oriented toolkit for developing on the Xion blockchain.
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Test Coverage](https://img.shields.io/badge/tests-369%20passing-green)]()
+[![Test Coverage](https://img.shields.io/badge/tests-232%20passing-green)]()
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 ## Overview
@@ -17,6 +17,7 @@ Xion Agent Toolkit provides a command-line interface for interacting with Xion's
 - 👤 Admin management (propose, accept, cancel)
 - 🔧 Treasury parameter updates
 - 🚀 Generic contract instantiation
+- 🎨 **Asset Builder (CW721 NFT)** - Create, mint, batch operations
 - 🔍 Smart contract queries (read-only)
 - 🤖 Agent-friendly JSON output
 - 🔒 Encrypted credential storage
@@ -302,6 +303,34 @@ xion-toolkit contract query \
 ## CLI Reference
 
 For detailed documentation, see [docs/cli-reference.md](./docs/cli-reference.md).
+
+### Asset (NFT)
+
+```bash
+# List available NFT types
+xion-toolkit asset types
+
+# Create NFT collection
+xion-toolkit asset create --type cw721-base --name "My Collection" --symbol "NFT"
+
+# Mint NFT token
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
+
+# Mint with royalties (CW2981)
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
+  --asset-type cw2981-royalties \
+  --royalty-address xion1... --royalty-percentage 0.05
+
+# Predict contract address
+xion-toolkit asset predict --type cw721-base --name "My Collection" \
+  --symbol "NFT" --salt "my-unique-salt"
+
+# Batch mint from JSON file
+xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
+
+# Query NFT contract
+xion-toolkit asset query --contract xion1... --msg '{"nft_info": {"token_id": "1"}}'
+```
 
 ### Authentication
 

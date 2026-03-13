@@ -43,7 +43,8 @@ xion-agent-toolkit/
 ├── AGENTS.md
 ├── README.md / CONTRIBUTING.md
 ├── Cargo.toml
-├── src/{cli,oauth,api,treasury,config,utils}
+├── src/
+│   └── {cli,oauth,api,treasury,config,utils,asset_builder}
 ├── skills/
 ├── tests/                 # all test scripts and integration tests
 │   ├── e2e_treasury_lifecycle.sh      # full lifecycle E2E test
@@ -257,7 +258,7 @@ cargo test test_pkce_challenge
 cargo test -- --nocapture
 ```
 
-Current status: **369 tests passing**
+Current status: **232 tests passing**
 
 ### Test Serialization Rules
 

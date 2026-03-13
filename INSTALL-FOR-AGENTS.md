@@ -233,7 +233,7 @@ fi
 # List available commands
 echo ""
 echo "Available command groups:"
-xion-toolkit --help | grep -E "^  (auth|treasury|contract|config)" | head -10
+xion-toolkit --help | grep -E "^  (auth|treasury|contract|asset|config)" | head -10
 
 echo ""
 echo "=== Installation Verification Complete ==="
@@ -457,6 +457,12 @@ if xion-toolkit treasury --help &> /dev/null; then
     pass "treasury commands available"
 else
     fail "treasury commands not available"
+fi
+
+if xion-toolkit asset --help &> /dev/null; then
+    pass "asset commands available"
+else
+    fail "asset commands not available"
 fi
 
 # 3. Check configuration directory
@@ -702,6 +708,14 @@ xion-toolkit treasury fund <ADDRESS> --amount 1000000
 xion-toolkit treasury fee-config set <ADDRESS> \
   --fee-allowance-type basic \
   --fee-spend-limit "5000000uxion"
+
+# 6. Create NFT collection
+xion-toolkit asset create --type cw721-base \
+  --name "My Collection" --symbol "NFT"
+
+# 7. Mint NFT token
+xion-toolkit asset mint --contract <ADDRESS> \
+  --token-id "1" --owner xion1...
 ```
 
 ### Agent Integration

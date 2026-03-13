@@ -141,6 +141,43 @@ xion-toolkit contract query \
 
 ---
 
+## Asset (NFT) Operations
+
+```bash
+# List available NFT types
+xion-toolkit asset types
+
+# Create collection
+xion-toolkit asset create --type cw721-base --name "My NFT" --symbol "NFT"
+
+# Mint token
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
+
+# Mint with royalties (CW2981)
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
+  --asset-type cw2981-royalties \
+  --royalty-address xion1... --royalty-percentage 0.05
+
+# Predict address
+xion-toolkit asset predict --type cw721-base --name "My NFT" \
+  --symbol "NFT" --salt "my-salt"
+
+# Batch mint
+xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
+```
+
+### Asset Types (Testnet)
+
+| Type | Code ID | Use Case |
+|------|---------|----------|
+| cw721-base | 522 | Standard NFT |
+| cw721-metadata-onchain | 525 | On-chain metadata |
+| cw721-expiration | 523 | Time-limited NFTs |
+| cw721-non-transferable | 526 | Soulbound tokens |
+| cw2981-royalties | 528 | Royalty-bearing NFTs |
+
+---
+
 ## Configuration
 
 ```bash
@@ -191,6 +228,7 @@ All commands return JSON:
 | INVALID_AMOUNT | Invalid amount | Use format `amountdenom` |
 | NETWORK_ERROR | Connection failed | Check internet |
 | TIMEOUT | Request timed out | Retry |
+| INVALID_ASSET_TYPE | Unknown asset type | Use one of: cw721-base, cw2981-royalties, etc. |
 
 ---
 
