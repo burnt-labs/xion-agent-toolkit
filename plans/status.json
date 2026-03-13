@@ -6,15 +6,15 @@
       "id": "metaaccount-info",
       "title": "MetaAccount Info Command",
       "file": "plans/metaaccount-info.md",
-      "status": "InProgress",
-      "progress": 10,
+      "status": "Blocked",
+      "progress": 30,
       "owner": "@project-manager",
       "agents": ["@fullstack-dev"],
-      "tags": ["feature", "account", "p1"],
+      "tags": ["feature", "account", "p1", "blocked"],
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",
       "done_at": null,
-      "notes": "Adding account info command to query MetaAccount authenticators"
+      "notes": "BLOCKED: DaoDao Indexer GraphQL endpoint not accessible. Need to research correct REST API endpoints for SmartAccount queries. Implementation files exist in src/account/ but have syntax errors and are not functional."
     },
     {
       "id": "extended-grant-types",
@@ -28,7 +28,7 @@
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",
       "done_at": null,
-      "notes": "Extend CLI to support all 24 message type URLs"
+      "notes": "Extend CLI to support all 24 message type URLs via presets"
     },
     {
       "id": "batch-operations",
@@ -51,7 +51,7 @@
       "status": "Todo",
       "progress": 0,
       "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@frontend-dev"],
+      "agents": ["@fullstack-dev"],
       "tags": ["feature", "nft", "p4"],
       "created_at": "2026-03-13",
       "updated_at": "2026-03-13",

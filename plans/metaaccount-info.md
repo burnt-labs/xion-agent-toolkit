@@ -1,10 +1,32 @@
 ---
-status: InProgress
+status: Blocked
 created_at: 2026-03-13
 updated_at: 2026-03-13
 ---
 
 # MetaAccount Info Command
+
+## ⚠️ BLOCKED
+
+**Status**: Blocked pending API research
+
+**Blocker**: DaoDao Indexer API endpoint verification required
+
+**Reason**: During implementation, we discovered that the GraphQL endpoint documented in Developer Portal's `src/lib/queries.ts` appears to be **unused/legacy code**. The actual DaoDao Indexer at `daodaoindexer.burnt.com` seems to be a **REST-only API**.
+
+**Investigation Findings**:
+1. GraphQL queries in `queries.ts` use Apollo Client's `gql` tag but are NOT actively used in the current codebase
+2. The `/graphql` endpoint returns 404 on the indexer
+3. Developer Portal uses REST endpoints like `/contract/{admin}/xion/account/treasuries` instead
+
+**Resolution Options**:
+1. Research the correct REST API endpoint for SmartAccount/MetaAccount queries
+2. Contact Xion team to confirm the correct API structure
+3. Skip this feature if the API is not publicly available
+
+**Temporary Code**: Implementation files exist in `src/account/` but have syntax errors and are not functional. The code has been committed but needs API research to complete.
+
+---
 
 ## Background
 
