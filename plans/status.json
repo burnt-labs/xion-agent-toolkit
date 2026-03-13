@@ -1,7 +1,64 @@
 {
   "version": 1,
-  "updated_at": "2026-03-12",
-  "plans": [],
+  "updated_at": "2026-03-13",
+  "plans": [
+    {
+      "id": "metaaccount-info",
+      "title": "MetaAccount Info Command",
+      "file": "plans/metaaccount-info.md",
+      "status": "InProgress",
+      "progress": 10,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev"],
+      "tags": ["feature", "account", "p1"],
+      "created_at": "2026-03-13",
+      "updated_at": "2026-03-13",
+      "done_at": null,
+      "notes": "Adding account info command to query MetaAccount authenticators"
+    },
+    {
+      "id": "extended-grant-types",
+      "title": "Extended Grant Types",
+      "file": "plans/extended-grant-types.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev"],
+      "tags": ["feature", "treasury", "p2"],
+      "created_at": "2026-03-13",
+      "updated_at": "2026-03-13",
+      "done_at": null,
+      "notes": "Extend CLI to support all 24 message type URLs"
+    },
+    {
+      "id": "batch-operations",
+      "title": "Batch Operations",
+      "file": "plans/batch-operations.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": ["@architect", "@fullstack-dev"],
+      "tags": ["feature", "p3", "research-needed"],
+      "created_at": "2026-03-13",
+      "updated_at": "2026-03-13",
+      "done_at": null,
+      "notes": "Support executing multiple messages in a single transaction - needs research on OAuth2 API support"
+    },
+    {
+      "id": "asset-builder",
+      "title": "Asset Builder (CW721)",
+      "file": "plans/asset-builder.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@frontend-dev"],
+      "tags": ["feature", "nft", "p4"],
+      "created_at": "2026-03-13",
+      "updated_at": "2026-03-13",
+      "done_at": null,
+      "notes": "CW721 NFT contract deployment and minting support"
+    }
+  ],
   "_notes": {
     "archived": "All previous plans archived to plans/archived/ on 2026-03-12. See plans/archived/ for historical records.",
     "knowledge": [
@@ -17,6 +74,7 @@
         "file": "plans/knowledge/TYPES_COMPARISON.md",
         "desc": "Treasury-related type comparison and mismatch impact analysis notes."
       }
-    ]
+    ],
+    "roadmap": "plans/feature-roadmap.md - Overall feature roadmap and priorities"
   }
 }

@@ -1,3 +1,4 @@
+pub mod account;
 pub mod auth;
 pub mod config;
 pub mod contract;
@@ -45,6 +46,10 @@ pub enum Commands {
     #[command(subcommand)]
     Contract(contract::ContractCommands),
 
+    /// Account (MetaAccount) queries
+    #[command(subcommand)]
+    Account(account::AccountCommands),
+
     /// Show current status (network, auth, etc.)
     Status,
 }
@@ -63,6 +68,10 @@ pub fn handle_config_command(cmd: config::ConfigCommands) -> Result<()> {
 
 pub async fn handle_contract_command(cmd: contract::ContractCommands) -> Result<()> {
     contract::handle_command(cmd).await
+}
+
+pub async fn handle_account_command(cmd: account::AccountCommands) -> Result<()> {
+    account::handle_command(cmd).await
 }
 
 pub fn handle_status_command() -> Result<()> {
