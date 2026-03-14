@@ -71,6 +71,9 @@ pub mod manager;
 pub mod types;
 
 // Re-export commonly used types (public API)
+// These are re-exported for external crate users, not used internally
+#[allow(unused_imports)]
+pub use manager::AssetBuilderManager;
 #[allow(unused_imports)]
 pub use types::{
     AssetType, BatchMintInput, BatchMintResult, BatchMintToken, CreateCollectionInput,
