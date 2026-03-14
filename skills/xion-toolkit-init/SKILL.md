@@ -15,7 +15,7 @@ metadata:
     - xion-toolkit CLI
   recommends:
     - burnt-labs/xion-skills
-compatibility: macOS (x64/ARM64), Linux (x64/ARM64), Windows (PowerShell)
+  compatibility: macOS (x64/ARM64), Linux (x64/ARM64), Windows (PowerShell)
 ---
 
 # xion-toolkit-init
@@ -96,7 +96,7 @@ Expected output:
 ```json
 {
   "success": true,
-  "version": "xion-agent-toolkit 0.4.3",
+  "version": "xion-toolkit 0.x.x",
   "network": "testnet",
   "authenticated": false
 }

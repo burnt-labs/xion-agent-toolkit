@@ -1,22 +1,23 @@
 {
   "version": 1,
-  "updated_at": "2026-03-12",
+  "updated_at": "2026-03-14",
   "plans": [],
   "_notes": {
-    "archived": "All previous plans archived to plans/archived/ on 2026-03-12. See plans/archived/ for historical records.",
+    "archived": "See plans/archived/README.md for archived plans summary.",
     "knowledge": [
       {
         "file": "plans/knowledge/oauth-client-implementation.md",
-        "desc": "Development log and technical decisions for OAuthClient implementation (2026-03-05)."
+        "desc": "OAuthClient implementation decisions."
       },
       {
         "file": "plans/knowledge/treasury-create-design.md",
-        "desc": "Design document for enhanced `xion-toolkit treasury create` CLI command."
+        "desc": "Treasury create command design."
       },
       {
         "file": "plans/knowledge/TYPES_COMPARISON.md",
-        "desc": "Treasury-related type comparison and mismatch impact analysis notes."
+        "desc": "Treasury type comparison analysis."
       }
-    ]
+    ],
+    "roadmap": "plans/feature-roadmap.md"
   }
 }

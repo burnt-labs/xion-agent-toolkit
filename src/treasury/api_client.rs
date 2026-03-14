@@ -1145,6 +1145,103 @@ impl TreasuryApiClient {
         debug!("Query result: {:?}", result);
         Ok(result)
     }
+
+    /// Get code info including checksum from the chain
+    ///
+    /// Fetches code details from the RPC endpoint to get the checksum
+    /// needed for instantiate2 address prediction.
+    ///
+    /// # Arguments
+    /// * `code_id` - The code ID to fetch info for
+    ///
+    /// # Returns
+    /// Code info including checksum (as lowercase hex string)
+    ///
+    /// # Example
+    /// ```no_run
+    /// use xion_agent_toolkit::treasury::TreasuryApiClient;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> anyhow::Result<()> {
+    /// let client = TreasuryApiClient::new(
+    ///     "https://oauth2.testnet.burnt.com".to_string(),
+    ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    /// );
+    /// let code_info = client.get_code_info(522).await?;
+    /// println!("Checksum: {}", code_info.checksum);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[instrument(skip(self))]
+    pub async fn get_code_info(&self, code_id: u64) -> Result<CodeInfo> {
+        let url = format!("{}/cosmwasm/wasm/v1/code/{}", self.rpc_url, code_id);
+        debug!("Fetching code info from: {}", url);
+
+        let response = self
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to send code info request")?;
+
+        let status = response.status();
+        debug!("Code info response status: {}", status);
+
+        if !status.is_success() {
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            anyhow::bail!(
+                "Code info query failed with status {}: {}",
+                status,
+                error_text
+            );
+        }
+
+        // Parse response
+        let code_response: CodeInfoResponse = response
+            .json()
+            .await
+            .context("Failed to parse code info response")?;
+
+        // Convert checksum to lowercase hex
+        let checksum = code_response.code_info.data_hash.to_lowercase();
+
+        Ok(CodeInfo {
+            code_id,
+            creator: code_response.code_info.creator,
+            checksum,
+        })
+    }
+}
+
+/// Code info from the chain
+#[derive(Debug, Clone)]
+pub struct CodeInfo {
+    /// Code ID
+    pub code_id: u64,
+    /// Creator address
+    #[allow(dead_code)]
+    pub creator: String,
+    /// Checksum (SHA-256 hash of wasm bytecode, lowercase hex)
+    pub checksum: String,
+}
+
+/// Response from /cosmwasm/wasm/v1/code/{code_id}
+#[derive(Debug, Clone, Deserialize)]
+struct CodeInfoResponse {
+    code_info: CodeInfoData,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CodeInfoData {
+    #[allow(dead_code)]
+    code_id: String,
+    #[allow(dead_code)]
+    creator: String,
+    data_hash: String,
 }
 
 // ============================================================================

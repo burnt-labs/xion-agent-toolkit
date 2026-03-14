@@ -13,6 +13,8 @@ Detailed documentation for all xion-treasury scripts.
 - [fee-config.sh](#fee-configsh)
 - [admin.sh](#adminsh)
 - [update-params.sh](#update-paramssh)
+- [export.sh](#exportsh)
+- [import.sh](#importsh)
 
 ---
 
@@ -258,6 +260,92 @@ Updates Treasury contract parameters.
 - `--redirect-url <URL>` - OAuth redirect URL
 - `--icon-url <URL>` - Treasury icon URL
 - `--metadata <JSON>` - Metadata as JSON string
+
+---
+
+## export.sh
+
+Exports Treasury configuration (grants, fee config, params) to a JSON file for backup or migration.
+
+**Usage:**
+```bash
+./scripts/export.sh <ADDRESS> [--output FILE] [--network NETWORK]
+```
+
+**Arguments:**
+- `ADDRESS` - Treasury contract address (required)
+
+**Options:**
+- `--output FILE` - Output file path (optional, defaults to stdout)
+- `--network NETWORK` - Network: testnet, mainnet (default: testnet)
+
+**Output (stdout):**
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123...",
+  "config": {
+    "grants": [...],
+    "fee_config": {...},
+    "params": {...}
+  }
+}
+```
+
+**Examples:**
+```bash
+# Export to stdout
+./scripts/export.sh xion1treasury...
+
+# Export to file
+./scripts/export.sh xion1treasury... --output treasury-backup.json
+
+# Export from mainnet
+./scripts/export.sh xion1treasury... --network mainnet --output backup.json
+```
+
+---
+
+## import.sh
+
+Imports configuration (grants, fee config, params) to an existing Treasury.
+
+**Usage:**
+```bash
+./scripts/import.sh <ADDRESS> --from-file <FILE> [--dry-run] [--network NETWORK]
+```
+
+**Arguments:**
+- `ADDRESS` - Treasury contract address (required)
+
+**Options:**
+- `--from-file FILE` - Path to JSON configuration file (required)
+- `--dry-run` - Preview actions without executing transactions (optional)
+- `--network NETWORK` - Network: testnet, mainnet (default: testnet)
+
+**Output (stdout):**
+```json
+{
+  "success": true,
+  "treasury_address": "xion1abc123...",
+  "actions_executed": [...],
+  "tx_hashes": ["ABC123...", "DEF456..."]
+}
+```
+
+**Examples:**
+```bash
+# Preview import (dry run)
+./scripts/import.sh xion1treasury... --from-file treasury-backup.json --dry-run
+
+# Execute import
+./scripts/import.sh xion1treasury... --from-file treasury-backup.json
+
+# Import to mainnet treasury
+./scripts/import.sh xion1treasury... --from-file backup.json --network mainnet
+```
+
+**Warning**: Import will execute transactions to configure the Treasury. Always use `--dry-run` first to preview changes.
 
 ---
 

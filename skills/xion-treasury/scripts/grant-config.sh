@@ -57,10 +57,49 @@ Add Command Options:
   --keys <KEYS>           Comma-separated list of accepted message keys
   
   # Preset shortcuts
-  --preset <TYPE>         Use preset: send, execute, instantiate, delegate, vote
+  --preset <TYPE>         Use preset (see Supported Presets below)
 
 Remove Command Options:
   --type-url <URL>        Type URL of the grant to remove (required)
+
+Supported Presets:
+  Banking:
+    send                   - /cosmos.bank.v1beta1.MsgSend (send authorization)
+  
+  CosmWasm:
+    execute                - /cosmwasm.wasm.v1.MsgExecuteContract (contract-execution)
+    instantiate            - /cosmwasm.wasm.v1.MsgInstantiateContract
+    instantiate2           - /cosmwasm.wasm.v1.MsgInstantiateContract2
+  
+  Staking:
+    delegate               - /cosmos.staking.v1beta1.MsgDelegate
+    undelegate             - /cosmos.staking.v1beta1.MsgUndelegate
+    redelegate             - /cosmos.staking.v1beta1.MsgBeginRedelegate
+    withdraw-rewards       - /cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward
+  
+  Governance:
+    vote                   - /cosmos.gov.v1beta1.MsgVote
+    gov-deposit            - /cosmos.gov.v1beta1.MsgDeposit
+    gov-submit-proposal    - /cosmos.gov.v1beta1.MsgSubmitProposal
+  
+  IBC:
+    ibc-transfer           - /ibc.applications.transfer.v1.MsgTransfer
+  
+  Authz:
+    authz-exec             - /cosmos.authz.v1beta1.MsgExec
+    authz-revoke           - /cosmos.authz.v1beta1.MsgRevoke
+  
+  Feegrant:
+    feegrant-grant         - /cosmos.feegrant.v1beta1.MsgGrantAllowance
+    feegrant-revoke        - /cosmos.feegrant.v1beta1.MsgRevokeAllowance
+  
+  Other:
+    unjail                 - /cosmos.slashing.v1beta1.MsgUnjail
+    crisis-verify          - /cosmos.crisis.v1beta1.MsgVerifyInvariant
+    evidence-submit        - /cosmos.evidence.v1beta1.MsgSubmitEvidence
+    vesting-create         - /cosmos.vesting.v1beta1.MsgCreateVestingAccount
+    tokenfactory-mint      - /osmosis.tokenfactory.v1beta1.MsgMint
+    tokenfactory-burn      - /osmosis.tokenfactory.v1beta1.MsgBurn
 
 Supported Message Types (for --type-url):
   /cosmos.bank.v1beta1.MsgSend                    - Send funds
@@ -146,11 +185,62 @@ get_preset_type_url() {
         instantiate)
             echo "/cosmwasm.wasm.v1.MsgInstantiateContract"
             ;;
+        instantiate2)
+            echo "/cosmwasm.wasm.v1.MsgInstantiateContract2"
+            ;;
         delegate)
             echo "/cosmos.staking.v1beta1.MsgDelegate"
             ;;
+        undelegate)
+            echo "/cosmos.staking.v1beta1.MsgUndelegate"
+            ;;
+        redelegate)
+            echo "/cosmos.staking.v1beta1.MsgBeginRedelegate"
+            ;;
+        withdraw-rewards)
+            echo "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward"
+            ;;
         vote)
             echo "/cosmos.gov.v1beta1.MsgVote"
+            ;;
+        gov-deposit)
+            echo "/cosmos.gov.v1beta1.MsgDeposit"
+            ;;
+        gov-submit-proposal)
+            echo "/cosmos.gov.v1beta1.MsgSubmitProposal"
+            ;;
+        ibc-transfer)
+            echo "/ibc.applications.transfer.v1.MsgTransfer"
+            ;;
+        authz-exec)
+            echo "/cosmos.authz.v1beta1.MsgExec"
+            ;;
+        authz-revoke)
+            echo "/cosmos.authz.v1beta1.MsgRevoke"
+            ;;
+        feegrant-grant)
+            echo "/cosmos.feegrant.v1beta1.MsgGrantAllowance"
+            ;;
+        feegrant-revoke)
+            echo "/cosmos.feegrant.v1beta1.MsgRevokeAllowance"
+            ;;
+        unjail)
+            echo "/cosmos.slashing.v1beta1.MsgUnjail"
+            ;;
+        crisis-verify)
+            echo "/cosmos.crisis.v1beta1.MsgVerifyInvariant"
+            ;;
+        evidence-submit)
+            echo "/cosmos.evidence.v1beta1.MsgSubmitEvidence"
+            ;;
+        vesting-create)
+            echo "/cosmos.vesting.v1beta1.MsgCreateVestingAccount"
+            ;;
+        tokenfactory-mint)
+            echo "/osmosis.tokenfactory.v1beta1.MsgMint"
+            ;;
+        tokenfactory-burn)
+            echo "/osmosis.tokenfactory.v1beta1.MsgBurn"
             ;;
         *)
             echo ""
@@ -168,7 +258,13 @@ get_preset_auth_type() {
             # MsgExecuteContract must use contract-execution for security
             echo "contract-execution"
             ;;
-        instantiate|delegate|vote)
+        ibc-transfer)
+            echo "ibc-transfer"
+            ;;
+        instantiate|instantiate2|delegate|undelegate|redelegate|withdraw-rewards|vote|\
+        gov-deposit|gov-submit-proposal|authz-exec|authz-revoke|feegrant-grant|\
+        feegrant-revoke|unjail|crisis-verify|evidence-submit|vesting-create|\
+        tokenfactory-mint|tokenfactory-burn)
             echo "generic"
             ;;
         *)
@@ -321,7 +417,7 @@ build_grant_config_json() {
         preset_auth_type=$(get_preset_auth_type "$PRESET")
         
         if [[ -z "$preset_type_url" ]]; then
-            log_error "Invalid preset: $PRESET. Valid presets: send, execute, instantiate, delegate, vote"
+            log_error "Invalid preset: $PRESET. Valid presets: send, execute, instantiate, instantiate2, delegate, undelegate, redelegate, withdraw-rewards, vote, gov-deposit, gov-submit-proposal, ibc-transfer, authz-exec, authz-revoke, feegrant-grant, feegrant-revoke, unjail, crisis-verify, evidence-submit, vesting-create, tokenfactory-mint, tokenfactory-burn"
             output_json '{
                 "success": false,
                 "error": "Invalid preset: '"$PRESET"'",

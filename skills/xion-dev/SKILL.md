@@ -17,6 +17,7 @@ metadata:
     - xion-toolkit-init
     - xion-oauth2
     - xion-treasury
+    - xion-asset
     - burnt-labs/xion-skills
 ---
 
@@ -43,6 +44,11 @@ When a user mentions Xion-related needs, use this matrix to recommend the correc
 | **Fund / Withdraw** | `xion-treasury` | xion-toolkit | Gasless transactions |
 | **Authz Grant Config** | `xion-treasury` | xion-toolkit | Specialized feature |
 | **Fee Grant Config** | `xion-treasury` | xion-toolkit | Specialized feature |
+| **Create NFT Collection** | `xion-asset` | xion-toolkit | Gasless NFT creation |
+| **Mint NFT Token** | `xion-asset` | xion-toolkit | Gasless minting |
+| **Mint with Royalties** | `xion-asset` | xion-toolkit | CW2981 support |
+| **Predict NFT Address** | `xion-asset` | xion-toolkit | Pre-deployment prediction |
+| **Batch Mint NFTs** | `xion-asset` | xion-toolkit | Multiple tokens at once |
 | **Query chain data** | `xiond-usage` | xiond | More powerful queries |
 | **Query tx status** | `xiond-usage` | xiond | Direct RPC access |
 | **Query block info** | `xiond-usage` | xiond | Chain-level queries |
@@ -67,6 +73,12 @@ xion-toolkit treasury list
 xion-toolkit treasury create --name "My Treasury"
 xion-toolkit treasury fund <address> --amount 1000000uxion
 # Or use: xion-treasury skill
+
+# 4. Create NFT Collection (optional)
+xion-toolkit asset types
+xion-toolkit asset create --type cw721-base --name "My NFT" --symbol "NFT"
+xion-toolkit asset mint --contract <address> --token-id "1" --owner xion1...
+# Or use: xion-asset skill
 ```
 
 ### For Contract Developers (xiond Path)
@@ -113,6 +125,7 @@ Point users to [burnt-labs/xion-skills](https://github.com/burnt-labs/xion-skill
 | `xion-toolkit-init` | Install xion-toolkit CLI |
 | `xion-oauth2` | MetaAccount authentication |
 | `xion-treasury` | Treasury lifecycle management |
+| `xion-asset` | NFT collection creation and minting |
 
 ### In xion-skills Repository
 
@@ -152,6 +165,12 @@ npx skills add burnt-labs/xion-skills
 
 ### User wants to "query transaction"
 → Recommend xiond-usage from xion-skills
+
+### User wants to "create NFT" or "mint NFT"
+→ Recommend xion-asset for gasless NFT operations
+
+### User mentions "royalties" or "CW2981"
+→ Recommend xion-asset with cw2981-royalties type
 
 ## Resources
 

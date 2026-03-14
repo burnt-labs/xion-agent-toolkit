@@ -3,7 +3,7 @@
 A CLI-driven, Agent-oriented toolkit for developing on the Xion blockchain.
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Test Coverage](https://img.shields.io/badge/tests-369%20passing-green)]()
+[![Test Coverage](https://img.shields.io/badge/tests-232%20passing-green)]()
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 ## Overview
@@ -17,6 +17,7 @@ Xion Agent Toolkit provides a command-line interface for interacting with Xion's
 - 👤 Admin management (propose, accept, cancel)
 - 🔧 Treasury parameter updates
 - 🚀 Generic contract instantiation
+- 🎨 **Asset Builder (CW721 NFT)** - Create, mint, batch operations
 - 🔍 Smart contract queries (read-only)
 - 🤖 Agent-friendly JSON output
 - 🔒 Encrypted credential storage
@@ -72,12 +73,6 @@ Prerequisites:
 git clone https://github.com/burnt-labs/xion-agent-toolkit
 cd xion-agent-toolkit
 cargo install --path .
-```
-
-### From Crates.io
-
-```bash
-cargo install xion-agent-toolkit
 ```
 
 ## Skills for AI Agents
@@ -303,6 +298,34 @@ xion-toolkit contract query \
 
 For detailed documentation, see [docs/cli-reference.md](./docs/cli-reference.md).
 
+### Asset (NFT)
+
+```bash
+# List available NFT types
+xion-toolkit asset types
+
+# Create NFT collection
+xion-toolkit asset create --type cw721-base --name "My Collection" --symbol "NFT"
+
+# Mint NFT token
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
+
+# Mint with royalties (CW2981)
+xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
+  --asset-type cw2981-royalties \
+  --royalty-address xion1... --royalty-percentage 0.05
+
+# Predict contract address
+xion-toolkit asset predict --type cw721-base --name "My Collection" \
+  --symbol "NFT" --salt "my-unique-salt"
+
+# Batch mint from JSON file
+xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
+
+# Query NFT contract
+xion-toolkit asset query --contract xion1... --msg '{"nft_info": {"token_id": "1"}}'
+```
+
 ### Authentication
 
 ```bash
@@ -419,11 +442,17 @@ Errors include actionable hints:
 
 ## Documentation
 
-- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference for AI Agents
+### For AI Agents
+
+- **[INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md)** - Installation guide for AI Agents
+- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference (~260 lines)
 - **[ERROR-CODES.md](./docs/ERROR-CODES.md)** - Complete error code reference
+
+### For Developers
+
 - [CLI Reference](./docs/cli-reference.md) - Detailed command documentation
 - [Configuration Guide](./docs/configuration.md) - Setup and configuration
-- [Skills Guide](./docs/skills-guide.md) - AI Agent integration
+- [Skills Guide](./docs/skills-guide.md) - Skills usage overview
 
 ## Resources
 

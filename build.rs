@@ -33,6 +33,13 @@ pub struct NetworkConfig {{
     pub treasury_code_id: u64,
     pub callback_port: u16,
     pub indexer_url: String,
+    // CW721 Asset Code IDs
+    pub cw721_base_code_id: u64,
+    pub cw721_metadata_onchain_code_id: u64,
+    pub cw721_expiration_code_id: u64,
+    pub cw721_fixed_price_code_id: u64,
+    pub cw721_non_transferable_code_id: u64,
+    pub cw2981_royalties_code_id: u64,
 }}
 
 pub fn get_testnet_config() -> NetworkConfig {{
@@ -45,6 +52,13 @@ pub fn get_testnet_config() -> NetworkConfig {{
         treasury_code_id: 1260,
         callback_port: 54321,
         indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
+        // CW721 Asset Code IDs (Testnet)
+        cw721_base_code_id: 522,
+        cw721_metadata_onchain_code_id: 525,
+        cw721_expiration_code_id: 523,
+        cw721_fixed_price_code_id: 524,
+        cw721_non_transferable_code_id: 526,
+        cw2981_royalties_code_id: 528,
     }}
 }}
 
@@ -58,6 +72,13 @@ pub fn get_mainnet_config() -> NetworkConfig {{
         treasury_code_id: 63,
         callback_port: 54321,
         indexer_url: "https://daodaoindexer.burnt.com/xion-mainnet-1".to_string(),
+        // CW721 Asset Code IDs (Mainnet - not yet deployed)
+        cw721_base_code_id: 0,
+        cw721_metadata_onchain_code_id: 0,
+        cw721_expiration_code_id: 0,
+        cw721_fixed_price_code_id: 0,
+        cw721_non_transferable_code_id: 0,
+        cw2981_royalties_code_id: 0,
     }}
 }}
 "#,
