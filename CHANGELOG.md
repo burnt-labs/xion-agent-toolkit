@@ -5,6 +5,48 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.6.0...0.7.0) (2026-03-14)
+
+
+### Features
+
+* **account:** add account info command ([53776c8](https://github.com/burnt-labs/xion-agent-toolkit/commit/53776c8527a822ccc48e34e485f0ebad9b47f824))
+* **account:** add MetaAccount info command ([157b354](https://github.com/burnt-labs/xion-agent-toolkit/commit/157b3542d5665518b73cce1894324cc17d52e7c5))
+* **account:** rewrite account info to use OAuth2 API ([d0f1d26](https://github.com/burnt-labs/xion-agent-toolkit/commit/d0f1d262a09d7056d31acb5126219b8a6c5a33ae))
+* Asset Builder, Batch Operations, Extended Grants, and MetaAccount Info ([057edc0](https://github.com/burnt-labs/xion-agent-toolkit/commit/057edc05615dec7a6b0b5d8d54e41406c28f7caf))
+* **asset:** add Asset Builder module for CW721 NFT deployment and minting ([4fc0919](https://github.com/burnt-labs/xion-agent-toolkit/commit/4fc0919ed52338a2324b16898ff37d3e21d0ea7d))
+* **asset:** add CW721 variant support for Phase 2 ([f2874ce](https://github.com/burnt-labs/xion-agent-toolkit/commit/f2874ce8b10a5713a69182338bd19ffe2b45f987))
+* **asset:** add Phase 3 features - address prediction and batch minting ([4c405cb](https://github.com/burnt-labs/xion-agent-toolkit/commit/4c405cbfe54c8640d36f371421265365fa327882))
+* **batch:** add batch operations for multi-message transactions ([7e2e2de](https://github.com/burnt-labs/xion-agent-toolkit/commit/7e2e2de79643e39a36312786b04839de08c3e8e2))
+* **skills:** add xion-asset skill for CW721 NFT operations ([b078ce0](https://github.com/burnt-labs/xion-agent-toolkit/commit/b078ce0487653f0f0f28e8b17d0d8d3d7443603b))
+* **treasury:** add 12 new grant presets for extended type support ([e7acbd5](https://github.com/burnt-labs/xion-agent-toolkit/commit/e7acbd52d635ca9fe7ab12de09d60379bcda4860))
+* **treasury:** add is_oauth2_app and name support to params update ([6a2e3e7](https://github.com/burnt-labs/xion-agent-toolkit/commit/6a2e3e7b411459a8b2b72bc351149196b932861e))
+
+
+### Bug Fixes
+
+* **asset:** add missing re-export of AssetBuilderManager ([81e31aa](https://github.com/burnt-labs/xion-agent-toolkit/commit/81e31aab7c8cb7ebd909a5efde5d171aa5dd019b))
+* **skills:** review and optimize all skills ([d8516ba](https://github.com/burnt-labs/xion-agent-toolkit/commit/d8516baf0dd15b2c77f92e5916b1e50206ae52c7))
+* **tests:** add trap cleanup and consistent bash options ([a26d6b9](https://github.com/burnt-labs/xion-agent-toolkit/commit/a26d6b9c1fa2a795d37ea827f4779a0df930f0f4))
+* **treasury:** add validation and tests for params update ([f191d5e](https://github.com/burnt-labs/xion-agent-toolkit/commit/f191d5ee1f827ab731ecda33831eead375172d9b))
+
+
+### Documentation
+
+* add Asset Builder documentation for Phase 1+2+3 ([446c4b7](https://github.com/burnt-labs/xion-agent-toolkit/commit/446c4b705ede8b61cc1cbfabeb17a8baf7668e84))
+* add QUICK-REFERENCE.md links to all documentation files ([94f5acf](https://github.com/burnt-labs/xion-agent-toolkit/commit/94f5acf907bf0bc2c3e611eb36a00576b592e6ff))
+* optimize documentation structure and remove crates.io references ([0a90e22](https://github.com/burnt-labs/xion-agent-toolkit/commit/0a90e227c371c63d6b6335c068958113016c91bb))
+* **plans:** add feature roadmap and detailed plan documents ([c353caf](https://github.com/burnt-labs/xion-agent-toolkit/commit/c353caf8d7011f7f5f305521fa3ae81f7f755899))
+* **plans:** mark Phase 1 features as completed, add E2E tests ([db669e5](https://github.com/burnt-labs/xion-agent-toolkit/commit/db669e5f87f7888d63c10f6f871789418eefedc2))
+* **plans:** update feature roadmap and status for Phase 1 completion ([5a13a46](https://github.com/burnt-labs/xion-agent-toolkit/commit/5a13a4678adca612ba35600fe940b59b092bd182))
+* update cli-reference with --name and --is-oauth2-app flags ([9ddc6f3](https://github.com/burnt-labs/xion-agent-toolkit/commit/9ddc6f320993b84d66b11fbc0d030e9c089a5a21))
+
+
+### Chores
+
+* archive completed plans and improve docs for AI agents ([b326d75](https://github.com/burnt-labs/xion-agent-toolkit/commit/b326d7571146813c2d8942ef90fcc577362892e8))
+* archive plans, improve docs for AI agents, and add params update support ([62ac467](https://github.com/burnt-labs/xion-agent-toolkit/commit/62ac46783436558717676df4d3bb134da9ee400f))
+
 ## [0.6.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.5.0...0.6.0) (2026-03-11)
 
 
