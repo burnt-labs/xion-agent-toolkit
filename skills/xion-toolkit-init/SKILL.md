@@ -96,7 +96,7 @@ Expected output:
 ```json
 {
   "success": true,
-  "version": "xion-agent-toolkit 0.4.3",
+  "version": "xion-toolkit 0.x.x",
   "network": "testnet",
   "authenticated": false
 }

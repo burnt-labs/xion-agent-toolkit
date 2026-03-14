@@ -75,12 +75,6 @@ cd xion-agent-toolkit
 cargo install --path .
 ```
 
-### From Crates.io
-
-```bash
-cargo install xion-agent-toolkit
-```
-
 ## Skills for AI Agents
 
 Xion Agent Toolkit includes pre-built skills that wrap CLI commands for easy AI Agent integration. These skills follow the [Agent Skills format](https://agentskills.io/).
@@ -448,11 +442,17 @@ Errors include actionable hints:
 
 ## Documentation
 
-- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference for AI Agents
+### For AI Agents
+
+- **[INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md)** - Installation guide for AI Agents
+- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference (~260 lines)
 - **[ERROR-CODES.md](./docs/ERROR-CODES.md)** - Complete error code reference
+
+### For Developers
+
 - [CLI Reference](./docs/cli-reference.md) - Detailed command documentation
 - [Configuration Guide](./docs/configuration.md) - Setup and configuration
-- [Skills Guide](./docs/skills-guide.md) - AI Agent integration
+- [Skills Guide](./docs/skills-guide.md) - Skills usage overview
 
 ## Resources
 
