@@ -4,8 +4,7 @@
 # Tests the asset module: types, predict, create, mint, query, batch-mint
 #
 
-# Use pipefail but not -e to avoid early exits
-set -uo pipefail
+set -euo pipefail
 
 # =============================================================================
 # Configuration
@@ -402,7 +401,12 @@ cleanup() {
 # =============================================================================
 
 main() {
+    # Set trap for cleanup
+    trap cleanup EXIT
+
     echo ""
+    echo "================================"
+    echo "Asset (NFT) E2E Test"
     echo "================================"
     echo "Asset (NFT) Module E2E Test"
     echo "================================"

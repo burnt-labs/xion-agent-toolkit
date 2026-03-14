@@ -4,8 +4,7 @@
 # Tests the batch module: validate, execute, error handling
 #
 
-# Use pipefail but not -e to avoid early exits
-set -uo pipefail
+set -euo pipefail
 
 # =============================================================================
 # Configuration
@@ -447,9 +446,12 @@ cleanup() {
 # =============================================================================
 
 main() {
+    # Set trap for cleanup
+    trap cleanup EXIT
+
     echo ""
     echo "================================"
-    echo "Batch Module E2E Test"
+    echo "Batch Operations E2E Test"
     echo "================================"
     echo ""
     log_info "Binary: $BINARY_PATH"
