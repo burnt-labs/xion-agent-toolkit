@@ -1,80 +1,23 @@
 {
   "version": 1,
   "updated_at": "2026-03-14",
-  "plans": [
-    {
-      "id": "metaaccount-info",
-      "title": "MetaAccount Info Command",
-      "file": "plans/metaaccount-info.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev"],
-      "tags": ["feature", "account", "p1"],
-      "created_at": "2026-03-13",
-      "updated_at": "2026-03-13",
-      "done_at": "2026-03-13",
-      "notes": "COMPLETED: Rewrote account info to use OAuth2 API /api/v1/me endpoint. Removed DaoDao Indexer dependency."
-    },
-    {
-      "id": "extended-grant-types",
-      "title": "Extended Grant Types",
-      "file": "plans/extended-grant-types.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev"],
-      "tags": ["feature", "treasury", "p2"],
-      "created_at": "2026-03-13",
-      "updated_at": "2026-03-13",
-      "done_at": "2026-03-13",
-      "notes": "COMPLETED: Added 12 new presets to PRESET_TYPES array, updated error messages, added 11 unit tests, updated docs and skills script."
-    },
-    {
-      "id": "batch-operations",
-      "title": "Batch Operations",
-      "file": "plans/batch-operations.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@architect", "@fullstack-dev", "@qa-engineer"],
-      "tags": ["feature", "p3", "batch"],
-      "created_at": "2026-03-13",
-      "updated_at": "2026-03-13",
-      "done_at": "2026-03-13",
-      "notes": "QA VERIFIED: All test cases passed - CLI help accurate, validation working, error handling correct, unit tests passing (23 tests)."
-    },
-    {
-      "id": "asset-builder",
-      "title": "Asset Builder (CW721)",
-      "file": "plans/asset-builder.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@architect", "@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["feature", "nft", "p4"],
-      "created_at": "2026-03-13",
-      "updated_at": "2026-03-14",
-      "done_at": "2026-03-14",
-      "notes": "COMPLETED: Phase 1+2+3. Address prediction, batch minting, 5 variants (fixed-price removed). 232 tests passing. QC+QA verified."
-    }
-  ],
+  "plans": [],
   "_notes": {
-    "archived": "All previous plans archived to plans/archived/ on 2026-03-12. See plans/archived/ for historical records.",
+    "archived": "See plans/archived/README.md for archived plans summary.",
     "knowledge": [
       {
         "file": "plans/knowledge/oauth-client-implementation.md",
-        "desc": "Development log and technical decisions for OAuthClient implementation (2026-03-05)."
+        "desc": "OAuthClient implementation decisions."
       },
       {
         "file": "plans/knowledge/treasury-create-design.md",
-        "desc": "Design document for enhanced `xion-toolkit treasury create` CLI command."
+        "desc": "Treasury create command design."
       },
       {
         "file": "plans/knowledge/TYPES_COMPARISON.md",
-        "desc": "Treasury-related type comparison and mismatch impact analysis notes."
+        "desc": "Treasury type comparison analysis."
       }
     ],
-    "roadmap": "plans/feature-roadmap.md - Overall feature roadmap and priorities"
+    "roadmap": "plans/feature-roadmap.md"
   }
 }
