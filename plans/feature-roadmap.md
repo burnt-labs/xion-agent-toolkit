@@ -1,22 +1,31 @@
 ---
-status: InProgress
+status: Done
 created_at: 2026-03-13
-updated_at: 2026-03-13
+updated_at: 2026-03-14
+done_at: 2026-03-14
 ---
 
-# Feature Roadmap: Next Steps for xion-agent-toolkit
+# Feature Roadmap: xion-agent-toolkit
 
-This document outlines planned features based on comparison with Developer Portal and user feedback.
+This document outlines completed and planned features for the toolkit.
 
-## Overview
+## Completed Features (Phase 1)
+
+| Feature | Priority | Complexity | Status | Completed |
+|---------|----------|------------|--------|-----------|
+| MetaAccount Info | P1 | Low | ✅ Done | 2026-03-13 |
+| Extended Grant Types | P2 | Medium | ✅ Done | 2026-03-13 |
+| Batch Operations | P3 | Medium | ✅ Done | 2026-03-13 |
+| Asset Builder (CW721) | P4 | High | ✅ Done | 2026-03-14 |
+
+## Future Considerations
 
 | Feature | Priority | Complexity | Status |
 |---------|----------|------------|--------|
-| MetaAccount Info | P1 | Low | Pending |
-| Extended Grant Types | P2 | Medium | Pending |
-| Batch Operations | P3 | Medium | Pending |
-| Asset Builder | P4 | High | Pending |
 | Transaction Wait (xion-skills) | P3 | Low | Deferred |
+| CW20 Token Support | P2 | Medium | Proposed |
+| Multi-sig Wallet Support | P3 | High | Proposed |
+| IBC Transfer Enhancement | P3 | Medium | Proposed |
 
 ---
 
@@ -94,10 +103,18 @@ src/
 
 ### Acceptance Criteria
 
-- [ ] `xion-toolkit account info` returns MetaAccount authenticators
-- [ ] Works on both testnet and mainnet
-- [ ] Proper error handling when not authenticated
-- [ ] JSON output for agent consumption
+- [x] `xion-toolkit account info` returns MetaAccount authenticators
+- [x] Works on both testnet and mainnet
+- [x] Proper error handling when not authenticated
+- [x] JSON output for agent consumption
+
+### Completion Notes
+
+**Completed: 2026-03-13**
+
+- Rewrote to use OAuth2 API `/api/v1/me` endpoint instead of DaoDao Indexer
+- Removed DaoDao Indexer dependency for cleaner architecture
+- See `plans/metaaccount-info.md` for details
 
 ---
 
@@ -182,10 +199,19 @@ src/
 
 ### Acceptance Criteria
 
-- [ ] All 24 type URLs supported via CLI
-- [ ] Proper presets for common use cases
-- [ ] Documentation updated
-- [ ] Tests for new presets
+- [x] All 24 type URLs supported via CLI
+- [x] Proper presets for common use cases
+- [x] Documentation updated
+- [x] Tests for new presets
+
+### Completion Notes
+
+**Completed: 2026-03-13**
+
+- Added 12 new presets to `PRESET_TYPES` array
+- Updated error messages for better UX
+- Added 11 unit tests for new presets
+- See `plans/extended-grant-types.md` for details
 
 ---
 
@@ -262,10 +288,20 @@ src/
 
 ### Acceptance Criteria
 
-- [ ] OAuth2 API batch capability documented
-- [ ] If supported: batch execute command works
-- [ ] Proper error handling for partial failures
-- [ ] Transaction hash returned for all messages
+- [x] OAuth2 API batch capability documented
+- [x] Batch execute command works
+- [x] Proper error handling for partial failures
+- [x] Transaction hash returned for all messages
+
+### Completion Notes
+
+**Completed: 2026-03-13**
+
+- Confirmed OAuth2 API supports batch transactions
+- Added `src/batch/` module with executor and types
+- Added `xion-toolkit batch execute` command
+- 23 unit tests passing
+- See `plans/batch-operations.md` for details
 
 ---
 
@@ -359,11 +395,26 @@ src/
 
 ### Acceptance Criteria
 
-- [ ] Deploy cw721-base contract
-- [ ] Mint tokens to recipient
-- [ ] Query contract state
-- [ ] Support CW2981 royalties
-- [ ] Predictable addresses via instantiate2
+- [x] Deploy cw721-base contract
+- [x] Mint tokens to recipient
+- [x] Query contract state
+- [x] Support CW2981 royalties
+- [x] Predictable addresses via instantiate2
+
+### Completion Notes
+
+**Completed: 2026-03-14**
+
+**Phase 1**: Basic CW721 deployment and minting
+**Phase 2**: All 5 variants supported (cw721-base, metadata-onchain, expiration, non-transferable, cw2981-royalties)
+**Phase 3**: Address prediction and batch minting
+
+- Added `src/asset/` module with deploy, mint, query, and predict-address commands
+- 5 CW721 variants supported (fixed-price removed as CW20-only)
+- Batch minting support
+- Predictable contract addresses via instantiate2
+- Skills integration: `skills/xion-asset.sh`
+- See `plans/asset-builder.md` for details
 
 ---
 
@@ -401,8 +452,41 @@ bash wait-tx.sh <txhash> [--timeout 60] [--interval 2]
 
 ---
 
+---
+
+## Sign-off
+
+| Date | Signer | Content | Status |
+|------|--------|---------|--------|
+| 2026-03-14 | @project-manager | All Phase 1 features completed | ✅ Done |
+
+---
+
+## Future Directions
+
+### CW20 Token Support (Proposed)
+
+Extend Asset Builder to support fungible tokens (CW20).
+
+```bash
+xion-toolkit asset deploy --type cw20-base --name "My Token" --symbol "TKN" --decimals 6
+xion-toolkit asset mint --contract xion1... --recipient xion1... --amount 1000000
+```
+
+### Multi-sig Wallet Support (Proposed)
+
+Support for multi-signature treasury management.
+
+### IBC Transfer Enhancement (Proposed)
+
+Improved cross-chain transfer experience with channel auto-discovery.
+
+---
+
 ## Next Steps
 
-1. Start with **MetaAccount Info** implementation
-2. Create detailed plan document: `plans/metaaccount-info.md`
-3. Implement in phases with proper testing
+1. ~~Start with **MetaAccount Info** implementation~~ ✅
+2. ~~Create detailed plan document: `plans/metaaccount-info.md`~~ ✅
+3. ~~Implement in phases with proper testing~~ ✅
+4. **Current**: Skills documentation improvement
+5. **Current**: E2E test coverage for new modules
