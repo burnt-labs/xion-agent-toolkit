@@ -1,6 +1,6 @@
 # Xion Agent Toolkit - Quick Reference
 
-> For AI Agents: Essential commands and patterns in one file (~100 lines).
+> For AI Agents: Essential commands and patterns in one file (~120 lines).
 
 ## Authentication
 
@@ -38,6 +38,9 @@ xion-toolkit treasury create \
   --name "My Treasury" \
   --is-oauth2-app
 
+# Predict address before deployment (Phase 3)
+xion-toolkit treasury create --predict --salt "my-unique-salt"
+
 # Query treasury details
 xion-toolkit treasury query <ADDRESS>
 
@@ -46,6 +49,14 @@ xion-toolkit treasury fund <ADDRESS> --amount 1000000uxion
 
 # Withdraw
 xion-toolkit treasury withdraw <ADDRESS> --amount 500000uxion
+
+# Export single/all treasuries
+xion-toolkit treasury export <ADDRESS> --output backup.json
+xion-toolkit treasury export --output all-treasuries.json
+
+# Batch operations (Phase 3)
+xion-toolkit treasury batch fund --config funds.json
+xion-toolkit treasury batch grant-config --config grants.json
 
 # Update parameters (redirect_url, icon_url, name, is_oauth2_app)
 xion-toolkit treasury params update <ADDRESS> \
@@ -65,6 +76,11 @@ xion-toolkit treasury params update <ADDRESS> \
 **Create:**
 ```json
 {"success": true, "address": "xion1...", "tx_hash": "0x...", "admin": "xion1...", "created_at": "2024-01-01T00:00:00Z"}
+```
+
+**Predict:**
+```json
+{"success": true, "predicted_address": "xion1...", "salt": "my-salt", "code_id": 1260}
 ```
 
 ---
@@ -178,6 +194,29 @@ xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
 
 ---
 
+## Output Formats (Phase 2)
+
+```bash
+# Pretty JSON (default)
+xion-toolkit treasury list --output json
+
+# Compact JSON for CI/CD
+xion-toolkit treasury list --output json-compact
+
+# GitHub Actions workflow commands
+xion-toolkit treasury create --output github-actions
+```
+
+| Format | Use Case |
+|--------|----------|
+| `json` | Human reading (default) |
+| `json-compact` | CI/CD, pipe to jq |
+| `github-actions` | GitHub Actions pipelines |
+
+See [EXIT-CODES.md](./EXIT-CODES.md) for standardized exit codes.
+
+---
+
 ## Configuration
 
 ```bash
@@ -249,6 +288,13 @@ xion-toolkit auth status                    # Check auth
 xion-toolkit treasury list                  # List treasuries
 xion-toolkit treasury query <ADDRESS>       # Check details
 xion-toolkit contract execute --contract <ADDRESS> --msg msg.json
+```
+
+### CI/CD Pipeline
+```bash
+xion-toolkit auth status --output json-compact
+xion-toolkit treasury list --output github-actions
+xion-toolkit treasury batch fund --config funds.json --output json-compact
 ```
 
 ### Troubleshooting

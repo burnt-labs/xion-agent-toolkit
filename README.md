@@ -18,6 +18,9 @@ Xion Agent Toolkit provides a command-line interface for interacting with Xion's
 - 🔧 Treasury parameter updates
 - 🚀 Generic contract instantiation
 - 🎨 **Asset Builder (CW721 NFT)** - Create, mint, batch operations
+- 🔮 **Predicted Address Computation** - Compute addresses before deployment
+- 📦 **Batch Treasury Operations** - Fund/configure multiple treasuries
+- 🔄 **CI/CD Integration** - GitHub Actions output, standardized exit codes
 - 🔍 Smart contract queries (read-only)
 - 🤖 Agent-friendly JSON output
 - 🔒 Encrypted credential storage
@@ -332,9 +335,17 @@ xion-toolkit treasury query <address>            # Query details
 xion-toolkit treasury fund <address> --amount N  # Fund treasury
 xion-toolkit treasury withdraw <address> --amount N --to <recipient>  # Withdraw
 
+# Predicted address (compute before deployment)
+xion-toolkit treasury create --predict --salt "my-unique-salt"
+
 # Export/Import (backup & migration)
 xion-toolkit treasury export <address> [--output file.json]  # Export config
+xion-toolkit treasury export [--output file.json]            # Export all treasuries
 xion-toolkit treasury import <address> --from-file config.json [--dry-run]  # Import config
+
+# Batch operations
+xion-toolkit treasury batch fund --config funds.json         # Fund multiple treasuries
+xion-toolkit treasury batch grant-config --config grants.json # Configure multiple grants
 
 # Grant configuration
 xion-toolkit treasury grant-config add <address> [options]     # Add grant
@@ -381,9 +392,33 @@ xion-toolkit status                       # Show status
 
 ```bash
 xion-toolkit --network <testnet|mainnet>  # Network override
+xion-toolkit --output <format>             # Output format (json, json-compact, github-actions)
 xion-toolkit --help                        # Show help
 xion-toolkit --version                     # Show version
 ```
+
+### Output Formats
+
+The `--output` flag supports multiple formats for different use cases:
+
+| Format | Description | Use Case |
+|--------|-------------|----------|
+| `json` | Pretty-printed JSON (default) | Human reading, debugging |
+| `json-compact` | Single-line JSON | CI/CD logging, parsing |
+| `github-actions` | GitHub Actions workflow commands | CI/CD pipelines |
+
+```bash
+# Pretty JSON (default)
+xion-toolkit treasury list --output json
+
+# Compact JSON for CI
+xion-toolkit treasury list --output json-compact
+
+# GitHub Actions format
+xion-toolkit treasury list --output github-actions
+```
+
+See [EXIT-CODES.md](./docs/EXIT-CODES.md) for standardized exit codes for CI/CD scripts.
 
 ## Networks
 
@@ -435,6 +470,7 @@ Errors include actionable hints:
 - **[INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md)** - Installation guide for AI Agents
 - **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference (~260 lines)
 - **[ERROR-CODES.md](./docs/ERROR-CODES.md)** - Complete error code reference
+- **[EXIT-CODES.md](./docs/EXIT-CODES.md)** - Standardized exit codes for CI/CD
 
 ### For Developers
 
