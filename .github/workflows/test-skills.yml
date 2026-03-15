@@ -21,7 +21,7 @@ env:
 
 jobs:
   # ===========================================================================
-  # Mock Tests - Build xion-toolkit and run tests
+  # Mock Tests - Download binary from CI or build locally
   # ===========================================================================
   mock-tests:
     name: Mock Tests
@@ -30,27 +30,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Download xion-toolkit binary from CI
+        uses: actions/download-artifact@v4
+        with:
+          name: xion-toolkit-binary
+          path: target/release/
+        continue-on-error: true
+        id: download-binary
 
-      - name: Build xion-toolkit
-        run: cargo build --release
+      - name: Build xion-toolkit (fallback)
+        if: steps.download-binary.outcome == 'failure'
+        run: |
+          echo "::warning::Binary artifact not available, building from source..."
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+          cargo build --release
 
       - name: Install xion-toolkit
         run: |
+          chmod +x target/release/xion-toolkit
           sudo ln -sf target/release/xion-toolkit /usr/local/bin/xion-toolkit
           xion-toolkit --version
 
       - name: Install jq
         run: sudo apt-get install -y jq
-
-      - name: Install shellcheck
-        run: sudo apt-get install -y shellcheck
-
-      - name: Validate test framework
-        run: |
-          echo "=== Validating test framework ==="
-          shellcheck tests/skills/lib.sh tests/skills/run_all.sh || true
 
       - name: Run mock tests
         run: |
