@@ -28,6 +28,7 @@ MOCK_ENABLED="${MOCK_ENABLED:-false}"
 CI="${CI:-false}"
 
 # Colors (disabled in CI mode)
+# shellcheck disable=SC2034
 if [[ "$CI" != "true" ]]; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
@@ -55,7 +56,7 @@ if [[ ! -f "$LIB_PATH" ]]; then
     exit 1
 fi
 
-# shellcheck source=./lib.sh
+# shellcheck source=lib.sh disable=SC1091
 source "$LIB_PATH"
 
 # =============================================================================
