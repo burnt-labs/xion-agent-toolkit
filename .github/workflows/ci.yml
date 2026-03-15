@@ -121,7 +121,7 @@ jobs:
       - name: Install xion-toolkit
         run: |
           chmod +x target/release/xion-toolkit
-          sudo ln -sf target/release/xion-toolkit /usr/local/bin/xion-toolkit
+          sudo ln -sf "$PWD/target/release/xion-toolkit" /usr/local/bin/xion-toolkit
           xion-toolkit --version
 
       - name: Install jq
@@ -201,7 +201,7 @@ jobs:
       - name: Install xion-toolkit
         run: |
           chmod +x target/release/xion-toolkit
-          sudo ln -sf target/release/xion-toolkit /usr/local/bin/xion-toolkit
+          sudo ln -sf "$PWD/target/release/xion-toolkit" /usr/local/bin/xion-toolkit
           xion-toolkit --version
 
       - name: Install jq
