@@ -28,7 +28,35 @@
       "created_at": "2026-03-15",
       "updated_at": "2026-03-15",
       "done_at": "2026-03-15",
-      "notes": "Completed: OutputFormat enum extended, ExecuteContext propagated to all handlers, exit_codes module added, docs/EXIT-CODES.md created. 298 tests passing. ExecuteContext propagation fix applied."
+      "notes": "Completed: OutputFormat enum extended, ExecuteContext propagated to all handlers, exit_codes module added, docs/EXIT-CODES.md created. 298 tests passing."
+    },
+    {
+      "id": "predicted-address-computation",
+      "title": "Predicted Address Computation",
+      "file": "plans/predicted-address-computation.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase3", "p1", "treasury", "instantiate2"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Dev complete: shared instantiate2 module, --predict and --salt flags, 17 new tests. Phase 4 (verify-address) deferred as optional. SIGN-OFF by @qa-engineer."
+    },
+    {
+      "id": "batch-treasury-operations",
+      "title": "Batch Treasury Operations",
+      "file": "plans/batch-treasury-operations.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase3", "p2", "treasury", "batch"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Dev complete: batch fund, batch grant-config commands, bulk export support. SIGN-OFF by @qa-engineer."
     }
   ],
   "_notes": {
@@ -39,6 +67,18 @@
         "title": "Treasury Analytics",
         "removed_at": "2026-03-15",
         "reason": "On-chain queries too heavy for this toolkit; should use external indexing services"
+      },
+      {
+        "id": "ibc-transfer-enhancement",
+        "title": "IBC Transfer Enhancement",
+        "removed_at": "2026-03-15",
+        "reason": "Not needed for current roadmap"
+      },
+      {
+        "id": "multi-sig-treasury-support",
+        "title": "Multi-sig Treasury Support",
+        "removed_at": "2026-03-15",
+        "reason": "Not needed for current roadmap"
       }
     ],
     "completed_phase2_p1": [
@@ -81,6 +121,6 @@
     ],
     "roadmap": "plans/feature-roadmap.md",
     "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing ✅, CI/CD integration ✅",
-    "phase3_summary": "Advanced Features - Multi-sig, IBC, Batch ops, Predicted address"
+    "phase3_summary": "Advanced Features - Predicted Address ✅, Batch Treasury Ops ✅"
   }
 }

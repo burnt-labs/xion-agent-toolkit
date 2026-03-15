@@ -5,6 +5,7 @@
 //! - **error**: Structured error types with codes and hints
 //! - **retry**: Automatic retry with exponential backoff
 //! - **exit_codes**: Standardized exit codes for CLI
+//! - **instantiate2**: Deterministic address computation for CosmWasm instantiate2
 //!
 //! # Error Handling
 //!
@@ -58,9 +59,26 @@
 //! // Auth required
 //! assert_eq!(exit_code::AUTH_REQUIRED, 2);
 //! ```
+//!
+//! # Instantiate2 Address Prediction
+//!
+//! Predict contract addresses before deployment:
+//!
+//! ```rust,ignore
+//! use xion_agent_toolkit::shared::instantiate2::{predict_treasury_address, SaltEncoding};
+//!
+//! // Auto-detect salt encoding and predict address
+//! let predicted = predict_treasury_address(
+//!     "xion1...",  // creator
+//!     1260,        // code ID
+//!     "my-salt",   // salt (auto-detected as UTF-8 or hex)
+//!     &checksum,   // from get_code_info
+//! )?;
+//! ```
 
 pub mod error;
 pub mod exit_codes;
+pub mod instantiate2;
 pub mod retry;
 
 // Re-export commonly used types
@@ -69,6 +87,10 @@ pub use error::{
     TreasuryError, TxError, XionError, XionErrorCode, XionResult,
 };
 pub use exit_codes::{exit_code, exit_code_name};
+pub use instantiate2::{
+    compute_address, detect_salt_encoding, predict_treasury_address, validate_salt,
+    PredictedAddress, SaltEncoding,
+};
 pub use retry::{
     is_retryable_reqwest_error, is_retryable_status, reqwest_to_xion_error, with_retry,
     with_retry_metadata, RetryConfig, RetryResult,

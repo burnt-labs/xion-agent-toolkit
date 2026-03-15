@@ -84,7 +84,12 @@ async fn handle_status(hash: String, ctx: &ExecuteContext) -> Result<()> {
     }
 }
 
-async fn handle_wait(hash: String, timeout: u64, interval: u64, ctx: &ExecuteContext) -> Result<()> {
+async fn handle_wait(
+    hash: String,
+    timeout: u64,
+    interval: u64,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     print_info(&format!(
         "Waiting for transaction: {} (timeout: {}s, interval: {}s)",
         hash, timeout, interval
@@ -136,9 +141,7 @@ async fn handle_wait(hash: String, timeout: u64, interval: u64, ctx: &ExecuteCon
                     print_formatted(&result, ctx.output_format())?;
                     std::process::exit(1);
                 }
-                _ => {
-                    print_formatted(&result, ctx.output_format())
-                }
+                _ => print_formatted(&result, ctx.output_format()),
             }
         }
         Err(e) => {

@@ -130,7 +130,10 @@ pub async fn handle_auth_command(cmd: auth::AuthCommands, ctx: &ExecuteContext) 
     auth::handle_command(cmd, ctx).await
 }
 
-pub async fn handle_treasury_command(cmd: treasury::TreasuryCommands, ctx: &ExecuteContext) -> Result<()> {
+pub async fn handle_treasury_command(
+    cmd: treasury::TreasuryCommands,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     treasury::handle_command(cmd, ctx).await
 }
 
@@ -138,11 +141,17 @@ pub fn handle_config_command(cmd: config::ConfigCommands, ctx: &ExecuteContext) 
     config::handle_command(cmd, ctx)
 }
 
-pub async fn handle_contract_command(cmd: contract::ContractCommands, ctx: &ExecuteContext) -> Result<()> {
+pub async fn handle_contract_command(
+    cmd: contract::ContractCommands,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     contract::handle_command(cmd, ctx).await
 }
 
-pub async fn handle_account_command(cmd: account::AccountCommands, ctx: &ExecuteContext) -> Result<()> {
+pub async fn handle_account_command(
+    cmd: account::AccountCommands,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     account::handle_command(cmd, ctx).await
 }
 

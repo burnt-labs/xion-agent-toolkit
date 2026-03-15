@@ -121,12 +121,15 @@ async fn handle_instantiate(args: InstantiateArgs, ctx: &ExecuteContext) -> Resu
 
     // Check auth
     if !manager.is_authenticated()? {
-        return print_formatted(&serde_json::json!({
-            "success": false,
-            "code": "NOT_AUTHENTICATED",
-            "error": "Not authenticated",
-            "suggestion": "Run 'xion-toolkit auth login' first"
-        }), ctx.output_format());
+        return print_formatted(
+            &serde_json::json!({
+                "success": false,
+                "code": "NOT_AUTHENTICATED",
+                "error": "Not authenticated",
+                "suggestion": "Run 'xion-toolkit auth login' first"
+            }),
+            ctx.output_format(),
+        );
     }
 
     // Call manager
@@ -209,12 +212,15 @@ async fn handle_instantiate2(args: Instantiate2Args, ctx: &ExecuteContext) -> Re
 
     // Check auth
     if !manager.is_authenticated()? {
-        return print_formatted(&serde_json::json!({
-            "success": false,
-            "code": "NOT_AUTHENTICATED",
-            "error": "Not authenticated",
-            "suggestion": "Run 'xion-toolkit auth login' first"
-        }), ctx.output_format());
+        return print_formatted(
+            &serde_json::json!({
+                "success": false,
+                "code": "NOT_AUTHENTICATED",
+                "error": "Not authenticated",
+                "suggestion": "Run 'xion-toolkit auth login' first"
+            }),
+            ctx.output_format(),
+        );
     }
 
     // Call manager
@@ -298,12 +304,15 @@ async fn handle_execute(args: ExecuteArgs, ctx: &ExecuteContext) -> Result<()> {
 
     // Check auth
     if !manager.is_authenticated()? {
-        return print_formatted(&serde_json::json!({
-            "success": false,
-            "code": "NOT_AUTHENTICATED",
-            "error": "Not authenticated",
-            "suggestion": "Run 'xion-toolkit auth login' first"
-        }), ctx.output_format());
+        return print_formatted(
+            &serde_json::json!({
+                "success": false,
+                "code": "NOT_AUTHENTICATED",
+                "error": "Not authenticated",
+                "suggestion": "Run 'xion-toolkit auth login' first"
+            }),
+            ctx.output_format(),
+        );
     }
 
     // Call manager

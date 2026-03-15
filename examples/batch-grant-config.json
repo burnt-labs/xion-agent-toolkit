@@ -1,0 +1,11 @@
+{
+  "grant_type": "send",
+  "message_type_url": "/cosmos.bank.v1beta1.MsgSend",
+  "spend_limit": "1000000uxion",
+  "description": "Allow sending funds from treasury",
+  "treasuries": [
+    {"address": "xion1abc123..."},
+    {"address": "xion1def456...", "spend_limit": "500000uxion"},
+    {"address": "xion1ghi789..."}
+  ]
+}

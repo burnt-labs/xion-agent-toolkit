@@ -104,66 +104,66 @@ xion-toolkit auth status --output github-actions # GitHub Actions format
 
 | Feature | Priority | Complexity | Status |
 |---------|----------|------------|--------|
-| Multi-sig Treasury Support | P2 | High | Proposed |
-| IBC Transfer Enhancement | P3 | Medium | Proposed |
-| Batch Treasury Operations | P3 | Medium | Proposed |
-| Predicted Address Computation | P3 | Low | Proposed |
+| Predicted Address Computation | P1 | Low | ✅ Done (2026-03-15) |
+| Batch Treasury Operations | P2 | Medium | ✅ Done (2026-03-15) |
 
-### 3.1 Multi-sig Treasury Support (P2)
+### 3.1 Predicted Address Computation (P1) ✅
 
-Support for multi-signature treasury management.
+**Completed: 2026-03-15**
 
-**Goals:**
-- Support threshold signature schemes
-- Proposal creation and voting workflow
-- Multi-party approval process
+- Created `src/shared/instantiate2.rs` with address computation logic
+- Added `--predict` and `--salt` flags to `treasury create`
+- Auto-detects salt encoding (UTF-8 or hex)
+- 17 new unit tests
 
-**Acceptance Criteria:**
-- [ ] Create multi-sig treasury with configurable threshold
-- [ ] Submit and vote on proposals
-- [ ] Execute approved transactions
+**Usage:**
+```bash
+# Predict address without deploying
+xion-toolkit treasury create --predict --salt "my-salt"
+# Output: {"success":true,"data":{"predicted_address":"xion1...","salt":"my-salt","code_id":1260}}
 
-### 3.2 IBC Transfer Enhancement (P3)
-
-Improved cross-chain transfer experience.
-
-**Goals:**
-- Auto-discover IBC channels
-- Validate destination chain compatibility
-- Track IBC transfer status
+# Deploy with same salt to get same address
+xion-toolkit treasury create --salt "my-salt"
+```
 
 **Acceptance Criteria:**
-- [ ] Auto-detect transfer channels
-- [ ] Support common IBC destinations (Cosmos Hub, Osmosis)
-- [ ] Transfer status tracking
+- [x] `treasury create --predict` returns predicted address
+- [x] Predicted address matches actual deployment
+- [x] Checksum validation implemented
 
-### 3.3 Batch Treasury Operations (P3)
+### 3.2 Batch Treasury Operations (P2) ✅
 
-Bulk management operations for treasuries.
+**Completed: 2026-03-15**
 
-**Goals:**
-- Batch funding multiple treasuries
-- Batch grant/fee configuration
-- Import/export multiple treasury configs
+- Added `treasury batch fund` subcommand
+- Added `treasury batch grant-config` subcommand
+- Enhanced `treasury export` for bulk export
+- Partial failure handling with detailed reports
 
-**Acceptance Criteria:**
-- [ ] Batch fund from JSON config
-- [ ] Apply same grant config to multiple treasuries
-- [ ] Export all treasury configs
+**Usage:**
+```bash
+# Batch fund treasuries
+xion-toolkit treasury batch fund --config funds.json
 
-### 3.4 Predicted Address Computation (P3)
+# Batch configure grants
+xion-toolkit treasury batch grant-config --config grants.json
 
-Complete predicted address feature for treasury creation.
-
-**Goals:**
-- Implement instantiate2 address prediction
-- Support all treasury creation scenarios
-- Add checksum verification
+# Export all treasuries
+xion-toolkit treasury export --output treasuries.json
+```
 
 **Acceptance Criteria:**
-- [ ] `treasury create --predict` returns predicted address
-- [ ] Predicted address matches actual deployment
-- [ ] Checksum validation implemented
+- [x] Batch fund from JSON config
+- [x] Apply same grant config to multiple treasuries
+- [x] Export all treasury configs
+
+### ~~3.3 IBC Transfer Enhancement~~ — Removed
+
+**Removed: 2026-03-15** — Not needed for current roadmap.
+
+### ~~3.4 Multi-sig Treasury Support~~ — Removed
+
+**Removed: 2026-03-15** — Not needed for current roadmap.
 
 ---
 
@@ -216,6 +216,7 @@ These features are acknowledged but deferred to external projects or future cons
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-03-15 | @project-manager | Phase 3 completed (Predicted Address ✅, Batch Treasury Ops ✅, IBC/Multi-sig removed) | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 2 P2 completed (Skills Test Framework ✅, CI/CD Integration Output ✅, Treasury Analytics removed) | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 2 P1 features completed (Error Recovery, Transaction Monitoring, shared module) | ✅ Done |
 | 2026-03-14 | @project-manager | All Phase 1 features completed | ✅ Done |
