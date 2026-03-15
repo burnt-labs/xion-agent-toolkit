@@ -1,0 +1,200 @@
+{
+  "types_list": {
+    "success": true,
+    "types": [
+      {
+        "id": "cw721-base",
+        "name": "CW721 Base",
+        "description": "Basic NFT collection with standard CW721 features",
+        "features": ["mint", "burn", "transfer", "approve"],
+        "code_id": {
+          "testnet": 1260,
+          "mainnet": 63
+        }
+      },
+      {
+        "id": "cw721-metadata-onchain",
+        "name": "CW721 with On-Chain Metadata",
+        "description": "NFT collection with metadata stored on-chain",
+        "features": ["mint", "burn", "transfer", "approve", "on-chain-metadata"],
+        "code_id": {
+          "testnet": 1261,
+          "mainnet": 64
+        }
+      },
+      {
+        "id": "cw721-royalties",
+        "name": "CW721 with Royalties",
+        "description": "NFT collection with configurable royalties",
+        "features": ["mint", "burn", "transfer", "approve", "royalties"],
+        "code_id": {
+          "testnet": 1262,
+          "mainnet": 65
+        }
+      },
+      {
+        "id": "cw721-limited",
+        "name": "Limited Edition NFT",
+        "description": "NFT collection with supply cap",
+        "features": ["mint", "burn", "transfer", "supply-cap"],
+        "code_id": {
+          "testnet": 1263,
+          "mainnet": 66
+        }
+      }
+    ]
+  },
+  "types_empty": {
+    "success": true,
+    "types": []
+  },
+  "types_network_error": {
+    "success": false,
+    "error": {
+      "code": "ENETWORK001",
+      "message": "Connection timeout: Failed to fetch asset types",
+      "hint": "Check network connectivity, will retry",
+      "retryable": true
+    }
+  },
+  "create_success_cw721": {
+    "success": true,
+    "transaction_hash": "CREATE123DEF456GHI789JKL012MNO345PQR678STU901VWX2",
+    "contract_address": "xion1nftcollectionabcdefghijklmnopqrstuvwxyz1234",
+    "name": "My NFT Collection",
+    "symbol": "MYNFT",
+    "asset_type": "cw721-base",
+    "minter": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "network": "testnet"
+  },
+  "create_success_with_minter": {
+    "success": true,
+    "transaction_hash": "CREATE456DEF789GHI012JKL345MNO678PQR901STU234VWX5",
+    "contract_address": "xion1customminterabcdefghijklmnopqrstuvwxyz5678",
+    "name": "Custom Minter Collection",
+    "symbol": "CMC",
+    "asset_type": "cw721-base",
+    "minter": "xion1treasury1abcdefghijklmnopqrstuvwxyz1234",
+    "network": "testnet"
+  },
+  "create_failed_invalid_type": {
+    "success": false,
+    "error": {
+      "code": "EASSET004",
+      "message": "Code ID not found: Invalid asset type 'invalid-type'",
+      "hint": "Check available code IDs with 'xion-toolkit asset code-ids'",
+      "retryable": false
+    }
+  },
+  "create_failed_invalid_metadata": {
+    "success": false,
+    "error": {
+      "code": "EASSET001",
+      "message": "Invalid metadata: Missing required field 'symbol'",
+      "hint": "Check JSON structure against schema",
+      "retryable": false
+    }
+  },
+  "create_failed_missing_args": {
+    "success": false,
+    "error": "Missing required args: --type, --name, --symbol",
+    "error_code": "MISSING_ARGS"
+  },
+  "mint_success": {
+    "success": true,
+    "transaction_hash": "MINT123DEF456GHI789JKL012MNO345PQR678STU901VWX234",
+    "contract_address": "xion1nftcollectionabcdefghijklmnopqrstuvwxyz1234",
+    "token_id": "token-001",
+    "owner": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "token_uri": "ipfs://QmExample1234567890abcdef"
+  },
+  "mint_success_with_royalties": {
+    "success": true,
+    "transaction_hash": "MINT456DEF789GHI012JKL345MNO678PQR901STU234VWX567",
+    "contract_address": "xion1nftcollectionabcdefghijklmnopqrstuvwxyz1234",
+    "token_id": "token-002",
+    "owner": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "token_uri": "ipfs://QmExample0987654321zyxwvutsrqponmlkjihgfedcba",
+    "royalty_info": {
+      "address": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+      "percentage": 5.0
+    }
+  },
+  "mint_failed_not_minter": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY008",
+      "message": "Not authorized: Only minter can mint tokens",
+      "hint": "Ensure you are the minter of this collection",
+      "retryable": false
+    }
+  },
+  "mint_failed_invalid_metadata": {
+    "success": false,
+    "error": {
+      "code": "EASSET001",
+      "message": "Invalid metadata: Token URI must be valid URL or IPFS hash",
+      "hint": "Check JSON structure against schema",
+      "retryable": false
+    }
+  },
+  "mint_failed_token_exists": {
+    "success": false,
+    "error": {
+      "code": "EASSET002",
+      "message": "Asset creation failed: Token ID 'token-001' already exists",
+      "hint": "Check asset configuration and try again",
+      "retryable": false
+    }
+  },
+  "query_collection": {
+    "success": true,
+    "address": "xion1nftcollectionabcdefghijklmnopqrstuvwxyz1234",
+    "name": "My NFT Collection",
+    "symbol": "MYNFT",
+    "minter": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "total_supply": 100,
+    "num_tokens": 10
+  },
+  "query_token": {
+    "success": true,
+    "contract_address": "xion1nftcollectionabcdefghijklmnopqrstuvwxyz1234",
+    "token_id": "token-001",
+    "owner": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "token_uri": "ipfs://QmExample1234567890abcdef",
+    "extension": {
+      "name": "My First NFT",
+      "description": "A beautiful NFT",
+      "image": "ipfs://QmImage1234567890abcdef"
+    }
+  },
+  "query_token_not_found": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY001",
+      "message": "Token not found: token-999",
+      "hint": "Run 'xion-toolkit asset query' to see available tokens",
+      "retryable": false
+    }
+  },
+  "batch_mint_success": {
+    "success": true,
+    "transaction_hash": "BATCH123DEF456GHI789JKL012MNO345PQR678STU901VWX2",
+    "contract_address": "xion1nftcollectionabcdefghijklmnopqrstuvwxyz1234",
+    "minted_count": 5,
+    "token_ids": ["token-001", "token-002", "token-003", "token-004", "token-005"]
+  },
+  "batch_mint_partial_failure": {
+    "success": false,
+    "error": {
+      "code": "EBATCH003",
+      "message": "Partial batch failure: 3 succeeded, 2 failed",
+      "hint": "Some operations succeeded, check results for details",
+      "retryable": false
+    },
+    "results": {
+      "succeeded": ["token-001", "token-002", "token-003"],
+      "failed": ["token-004", "token-005"]
+    }
+  }
+}

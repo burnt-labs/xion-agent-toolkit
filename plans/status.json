@@ -1,7 +1,22 @@
 {
   "version": 1,
   "updated_at": "2026-03-15",
-  "plans": [],
+  "plans": [
+    {
+      "id": "skills-test-framework",
+      "title": "Skills Test Framework",
+      "file": "plans/skills-test-framework.md",
+      "status": "InProgress",
+      "progress": 75,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase2", "p2", "testing"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": null,
+      "notes": "Phase 1 (framework core) & Phase 4 (CI) completed by @fullstack-dev. Phase 2 (58 mock scenarios) & Phase 3 (48 tests) completed by @fullstack-dev-2. Pending: xion-toolkit-init tests, xion-dev tests, README docs"
+    }
+  ],
   "_notes": {
     "archived": "See plans/archived/README.md for archived plans summary.",
     "completed_phase2_p1": [

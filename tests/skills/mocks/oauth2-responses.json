@@ -1,0 +1,102 @@
+{
+  "login_success": {
+    "success": true,
+    "network": "testnet",
+    "xion_address": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "expires_at": "2026-03-16T01:00:00Z"
+  },
+  "login_success_mainnet": {
+    "success": true,
+    "network": "mainnet",
+    "xion_address": "xion1main0987654321zyxwvutsrqponmlkjihgfedcba09",
+    "expires_at": "2026-03-16T01:00:00Z"
+  },
+  "login_failed": {
+    "success": false,
+    "error": "Login failed: User denied authorization",
+    "code": "AUTH_LOGIN_FAILED",
+    "suggestion": "Please try again or check your browser for authorization"
+  },
+  "login_timeout": {
+    "success": false,
+    "error": "Login failed: Authorization timeout",
+    "code": "AUTH_LOGIN_FAILED",
+    "suggestion": "Please try again or check your browser for authorization"
+  },
+  "status_authenticated": {
+    "network": "testnet",
+    "chain_id": "xion-testnet-2",
+    "oauth_api_url": "https://oauth2.testnet.burnt.com",
+    "authenticated": true,
+    "xion_address": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "expires_at": "2026-03-16T01:00:00Z"
+  },
+  "status_authenticated_mainnet": {
+    "network": "mainnet",
+    "chain_id": "xion-mainnet-1",
+    "oauth_api_url": "https://oauth2.burnt.com",
+    "authenticated": true,
+    "xion_address": "xion1main0987654321zyxwvutsrqponmlkjihgfedcba09",
+    "expires_at": "2026-03-16T01:00:00Z"
+  },
+  "status_not_authenticated": {
+    "network": "testnet",
+    "chain_id": "xion-testnet-2",
+    "oauth_api_url": "https://oauth2.testnet.burnt.com",
+    "authenticated": false,
+    "message": "Not authenticated. Please run 'xion auth login' first."
+  },
+  "status_not_authenticated_mainnet": {
+    "network": "mainnet",
+    "chain_id": "xion-mainnet-1",
+    "oauth_api_url": "https://oauth2.burnt.com",
+    "authenticated": false,
+    "message": "Not authenticated. Please run 'xion auth login' first."
+  },
+  "logout_success": {
+    "success": true,
+    "message": "Logged out successfully",
+    "network": "testnet"
+  },
+  "logout_success_mainnet": {
+    "success": true,
+    "message": "Logged out successfully",
+    "network": "mainnet"
+  },
+  "logout_already_logged_out": {
+    "success": true,
+    "message": "Already logged out"
+  },
+  "logout_failed": {
+    "success": false,
+    "error": "Logout failed: Token storage error",
+    "code": "AUTH_LOGOUT_FAILED"
+  },
+  "refresh_success": {
+    "success": true,
+    "message": "Token refreshed successfully",
+    "network": "testnet",
+    "expires_at": "2026-03-16T02:00:00Z"
+  },
+  "refresh_failed": {
+    "success": false,
+    "error": "Token refresh failed: Refresh token expired",
+    "code": "AUTH_REFRESH_FAILED",
+    "suggestion": "Your session may have expired. Please run 'xion auth login' to re-authenticate."
+  },
+  "refresh_not_authenticated": {
+    "success": false,
+    "error": "Token refresh failed: No credentials found",
+    "code": "AUTH_REFRESH_FAILED",
+    "suggestion": "Your session may have expired. Please run 'xion auth login' to re-authenticate."
+  },
+  "cli_not_found": {
+    "success": false,
+    "error": {
+      "code": "ECONFIG002",
+      "message": "Configuration error: xion-toolkit CLI not found in PATH",
+      "hint": "Check configuration file format and values",
+      "retryable": false
+    }
+  }
+}
