@@ -1,7 +1,36 @@
 {
   "version": 1,
-  "updated_at": "2026-03-14",
-  "plans": [],
+  "updated_at": "2026-03-15",
+  "plans": [
+    {
+      "id": "error-recovery-enhancement",
+      "title": "Error Recovery Enhancement",
+      "file": "plans/error-recovery-enhancement.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase2", "p1", "dx"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": null,
+      "notes": "Structured error codes, retry logic, remediation hints"
+    },
+    {
+      "id": "transaction-monitoring",
+      "title": "Transaction Monitoring",
+      "file": "plans/transaction-monitoring.md",
+      "status": "Todo",
+      "progress": 0,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase2", "p1", "tx"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": null,
+      "notes": "tx status and tx wait commands"
+    }
+  ],
   "_notes": {
     "archived": "See plans/archived/README.md for archived plans summary.",
     "knowledge": [
@@ -18,6 +47,8 @@
         "desc": "Treasury type comparison analysis."
       }
     ],
-    "roadmap": "plans/feature-roadmap.md"
+    "roadmap": "plans/feature-roadmap.md",
+    "phase2_summary": "Ecosystem Polish - Error Recovery, Transaction Monitoring, shared/ module, Skills testing, CI/CD integration",
+    "phase3_summary": "Advanced Features - Multi-sig, IBC, Batch ops, Predicted address"
   }
 }
