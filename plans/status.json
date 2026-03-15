@@ -1,38 +1,21 @@
 {
   "version": 1,
   "updated_at": "2026-03-15",
-  "plans": [
-    {
-      "id": "error-recovery-enhancement",
-      "title": "Error Recovery Enhancement",
-      "file": "plans/error-recovery-enhancement.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@fullstack-dev",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["phase2", "p1", "dx"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Completed: Core error types, retry logic, documentation, refactored oauth2_api.rs, treasury/api_client.rs, treasury/manager.rs to use XionError. All tests passing."
-    },
-    {
-      "id": "transaction-monitoring",
-      "title": "Transaction Monitoring",
-      "file": "plans/transaction-monitoring.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@fullstack-dev-2",
-      "agents": ["@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
-      "tags": ["phase2", "p1", "tx"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Implementation complete. QC issues fixed. Documentation updated."
-    }
-  ],
+  "plans": [],
   "_notes": {
     "archived": "See plans/archived/README.md for archived plans summary.",
+    "completed_phase2_p1": [
+      {
+        "id": "error-recovery-enhancement",
+        "title": "Error Recovery Enhancement",
+        "completed_at": "2026-03-15"
+      },
+      {
+        "id": "transaction-monitoring",
+        "title": "Transaction Monitoring",
+        "completed_at": "2026-03-15"
+      }
+    ],
     "knowledge": [
       {
         "file": "plans/knowledge/oauth-client-implementation.md",
@@ -48,7 +31,7 @@
       }
     ],
     "roadmap": "plans/feature-roadmap.md",
-    "phase2_summary": "Ecosystem Polish - Error Recovery, Transaction Monitoring, shared/ module, Skills testing, CI/CD integration",
+    "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing, CI/CD integration",
     "phase3_summary": "Advanced Features - Multi-sig, IBC, Batch ops, Predicted address"
   }
 }

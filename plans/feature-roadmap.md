@@ -14,69 +14,54 @@ This document outlines the feature roadmap for the Xion Agent Toolkit.
 
 All planned Phase 1 features have been implemented and tested.
 
+**Phase 2 P1 Completed: 2026-03-15**
+
+Error Recovery Enhancement and Transaction Monitoring implemented.
+
 ---
 
-## Phase 2: Ecosystem Polish (Recommended Next)
+## Phase 2: Ecosystem Polish
 
 Phase 2 focuses on improving developer experience, code quality, and production readiness.
 
 | Feature | Priority | Complexity | Status |
 |---------|----------|------------|--------|
-| Error Recovery Enhancement | P1 | Medium | Proposed |
-| Transaction Monitoring | P1 | Low | Proposed |
-| `shared/` Module Implementation | P2 | Low | Proposed |
+| Error Recovery Enhancement | P1 | Medium | ✅ Done (2026-03-15) |
+| Transaction Monitoring | P1 | Low | ✅ Done (2026-03-15) |
+| `shared/` Module Implementation | P2 | Low | ✅ Done (2026-03-15) |
 | Skills Test Framework | P2 | Medium | Proposed |
 | CI/CD Integration Output | P2 | Low | Proposed |
 | Treasury Analytics | P3 | Medium | Proposed |
 
-### 2.1 Error Recovery Enhancement (P1)
+### 2.1 Error Recovery Enhancement (P1) ✅
 
-Improve error handling with structured error codes and actionable remediation hints.
+**Completed: 2026-03-15**
 
-**Goals:**
-- Standardize error codes across all CLI commands
-- Add remediation hints for common failure scenarios
-- Implement retry logic with exponential backoff for transient failures
-- Improve error documentation in `docs/ERROR-CODES.md`
+- 40+ structured error codes (EAUTH, ETREASURY, EASSET, EBATCH, ECONFIG, ENETWORK, ETX)
+- Exponential backoff retry logic
+- Refactored oauth2_api.rs, treasury/api_client.rs, treasury/manager.rs
+- Documentation in `docs/ERROR-CODES.md`
 
-**Acceptance Criteria:**
-- [ ] All errors return structured JSON with `code`, `message`, `hint`
-- [ ] Network errors implement automatic retry (max 3 attempts)
-- [ ] Error documentation covers all error codes
+### 2.2 Transaction Monitoring (P1) ✅
 
-### 2.2 Transaction Monitoring (P1)
-
-Add transaction status tracking and waiting capabilities.
+**Completed: 2026-03-15**
 
 ```bash
 xion-toolkit tx status <tx_hash> --output json
 xion-toolkit tx wait <tx_hash> --timeout 60 --interval 2 --output json
 ```
 
-**Goals:**
 - Query transaction status from RPC
-- Wait for transaction confirmation with configurable timeout
-- Return structured status information (pending, success, failed)
+- Wait for confirmation with configurable timeout
+- Proper exit codes (0=success, 1=failure/timeout)
 
-**Acceptance Criteria:**
-- [ ] `tx status` returns current transaction state
-- [ ] `tx wait` polls until confirmation or timeout
-- [ ] Supports both testnet and mainnet
+### 2.3 `shared/` Module Implementation (P2) ✅
 
-### 2.3 `shared/` Module Implementation (P2)
+**Completed: 2026-03-15** (as part of Error Recovery)
 
-Implement the reserved `src/shared/` directory with common utilities.
-
-**Goals:**
-- Extract shared types and traits
-- Common error handling patterns
-- Reusable validation functions
-- Shared test utilities
-
-**Acceptance Criteria:**
-- [ ] `src/shared/` contains at least `types.rs`, `error.rs`, `validation.rs`
-- [ ] At least 2 existing modules refactored to use shared code
-- [ ] No code duplication across modules
+- `src/shared/error.rs` - Structured error types
+- `src/shared/retry.rs` - Retry logic with exponential backoff
+- Re-exports for backward compatibility
 
 ### 2.4 Skills Test Framework (P2)
 
@@ -242,4 +227,5 @@ These features are acknowledged but deferred to external projects or future cons
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-03-15 | @project-manager | Phase 2 P1 features completed (Error Recovery, Transaction Monitoring, shared module) | ✅ Done |
 | 2026-03-14 | @project-manager | All Phase 1 features completed | ✅ Done |
