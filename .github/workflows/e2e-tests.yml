@@ -1,0 +1,140 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ===========================================================================
+  # Download pre-built binary from CI build job
+  # ===========================================================================
+  get-binary:
+    name: Get Binary
+    runs-on: ubuntu-latest
+    outputs:
+      binary-path: ${{ steps.download.outputs.binary-path }}
+    steps:
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xion-toolkit-binary
+          path: target/release/
+      
+      - name: Set binary path
+        id: download
+        run: echo "binary-path=$(find target/release -name 'xion-toolkit*' -type f -executable)" >> "$GITHUB_OUTPUT"
+        
+      - name: Make binary executable
+        run: chmod +x "${{ steps.download.outputs.binary-path }}" +x
+
+  # ===========================================================================
+  # E2E Treasury Tests - Only runs if credentials are configured
+  # ===========================================================================
+  e2e-treasury:
+    name: E2E Treasury Tests
+    runs-on: ubuntu-latest
+    needs: [get-binary]
+    # Only run if credentials are configured
+    if: ${{ secrets.XION_TESTNET_CREDENTIALS != '' }}
+    outputs:
+      exit-code: ${{ steps.run-tests.outputs.exit-code }}
+    steps:
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xion-toolkit-binary
+          path: target/release/
+      
+      - name: Make binary executable
+        run: chmod +x "${{ needs.get-binary.outputs.binary-path }}" +x ~/.cargo/bin/
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Setup credentials
+        env:
+          XION_CI_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        run: |
+          mkdir -p ~/.xion-toolkit/credentials
+          echo '${{ secrets.XION_TESTNET_CREDENTIALS }}' > ~/.xion-toolkit/credentials/testnet.enc
+
+      - name: Run E2E Treasury Lifecycle Test
+        id: run-tests
+        run: |
+          export PATH="${{ needs.get-binary.outputs.binary-path }}:$PATH"
+          ./tests/e2e_treasury_lifecycle.sh
+        env:
+          XION_CI_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+  # ===========================================================================
+  # E2E Treasury Grant/Fee Tests - Only runs if credentials are configured
+  # ===========================================================================
+  e2e-treasury-grant-fee:
+    name: E2E Treasury Grant/Fee Tests
+    runs-on: ubuntu-latest
+    needs: [get-binary]
+    # Only run if credentials are configured
+    if: ${{ secrets.XION_TESTNET_CREDENTIALS != '' }}
+    outputs:
+      exit-code: ${{ steps.run-tests.outputs.exit-code }}
+    steps:
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xion-toolkit-binary
+          path: target/release/
+      
+      - name: Make binary executable
+        run: chmod +x "${{ needs.get-binary.outputs.binary-path }}" +x ~/.cargo/bin/
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Setup credentials
+        env:
+          XION_CI_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        run: |
+          mkdir -p ~/.xion-toolkit/credentials
+          echo '${{ secrets.XION_TESTNET_CREDENTIALS }}' > ~/.xion-toolkit/credentials/testnet.enc
+
+      - name: Run E2E Treasury Grant/Fee Test
+        id: run-tests
+        run: |
+          export PATH="${{ needs.get-binary.outputs.binary-path }}:$PATH"
+          ./tests/e2e_treasury_grant_fee.sh
+        env:
+          XION_CI_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+  # ===========================================================================
+  # Summary - Combined status for branch protection
+  # ===========================================================================
+  e2e-status:
+    name: E2E Tests Status
+    runs-on: ubuntu-latest
+    needs: [get-binary, e2e-treasury, e2e-treasury-grant-fee]
+    if: always()
+    steps:
+      - name: Check overall status
+        run: |
+          # Skip if credentials not configured (tests were skipped)
+          if [[ "${{ secrets.XION_TESTNET_CREDENTIALS }}" == "" ]]; then
+            echo "::notice::E2E tests skipped (no credentials configured)"
+            exit 0
+          fi
+          
+          if [[ "${{ needs.e2e-treasury.result }}" == "failure" || "${{ needs.e2e-treasury-grant-fee.result }}" == "failure" ]]; then
+            echo "::error::Some E2E tests failed"
+            exit 1
+          fi
+          echo "::notice::All E2E tests passed"

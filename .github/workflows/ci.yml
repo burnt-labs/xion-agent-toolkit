@@ -41,9 +41,6 @@ jobs:
       - name: Run tests
         run: cargo test --all-features
         env:
-          # Encryption key for credential storage tests (CI/CD only)
-          # Local development uses machine ID derivation automatically
-          # This fixed key enables automated testing without OS keychain interaction
           XION_CI_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
   lint:
@@ -72,8 +69,22 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build
+      - name: Build release binary
         run: cargo build --release
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xion-toolkit-binary
+          path: target/release/
+          retention-days: 1
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xion-toolkit-binary
+          path: target/release/xion-toolkit
+          retention-days: 1
 
   security-audit:
     name: Security Audit
