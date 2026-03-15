@@ -40,6 +40,7 @@ Format: `E{MODULE}{NUMBER}`
 | BATCH | EBATCH001-EBATCH099 | Batch operations |
 | CONFIG | ECONFIG001-ECONFIG099 | Configuration |
 | NETWORK | ENETWORK001-ENETWORK099 | Network/API |
+| TX | ETX001-ETX099 | Transaction monitoring |
 
 ---
 
@@ -205,6 +206,29 @@ Network errors with `retryable: true` are automatically retried with exponential
 | 2 | 200ms | 5000ms |
 | 3 | 400ms | 5000ms |
 
+---
+
+## Transaction Errors (ETX001-ETX099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| ETX001 | Transaction query failed | Check network connection and transaction hash | No |
+| ETX002 | Transaction wait failed | Check network connection and wait parameters | No |
+| ETX003 | Transaction timeout | Transaction took too long to confirm, check chain status | No |
+
+### Transaction Troubleshooting
+
+```bash
+# Verify transaction exists
+xion-toolkit tx status <tx_hash>
+
+# Wait with longer timeout
+xion-toolkit tx wait <tx_hash> --timeout 120
+
+# Check network status
+curl https://rpc.xion-testnet-2.burnt.com:443/status
+```
+
 ### Network Troubleshooting
 
 ```bash
@@ -333,6 +357,8 @@ def run_command(cmd):
 | Session expired | EAUTH003 | Re-login |
 | Treasury missing | ETREASURY001 | `xion-toolkit treasury list` |
 | No balance | ETREASURY002 | Fund treasury |
+| TX not found | ETX001 | Check transaction hash |
+| TX timeout | ETX003 | Increase wait timeout |
 | Network timeout | ENETWORK001 | Auto-retry |
 | Rate limited | ENETWORK002 | Wait and retry |
 | Config missing | ECONFIG001 | `xion-toolkit config init` |
@@ -343,4 +369,5 @@ def run_command(cmd):
 
 | Version | Changes |
 |---------|---------|
+| 0.8.0 | Added TX error codes (ETX001-ETX003) for transaction monitoring |
 | 0.7.0 | Introduced structured error codes with `E{MODULE}{NUMBER}` format |
