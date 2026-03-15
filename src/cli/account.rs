@@ -8,6 +8,7 @@ use tracing::info;
 
 use crate::account::AccountInfoOutput;
 use crate::api::OAuth2ApiClient;
+use crate::cli::ExecuteContext;
 use crate::config::ConfigManager;
 use crate::oauth::OAuthClient;
 
@@ -17,14 +18,14 @@ pub enum AccountCommands {
     Info,
 }
 
-pub async fn handle_command(cmd: AccountCommands) -> Result<()> {
+pub async fn handle_command(cmd: AccountCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        AccountCommands::Info => handle_info().await,
+        AccountCommands::Info => handle_info(ctx).await,
     }
 }
 
-async fn handle_info() -> Result<()> {
-    use crate::utils::output::{print_info, print_json};
+async fn handle_info(ctx: &ExecuteContext) -> Result<()> {
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info("Querying MetaAccount info...");
 
@@ -39,7 +40,7 @@ async fn handle_info() -> Result<()> {
             "code": "NOT_AUTHENTICATED",
             "hint": "Run 'xion-toolkit auth login' first"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     let credentials = match oauth_client.get_credentials()? {
@@ -51,7 +52,7 @@ async fn handle_info() -> Result<()> {
                 "code": "CREDENTIALS_NOT_FOUND",
                 "hint": "Run 'xion-toolkit auth login' to authenticate"
             });
-            return print_json(&result);
+            return print_formatted(&result, ctx.output_format());
         }
     };
 
@@ -68,7 +69,7 @@ async fn handle_info() -> Result<()> {
             info!("Successfully retrieved MetaAccount info");
             print_info(&format!("MetaAccount address: {}", user_info.id));
             let output: AccountInfoOutput = user_info.into();
-            print_json(&output)
+            print_formatted(&output, ctx.output_format())
         }
         Err(e) => {
             info!("Failed to query MetaAccount: {}", e);
@@ -78,7 +79,7 @@ async fn handle_info() -> Result<()> {
                 "code": "ACCOUNT_QUERY_FAILED",
                 "hint": "Failed to query MetaAccount via OAuth2 API. Check network connection or try re-authenticating."
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }

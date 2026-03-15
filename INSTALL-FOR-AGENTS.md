@@ -256,12 +256,16 @@ Available command groups:
 Skills provide agent-friendly wrappers around CLI commands with JSON output and error handling.
 
 ```bash
-# Install xion-agent-toolkit skills
-npx skills add burnt-labs/xion-agent-toolkit
+# Install xion-agent-toolkit skills (global, all common agents: Cursor, Claude Code, Codex, OpenClaw)
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
 
 # Optional: Install xion-skills for xiond CLI operations
-npx skills add burnt-labs/xion-skills
+npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
 ```
+
+- **`-g`**: Install to global directory (`~/.agents/skills/`) so skills are available in all projects.
+- **`-y`**: Non-interactive; skip confirmation prompts (suitable for scripts and agents).
+- **`-a cursor -a claude-code -a codex -a openclaw`**: Create symlinks for these agents so each tool (Cursor, Claude Code, Codex, OpenClaw) can load the skills from its own directory. You can omit agents you do not use.
 
 **Available Skills:**
 

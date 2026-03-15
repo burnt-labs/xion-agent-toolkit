@@ -131,7 +131,7 @@ install_xion_skills() {
     log_info "Installing xion-skills for xiond CLI operations..."
     
     if command -v npx &> /dev/null; then
-        if npx skills add burnt-labs/xion-skills; then
+        if npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw; then
             log_info "xion-skills installed successfully"
             return 0
         else
@@ -140,7 +140,7 @@ install_xion_skills() {
         fi
     else
         log_warn "npx not found, skipping xion-skills installation"
-        log_warn "Install manually: npx skills add burnt-labs/xion-skills"
+        log_warn "Install manually: npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw"
         return 1
     fi
 }

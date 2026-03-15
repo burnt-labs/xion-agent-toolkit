@@ -1,9 +1,124 @@
 {
   "version": 1,
-  "updated_at": "2026-03-14",
-  "plans": [],
+  "updated_at": "2026-03-15",
+  "plans": [
+    {
+      "id": "unified-ci-workflow",
+      "title": "Unified CI Workflow",
+      "file": "plans/unified-ci-workflow.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@ops-engineer"],
+      "tags": ["ci", "github-actions", "devops"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Merged ci.yml, test-skills.yml, e2e-tests.yml into unified workflow with proper job dependencies. QA SIGN-OFF: All acceptance criteria validated - job dependencies correct, YAML valid, E2E config documented, artifact handling correct. Ready for production use."
+    },
+    {
+      "id": "skills-test-framework",
+      "title": "Skills Test Framework",
+      "file": "plans/skills-test-framework.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase2", "p2", "testing"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Completed: 48 tests, 58 mock scenarios, CI integration, skill documentation updates"
+    },
+    {
+      "id": "cicd-integration-output",
+      "title": "CI/CD Integration Output",
+      "file": "plans/cicd-integration-output.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase2", "p2", "cicd", "output"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Completed: OutputFormat enum extended, ExecuteContext propagated to all handlers, exit_codes module added, docs/EXIT-CODES.md created. 298 tests passing."
+    },
+    {
+      "id": "predicted-address-computation",
+      "title": "Predicted Address Computation",
+      "file": "plans/predicted-address-computation.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase3", "p1", "treasury", "instantiate2"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Dev complete: shared instantiate2 module, --predict and --salt flags, 17 new tests. Phase 4 (verify-address) deferred as optional. SIGN-OFF by @qa-engineer."
+    },
+    {
+      "id": "batch-treasury-operations",
+      "title": "Batch Treasury Operations",
+      "file": "plans/batch-treasury-operations.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase3", "p2", "treasury", "batch"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Dev complete: batch fund, batch grant-config commands, bulk export support. SIGN-OFF by @qa-engineer."
+    }
+  ],
   "_notes": {
     "archived": "See plans/archived/README.md for archived plans summary.",
+    "removed": [
+      {
+        "id": "treasury-analytics",
+        "title": "Treasury Analytics",
+        "removed_at": "2026-03-15",
+        "reason": "On-chain queries too heavy for this toolkit; should use external indexing services"
+      },
+      {
+        "id": "ibc-transfer-enhancement",
+        "title": "IBC Transfer Enhancement",
+        "removed_at": "2026-03-15",
+        "reason": "Not needed for current roadmap"
+      },
+      {
+        "id": "multi-sig-treasury-support",
+        "title": "Multi-sig Treasury Support",
+        "removed_at": "2026-03-15",
+        "reason": "Not needed for current roadmap"
+      }
+    ],
+    "completed_phase2_p1": [
+      {
+        "id": "error-recovery-enhancement",
+        "title": "Error Recovery Enhancement",
+        "completed_at": "2026-03-15"
+      },
+      {
+        "id": "transaction-monitoring",
+        "title": "Transaction Monitoring",
+        "completed_at": "2026-03-15"
+      }
+    ],
+    "completed_phase2_p2": [
+      {
+        "id": "skills-test-framework",
+        "title": "Skills Test Framework",
+        "completed_at": "2026-03-15"
+      },
+      {
+        "id": "cicd-integration-output",
+        "title": "CI/CD Integration Output",
+        "completed_at": "2026-03-15"
+      }
+    ],
     "knowledge": [
       {
         "file": "plans/knowledge/oauth-client-implementation.md",
@@ -18,6 +133,8 @@
         "desc": "Treasury type comparison analysis."
       }
     ],
-    "roadmap": "plans/feature-roadmap.md"
+    "roadmap": "plans/feature-roadmap.md",
+    "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing ✅, CI/CD integration ✅",
+    "phase3_summary": "Advanced Features - Predicted Address ✅, Batch Treasury Ops ✅"
   }
 }

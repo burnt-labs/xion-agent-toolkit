@@ -1,0 +1,214 @@
+{
+  "list_success": {
+    "success": true,
+    "treasuries": [
+      {
+        "address": "xion1treasury1abcdefghijklmnopqrstuvwxyz1234",
+        "name": "Test Treasury 1",
+        "admin": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+        "balance": [
+          {
+            "denom": "uxion",
+            "amount": "10000000"
+          }
+        ],
+        "created_at": "2026-03-01T00:00:00Z"
+      },
+      {
+        "address": "xion1treasury2zyxwvutsrqponmlkjihgfedcba5678",
+        "name": "Test Treasury 2",
+        "admin": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+        "balance": [
+          {
+            "denom": "uxion",
+            "amount": "5000000"
+          }
+        ],
+        "created_at": "2026-03-05T00:00:00Z"
+      }
+    ],
+    "count": 2
+  },
+  "list_empty": {
+    "success": true,
+    "treasuries": [],
+    "count": 0
+  },
+  "list_not_authenticated": {
+    "success": false,
+    "error": {
+      "code": "EAUTH001",
+      "message": "Not authenticated: Please use 'xion-oauth2/login.sh' first",
+      "hint": "Run 'xion-toolkit auth login' first",
+      "retryable": false
+    }
+  },
+  "list_network_error": {
+    "success": false,
+    "error": {
+      "code": "ENETWORK001",
+      "message": "Connection timeout: Failed to list treasuries",
+      "hint": "Check network connectivity, will retry",
+      "retryable": true
+    }
+  },
+  "query_success": {
+    "success": true,
+    "address": "xion1treasury1abcdefghijklmnopqrstuvwxyz1234",
+    "name": "Test Treasury 1",
+    "admin": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "balance": [
+      {
+        "denom": "uxion",
+        "amount": "10000000"
+      }
+    ],
+    "grants": {
+      "authz": [
+        {
+          "grant_type": "/cosmos.bank.v1beta1.MsgSend",
+          "authorization": {
+            "type": "send",
+            "spend_limit": [
+              {
+                "denom": "uxion",
+                "amount": "1000000"
+              }
+            ]
+          }
+        }
+      ],
+      "fee": {
+        "allowance_type": "periodic",
+        "period_seconds": 86400,
+        "period_spend_limit": [
+          {
+            "denom": "uxion",
+            "amount": "100000"
+          }
+        ]
+      }
+    },
+    "created_at": "2026-03-01T00:00:00Z"
+  },
+  "query_success_no_grants": {
+    "success": true,
+    "address": "xion1treasury2zyxwvutsrqponmlkjihgfedcba5678",
+    "name": "Test Treasury 2",
+    "admin": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "balance": [
+      {
+        "denom": "uxion",
+        "amount": "5000000"
+      }
+    ],
+    "grants": null,
+    "created_at": "2026-03-05T00:00:00Z"
+  },
+  "query_not_found": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY001",
+      "message": "Treasury not found: xion1invalidaddress1234567890abcdef",
+      "hint": "Run 'xion-toolkit treasury list' to see available treasuries",
+      "retryable": false
+    }
+  },
+  "query_invalid_address": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY003",
+      "message": "Invalid treasury address: invalid123",
+      "hint": "Verify the treasury address is a valid bech32 address",
+      "retryable": false
+    }
+  },
+  "query_not_authenticated": {
+    "success": false,
+    "error": {
+      "code": "EAUTH001",
+      "message": "Not authenticated: Please use 'xion-oauth2/login.sh' first",
+      "hint": "Run 'xion-toolkit auth login' first",
+      "retryable": false
+    }
+  },
+  "create_success": {
+    "success": true,
+    "address": "xion1newtreasuryabcdefghijklmnopqrstuvwxyz5678",
+    "transaction_hash": "ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZ",
+    "name": "New Treasury",
+    "network": "testnet",
+    "admin": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12"
+  },
+  "create_success_with_config": {
+    "success": true,
+    "address": "xion1configuredtreasury1234567890abcdefxyz789",
+    "transaction_hash": "XYZ789ABC123DEF456GHI789JKL012MNO345PQR678STU901",
+    "name": "Configured Treasury",
+    "network": "testnet",
+    "admin": "xion1test1234567890abcdefghijklmnopqrstuvwxyz12",
+    "fee_configured": true,
+    "grant_configured": true
+  },
+  "create_already_exists": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY009",
+      "message": "Treasury already exists: Treasury with this salt already deployed",
+      "hint": "Use a different salt or address for the new treasury",
+      "retryable": false
+    }
+  },
+  "create_failed": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY004",
+      "message": "Treasury creation failed: Insufficient funds for transaction",
+      "hint": "Check parameters and try again",
+      "retryable": false
+    }
+  },
+  "fund_success": {
+    "success": true,
+    "message": "Treasury funded successfully",
+    "treasury_address": "xion1treasury1abcdefghijklmnopqrstuvwxyz1234",
+    "amount": "1000000uxion",
+    "transaction_hash": "FUND123DEF456GHI789JKL012MNO345PQR678STU901VWX234",
+    "new_balance": "11000000uxion"
+  },
+  "withdraw_success": {
+    "success": true,
+    "message": "Withdrawal successful",
+    "treasury_address": "xion1treasury1abcdefghijklmnopqrstuvwxyz1234",
+    "amount": "500000uxion",
+    "transaction_hash": "WDRL123DEF456GHI789JKL012MNO345PQR678STU901VWX2",
+    "new_balance": "9500000uxion"
+  },
+  "insufficient_balance": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY002",
+      "message": "Insufficient balance: Required: 10000000uxion, Available: 500000uxion",
+      "hint": "Fund treasury with 'xion-toolkit treasury fund'",
+      "retryable": false
+    }
+  },
+  "withdraw_insufficient_balance": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY002",
+      "message": "Insufficient balance: Treasury balance too low for withdrawal",
+      "hint": "Fund treasury with 'xion-toolkit treasury fund'",
+      "retryable": false
+    }
+  },
+  "not_authorized": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY008",
+      "message": "Not authorized for treasury: Only admin can perform this operation",
+      "hint": "Ensure you are the admin of this treasury",
+      "retryable": false
+    }
+  }
+}

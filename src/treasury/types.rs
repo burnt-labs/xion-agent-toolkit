@@ -804,6 +804,130 @@ pub struct FeeAllowanceInfo {
 }
 
 // ============================================================================
+// BATCH OPERATION TYPES
+// ============================================================================
+
+/// Batch fund operation config file format
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchFundConfig {
+    /// List of funding operations
+    pub operations: Vec<BatchFundOperation>,
+}
+
+/// Single fund operation in a batch
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchFundOperation {
+    /// Treasury contract address
+    pub address: String,
+    /// Amount to fund (e.g., "1000000uxion")
+    pub amount: String,
+}
+
+/// Batch fund operation result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchFundResult {
+    /// Treasury address
+    pub address: String,
+    /// Operation status: "success" or "failed"
+    pub status: String,
+    /// Amount that was attempted to fund
+    pub amount: String,
+    /// Transaction hash (if successful)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_hash: Option<String>,
+    /// Error message (if failed)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Batch grant config file format
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchGrantConfig {
+    /// Grant type for all treasuries in this batch
+    pub grant_type: String,
+    /// Message type URL for the grant
+    #[serde(rename = "message_type_url")]
+    pub message_type_url: String,
+    /// List of treasuries to configure
+    pub treasuries: Vec<BatchGrantTreasury>,
+    /// Optional spend limit for send authorization
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spend_limit: Option<String>,
+    /// Optional description for the grant
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+/// Treasury entry in batch grant config
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchGrantTreasury {
+    /// Treasury contract address
+    pub address: String,
+    /// Spend limit for this treasury (overrides global spend_limit)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spend_limit: Option<String>,
+}
+
+/// Batch grant config operation result (per-treasury)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchGrantConfigOperationResult {
+    /// Treasury address
+    pub address: String,
+    /// Operation status: "success" or "failed"
+    pub status: String,
+    /// Grant type URL
+    pub grant_type: String,
+    /// Transaction hash (if successful)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_hash: Option<String>,
+    /// Error message (if failed)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Batch operation summary report
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchOperationSummary {
+    /// Total number of operations
+    pub total: usize,
+    /// Number of successful operations
+    pub successful: usize,
+    /// Number of failed operations
+    pub failed: usize,
+    /// Individual operation results
+    pub results: Vec<BatchOperationResult>,
+}
+
+/// Individual batch operation result (unified type for any batch operation)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchOperationResult {
+    /// Treasury address
+    pub address: String,
+    /// Operation status: "success" or "failed"
+    pub status: String,
+    /// Transaction hash (if successful)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_hash: Option<String>,
+    /// Error message (if failed)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    /// Additional details (operation-specific)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<serde_json::Value>,
+}
+
+/// Treasury export config for single or bulk export
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TreasuryExportConfig {
+    /// Export timestamp (ISO 8601)
+    pub exported_at: String,
+    /// Network name
+    pub network: String,
+    /// List of treasury configurations
+    pub treasuries: Vec<TreasuryExportData>,
+}
+
+// ============================================================================
 // CONTRACT EXECUTE MESSAGE TYPES
 // ============================================================================
 // Note: We maintain our own TreasuryExecuteMsg instead of using treasury::msg::ExecuteMsg

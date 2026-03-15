@@ -1,0 +1,118 @@
+{
+  "tx_status_pending": {
+    "success": true,
+    "tx_hash": "ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZ",
+    "status": "pending",
+    "height": null,
+    "gas_used": null,
+    "gas_wanted": null,
+    "timestamp": null,
+    "raw_log": null
+  },
+  "tx_status_success": {
+    "success": true,
+    "tx_hash": "ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZ",
+    "status": "success",
+    "height": 1234567,
+    "gas_used": 85000,
+    "gas_wanted": 100000,
+    "timestamp": "2026-03-15T12:00:00Z",
+    "raw_log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"execute_contract\"}]}]}]"
+  },
+  "tx_status_failed": {
+    "success": true,
+    "tx_hash": "FAIL123DEF456GHI789JKL012MNO345PQR678STU901VWX234",
+    "status": "failed",
+    "height": 1234568,
+    "gas_used": 50000,
+    "gas_wanted": 100000,
+    "timestamp": "2026-03-15T12:05:00Z",
+    "raw_log": "out of gas: insufficient fee",
+    "error": "out of gas: insufficient fee"
+  },
+  "tx_not_found": {
+    "success": false,
+    "error": {
+      "code": "ETX001",
+      "message": "Transaction query failed: Transaction not found",
+      "hint": "Check network connection and transaction hash",
+      "retryable": false
+    }
+  },
+  "tx_query_network_error": {
+    "success": false,
+    "error": {
+      "code": "ENETWORK001",
+      "message": "Connection timeout: Failed to query transaction",
+      "hint": "Check network connectivity, will retry",
+      "retryable": true
+    }
+  },
+  "tx_wait_success": {
+    "success": true,
+    "tx_hash": "ABC123DEF456GHI789JKL012MNO345PQR678STU901VWX234YZ",
+    "status": "success",
+    "height": 1234567,
+    "gas_used": 85000,
+    "gas_wanted": 100000,
+    "timestamp": "2026-03-15T12:00:00Z",
+    "wait_time_seconds": 5.2,
+    "attempts": 3
+  },
+  "tx_wait_timeout": {
+    "success": false,
+    "error": {
+      "code": "ETX003",
+      "message": "Transaction timeout: Transaction did not complete within 60 seconds",
+      "hint": "Transaction took too long to confirm, check chain status",
+      "retryable": true
+    },
+    "tx_hash": "PENDING123DEF456GHI789JKL012MNO345PQR678STU901VWX",
+    "wait_time_seconds": 60,
+    "attempts": 12
+  },
+  "tx_wait_failed": {
+    "success": false,
+    "error": {
+      "code": "ETX002",
+      "message": "Transaction wait failed: Transaction failed on chain",
+      "hint": "Check network connection and wait parameters",
+      "retryable": false
+    },
+    "tx_hash": "FAIL123DEF456GHI789JKL012MNO345PQR678STU901VWX234",
+    "status": "failed",
+    "error_details": "out of gas: insufficient fee"
+  },
+  "tx_broadcast_success": {
+    "success": true,
+    "tx_hash": "BROADCAST123DEF456GHI789JKL012MNO345PQR678STU901",
+    "status": "broadcasted",
+    "height": null,
+    "message": "Transaction broadcasted successfully"
+  },
+  "tx_broadcast_invalid_sequence": {
+    "success": false,
+    "error": {
+      "code": "ETX002",
+      "message": "Transaction broadcast failed: invalid account sequence",
+      "hint": "Retry the transaction with updated sequence",
+      "retryable": true
+    }
+  },
+  "tx_simulation_success": {
+    "success": true,
+    "gas_estimate": 85000,
+    "gas_wanted": 100000,
+    "fee_estimate": "5000uxion",
+    "is_valid": true
+  },
+  "tx_simulation_failed": {
+    "success": false,
+    "error": {
+      "code": "ETREASURY002",
+      "message": "Transaction simulation failed: insufficient balance",
+      "hint": "Fund treasury with 'xion-toolkit treasury fund'",
+      "retryable": false
+    }
+  }
+}

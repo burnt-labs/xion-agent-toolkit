@@ -1,0 +1,7 @@
+{
+  "operations": [
+    {"address": "xion1abc123...", "amount": "1000000uxion"},
+    {"address": "xion1def456...", "amount": "500000uxion"},
+    {"address": "xion1ghi789...", "amount": "250000uxion"}
+  ]
+}

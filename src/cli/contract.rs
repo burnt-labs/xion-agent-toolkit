@@ -2,6 +2,8 @@ use anyhow::Result;
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
+use crate::cli::ExecuteContext;
+
 #[derive(Debug, Subcommand)]
 pub enum ContractCommands {
     /// Instantiate a new smart contract (v1 - dynamic address)
@@ -85,20 +87,20 @@ pub struct QueryArgs {
     pub msg: PathBuf,
 }
 
-pub async fn handle_command(cmd: ContractCommands) -> Result<()> {
+pub async fn handle_command(cmd: ContractCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        ContractCommands::Instantiate(args) => handle_instantiate(args).await,
-        ContractCommands::Instantiate2(args) => handle_instantiate2(args).await,
-        ContractCommands::Execute(args) => handle_execute(args).await,
-        ContractCommands::Query(args) => handle_query(args).await,
+        ContractCommands::Instantiate(args) => handle_instantiate(args, ctx).await,
+        ContractCommands::Instantiate2(args) => handle_instantiate2(args, ctx).await,
+        ContractCommands::Execute(args) => handle_execute(args, ctx).await,
+        ContractCommands::Query(args) => handle_query(args, ctx).await,
     }
 }
 
-async fn handle_instantiate(args: InstantiateArgs) -> Result<()> {
+async fn handle_instantiate(args: InstantiateArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Instantiating contract code_id={} with label='{}'...",
@@ -119,12 +121,15 @@ async fn handle_instantiate(args: InstantiateArgs) -> Result<()> {
 
     // Check auth
     if !manager.is_authenticated()? {
-        return print_json(&serde_json::json!({
-            "success": false,
-            "code": "NOT_AUTHENTICATED",
-            "error": "Not authenticated",
-            "suggestion": "Run 'xion-toolkit auth login' first"
-        }));
+        return print_formatted(
+            &serde_json::json!({
+                "success": false,
+                "code": "NOT_AUTHENTICATED",
+                "error": "Not authenticated",
+                "suggestion": "Run 'xion-toolkit auth login' first"
+            }),
+            ctx.output_format(),
+        );
     }
 
     // Call manager
@@ -140,7 +145,7 @@ async fn handle_instantiate(args: InstantiateArgs) -> Result<()> {
                 "label": result.label,
                 "admin": result.admin
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -170,16 +175,16 @@ async fn handle_instantiate(args: InstantiateArgs) -> Result<()> {
                 "error": e.to_string(),
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_instantiate2(args: Instantiate2Args) -> Result<()> {
+async fn handle_instantiate2(args: Instantiate2Args, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Instantiating contract2 code_id={} with label='{}'...",
@@ -207,12 +212,15 @@ async fn handle_instantiate2(args: Instantiate2Args) -> Result<()> {
 
     // Check auth
     if !manager.is_authenticated()? {
-        return print_json(&serde_json::json!({
-            "success": false,
-            "code": "NOT_AUTHENTICATED",
-            "error": "Not authenticated",
-            "suggestion": "Run 'xion-toolkit auth login' first"
-        }));
+        return print_formatted(
+            &serde_json::json!({
+                "success": false,
+                "code": "NOT_AUTHENTICATED",
+                "error": "Not authenticated",
+                "suggestion": "Run 'xion-toolkit auth login' first"
+            }),
+            ctx.output_format(),
+        );
     }
 
     // Call manager
@@ -236,7 +244,7 @@ async fn handle_instantiate2(args: Instantiate2Args) -> Result<()> {
                 "admin": result.admin,
                 "predicted_address": result.predicted_address
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -266,16 +274,16 @@ async fn handle_instantiate2(args: Instantiate2Args) -> Result<()> {
                 "error": e.to_string(),
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_execute(args: ExecuteArgs) -> Result<()> {
+async fn handle_execute(args: ExecuteArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Executing message on contract {}...",
@@ -296,12 +304,15 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
 
     // Check auth
     if !manager.is_authenticated()? {
-        return print_json(&serde_json::json!({
-            "success": false,
-            "code": "NOT_AUTHENTICATED",
-            "error": "Not authenticated",
-            "suggestion": "Run 'xion-toolkit auth login' first"
-        }));
+        return print_formatted(
+            &serde_json::json!({
+                "success": false,
+                "code": "NOT_AUTHENTICATED",
+                "error": "Not authenticated",
+                "suggestion": "Run 'xion-toolkit auth login' first"
+            }),
+            ctx.output_format(),
+        );
     }
 
     // Call manager
@@ -315,7 +326,7 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                 "tx_hash": result.tx_hash,
                 "contract": result.contract
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -342,16 +353,16 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                 "error": e.to_string(),
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_query(args: QueryArgs) -> Result<()> {
+async fn handle_query(args: QueryArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Querying contract {}...", args.contract));
 
@@ -378,7 +389,7 @@ async fn handle_query(args: QueryArgs) -> Result<()> {
                 "query": msg,
                 "result": result
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -408,7 +419,7 @@ async fn handle_query(args: QueryArgs) -> Result<()> {
                 "error": e.to_string(),
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }

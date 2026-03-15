@@ -3,11 +3,12 @@
 //! Client for communicating with Xion's OAuth2 API Service.
 //! Supports token exchange, refresh, and user info retrieval.
 
-use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, instrument};
+
+use crate::shared::error::{AuthError, NetworkError, XionResult};
 
 /// OAuth2 API Client for Xion
 ///
@@ -246,7 +247,7 @@ impl OAuth2ApiClient {
         code_verifier: &str,
         redirect_uri: &str,
         client_id: &str,
-    ) -> Result<TokenResponse> {
+    ) -> XionResult<TokenResponse> {
         debug!("Exchanging authorization code for token");
 
         let request = TokenRequest {
@@ -258,9 +259,13 @@ impl OAuth2ApiClient {
             client_id: client_id.to_string(),
         };
 
-        self.request_token(&request)
-            .await
-            .context("Failed to exchange authorization code for token")
+        self.request_token(&request).await.map_err(|e| {
+            AuthError::CallbackFailed(format!(
+                "Failed to exchange authorization code for token: {}",
+                e
+            ))
+            .into()
+        })
     }
 
     /// Exchange authorization code for tokens (with custom endpoint)
@@ -282,7 +287,7 @@ impl OAuth2ApiClient {
         redirect_uri: &str,
         client_id: &str,
         token_endpoint: &str,
-    ) -> Result<TokenResponse> {
+    ) -> XionResult<TokenResponse> {
         debug!(
             "Exchanging authorization code for token using custom endpoint: {}",
             token_endpoint
@@ -299,7 +304,13 @@ impl OAuth2ApiClient {
 
         self.request_token_with_endpoint(&request, token_endpoint)
             .await
-            .context("Failed to exchange authorization code for token")
+            .map_err(|e| {
+                AuthError::CallbackFailed(format!(
+                    "Failed to exchange authorization code for token: {}",
+                    e
+                ))
+                .into()
+            })
     }
 
     /// Refresh access token using refresh token
@@ -339,7 +350,7 @@ impl OAuth2ApiClient {
         &self,
         refresh_token: &str,
         client_id: &str,
-    ) -> Result<TokenResponse> {
+    ) -> XionResult<TokenResponse> {
         debug!("Refreshing access token");
 
         let request = TokenRequest {
@@ -353,7 +364,7 @@ impl OAuth2ApiClient {
 
         self.request_token(&request)
             .await
-            .context("Failed to refresh token")
+            .map_err(|e| AuthError::TokenExpired(format!("Failed to refresh token: {}", e)).into())
     }
 
     /// Get user information
@@ -385,7 +396,7 @@ impl OAuth2ApiClient {
     /// # }
     /// ```
     #[instrument(skip(self, access_token))]
-    pub async fn get_user_info(&self, access_token: &str) -> Result<UserInfo> {
+    pub async fn get_user_info(&self, access_token: &str) -> XionResult<UserInfo> {
         debug!("Fetching user info from /api/v1/me");
 
         let url = format!("{}/api/v1/me", self.base_url);
@@ -396,7 +407,9 @@ impl OAuth2ApiClient {
             .bearer_auth(access_token)
             .send()
             .await
-            .context("Failed to send user info request")?;
+            .map_err(|e| {
+                NetworkError::RequestFailed(format!("Failed to send user info request: {}", e))
+            })?;
 
         let status = response.status();
         debug!("User info response status: {}", status);
@@ -406,13 +419,16 @@ impl OAuth2ApiClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            anyhow::bail!("Failed to get user info: HTTP {} - {}", status, error_text);
+            return Err(NetworkError::InvalidResponse(format!(
+                "Failed to get user info: HTTP {} - {}",
+                status, error_text
+            ))
+            .into());
         }
 
-        let user_info = response
-            .json::<UserInfo>()
-            .await
-            .context("Failed to parse user info response")?;
+        let user_info = response.json::<UserInfo>().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse user info response: {}", e))
+        })?;
 
         debug!(
             "Successfully retrieved user info for MetaAccount: {}",
@@ -424,7 +440,7 @@ impl OAuth2ApiClient {
     /// Internal method to request tokens from the OAuth2 service
     ///
     /// Makes a POST request to the /oauth/token endpoint
-    async fn request_token(&self, request: &TokenRequest) -> Result<TokenResponse> {
+    async fn request_token(&self, request: &TokenRequest) -> XionResult<TokenResponse> {
         let url = format!("{}/oauth/token", self.base_url);
 
         debug!("Making token request to: {}", url);
@@ -435,7 +451,9 @@ impl OAuth2ApiClient {
             .form(request)
             .send()
             .await
-            .context("Failed to send token request")?;
+            .map_err(|e| {
+                NetworkError::RequestFailed(format!("Failed to send token request: {}", e))
+            })?;
 
         let status = response.status();
         debug!("Token response status: {}", status);
@@ -445,25 +463,33 @@ impl OAuth2ApiClient {
             if let Ok(error_text) = response.text().await {
                 // Try to parse as OAuth2 error
                 if let Ok(oauth_error) = serde_json::from_str::<OAuth2Error>(&error_text) {
-                    anyhow::bail!(
+                    return Err(AuthError::InvalidCredentials(format!(
                         "OAuth2 error: {} - {}",
                         oauth_error.error,
                         oauth_error
                             .error_description
                             .unwrap_or_else(|| "No description".to_string())
-                    );
+                    ))
+                    .into());
                 } else {
-                    anyhow::bail!("Token request failed: HTTP {} - {}", status, error_text);
+                    return Err(NetworkError::InvalidResponse(format!(
+                        "Token request failed: HTTP {} - {}",
+                        status, error_text
+                    ))
+                    .into());
                 }
             } else {
-                anyhow::bail!("Token request failed: HTTP {}", status);
+                return Err(NetworkError::InvalidResponse(format!(
+                    "Token request failed: HTTP {}",
+                    status
+                ))
+                .into());
             }
         }
 
-        let mut token_response = response
-            .json::<TokenResponse>()
-            .await
-            .context("Failed to parse token response")?;
+        let mut token_response = response.json::<TokenResponse>().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse token response: {}", e))
+        })?;
 
         // Debug: print token prefix
         debug!(
@@ -495,7 +521,7 @@ impl OAuth2ApiClient {
         &self,
         request: &TokenRequest,
         token_endpoint: &str,
-    ) -> Result<TokenResponse> {
+    ) -> XionResult<TokenResponse> {
         debug!(
             "Making token request to custom endpoint: {}",
             token_endpoint
@@ -507,7 +533,9 @@ impl OAuth2ApiClient {
             .form(request)
             .send()
             .await
-            .context("Failed to send token request")?;
+            .map_err(|e| {
+                NetworkError::RequestFailed(format!("Failed to send token request: {}", e))
+            })?;
 
         let status = response.status();
         debug!("Token response status: {}", status);
@@ -517,25 +545,33 @@ impl OAuth2ApiClient {
             if let Ok(error_text) = response.text().await {
                 // Try to parse as OAuth2 error
                 if let Ok(oauth_error) = serde_json::from_str::<OAuth2Error>(&error_text) {
-                    anyhow::bail!(
+                    return Err(AuthError::InvalidCredentials(format!(
                         "OAuth2 error: {} - {}",
                         oauth_error.error,
                         oauth_error
                             .error_description
                             .unwrap_or_else(|| "No description".to_string())
-                    );
+                    ))
+                    .into());
                 } else {
-                    anyhow::bail!("Token request failed: HTTP {} - {}", status, error_text);
+                    return Err(NetworkError::InvalidResponse(format!(
+                        "Token request failed: HTTP {} - {}",
+                        status, error_text
+                    ))
+                    .into());
                 }
             } else {
-                anyhow::bail!("Token request failed: HTTP {}", status);
+                return Err(NetworkError::InvalidResponse(format!(
+                    "Token request failed: HTTP {}",
+                    status
+                ))
+                .into());
             }
         }
 
-        let mut token_response = response
-            .json::<TokenResponse>()
-            .await
-            .context("Failed to parse token response")?;
+        let mut token_response = response.json::<TokenResponse>().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse token response: {}", e))
+        })?;
 
         // Calculate and set expires_at if not provided
         if token_response.expires_at.is_none() {
@@ -848,12 +884,12 @@ mod tests {
 
             assert!(result.is_err());
             let error = result.unwrap_err();
-            // Check the error chain since anyhow's Display only shows top-level message
-            let error_chain: Vec<String> = error.chain().map(|e| e.to_string()).collect();
+            // Check the error message contains the OAuth2 error
+            let error_str = error.to_string();
             assert!(
-                error_chain.iter().any(|e| e.contains("invalid_grant")),
-                "Expected 'invalid_grant' in error chain, got: {:?}",
-                error_chain
+                error_str.contains("invalid_grant"),
+                "Expected 'invalid_grant' in error message, got: {}",
+                error_str
             );
         }
     }

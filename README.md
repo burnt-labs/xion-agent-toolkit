@@ -1,73 +1,38 @@
 # Xion Agent Toolkit
 
-A CLI-driven, Agent-oriented toolkit for developing on the Xion blockchain.
+**Build on Xion with gasless transactions.**
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Test Coverage](https://img.shields.io/badge/tests-232%20passing-green)]()
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+A command-line tool for managing Xion MetaAccounts, Treasury contracts, and NFT assets — all without handling private keys or paying gas fees.
 
-## Overview
+---
 
-Xion Agent Toolkit provides a command-line interface for interacting with Xion's MetaAccount system, enabling gasless transactions and automated Treasury management through OAuth2 authentication.
+## What You Can Do
 
-**Key Features:**
-- 🔐 OAuth2 authentication with PKCE security
-- 💰 Treasury management (list, query, fund, withdraw, export, import)
-- ⚙️ Grant & fee configuration
-- 👤 Admin management (propose, accept, cancel)
-- 🔧 Treasury parameter updates
-- 🚀 Generic contract instantiation
-- 🎨 **Asset Builder (CW721 NFT)** - Create, mint, batch operations
-- 🔍 Smart contract queries (read-only)
-- 🤖 Agent-friendly JSON output
-- 🔒 Encrypted credential storage
+- **🔐 Login with Google, Email, or Passkey** — No seed phrases, no private keys
+- **💰 Manage Treasuries** — Create, fund, withdraw, configure permissions
+- **🎨 Create NFTs** — Deploy and mint CW721 collections
+- **🔮 Predict Addresses** — Know contract addresses before deployment
+- **📦 Batch Operations** — Manage multiple treasuries at once
+- **🔄 CI/CD Ready** — JSON output, exit codes, GitHub Actions support
+
+---
 
 ## Installation
 
-### For AI Agents
+### Quick Install (macOS / Linux)
 
-If you're setting up an AI Agent, see [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for complete integration instructions.
-
-Please tell your AI Agent the following instruction:
-
-```text
-Follow this guide https://raw.githubusercontent.com/burnt-labs/xion-agent-toolkit/main/INSTALL-FOR-AGENTS.md to install and configure the Xion Agent Toolkit skills for AI agents.
-```
-
-### From GitHub Releases (Recommended)
-
-Pre-built binaries are available for Linux, macOS, and Windows:
-
-**macOS / Linux:**
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
 ```
 
-**Windows (PowerShell):**
+### Windows (PowerShell)
+
 ```powershell
 powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
 ```
 
-**Manual Download:**
-
-Download the appropriate archive from the [Releases page](https://github.com/burnt-labs/xion-agent-toolkit/releases):
-
-| Platform | Archive |
-|----------|---------|
-| Linux x64 | `xion-agent-toolkit-x86_64-unknown-linux-gnu.tar.xz` |
-| Linux ARM64 | `xion-agent-toolkit-aarch64-unknown-linux-gnu.tar.xz` |
-| macOS Intel | `xion-agent-toolkit-x86_64-apple-darwin.tar.xz` |
-| macOS Apple Silicon | `xion-agent-toolkit-aarch64-apple-darwin.tar.xz` |
-| Windows x64 | `xion-agent-toolkit-x86_64-pc-windows-msvc.zip` |
-
-Extract the archive and add the binary to your `PATH`.
-
 ### From Source
-
-Prerequisites:
-- Rust 1.75 or higher
-- OpenSSL development libraries
 
 ```bash
 git clone https://github.com/burnt-labs/xion-agent-toolkit
@@ -75,393 +40,287 @@ cd xion-agent-toolkit
 cargo install --path .
 ```
 
-## Skills for AI Agents
-
-Xion Agent Toolkit includes pre-built skills that wrap CLI commands for easy AI Agent integration. These skills follow the [Agent Skills format](https://agentskills.io/).
-
-### Available Skills
-
-| Skill | Description |
-|-------|-------------|
-| `xion-dev` | Unified entry point - routes to correct skill based on user needs |
-| `xion-toolkit-init` | Install xion-toolkit CLI automatically |
-| `xion-oauth2` | OAuth2 authentication (login, logout, status, refresh) |
-| `xion-treasury` | Treasury management (list, query, create, fund, withdraw, grants, fees) |
-
-### When to Use xion-toolkit vs xion-skills
-
-**xion-toolkit** (this repo) is for **MetaAccount development** - the primary way to build on Xion:
-
-| Use xion-toolkit when... | Use xion-skills when... |
-|--------------------------|-------------------------|
-| Building Xion applications | Deploying CosmWasm contracts |
-| Managing Treasury contracts | Querying chain data |
-| Gasless transactions | Checking transaction status |
-| OAuth2 authentication | Mnemonic wallet management |
-| Authz/Fee grant configuration | Validator operations |
-
-**For most Xion developers, xion-toolkit is the recommended tool.**
-
-Install both for complete coverage:
-```bash
-# Primary: MetaAccount development
-npx skills add burnt-labs/xion-agent-toolkit
-
-# Secondary: Advanced chain operations
-npx skills add burnt-labs/xion-skills
-```
-
-### Installing via skills.sh (Recommended)
-
-Install all skills with a single command using [skills.sh](https://skills.sh):
-
-```bash
-# Install xion-agent-toolkit skills (includes xion-toolkit-init, xion-oauth2, xion-treasury)
-npx skills add burnt-labs/xion-agent-toolkit
-
-# Optionally, also install xion-skills for xiond CLI operations
-npx skills add burnt-labs/xion-skills
-```
-
-### Using Skills
-
-After installation via skills.sh, the `xion-toolkit` CLI is available and wrapped by skills for agent use.
-
-- **From a shell (human/operator)**: call the CLI directly:
-
-```bash
-# Authenticate with OAuth2
-xion-toolkit auth login
-
-# List all treasuries
-xion-toolkit treasury list
-
-# Query a treasury
-xion-toolkit treasury query xion1abc123...
-```
-
-- **From AI Agents**: call the installed skill scripts (for JSON-only output and better tooling). See:
-  - [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md)
-  - [docs/skills-guide.md](./docs/skills-guide.md)
+---
 
 ## Quick Start
 
-### 1. Check Status
+### 1. Login
+
+```bash
+xion-toolkit auth login
+```
+
+Opens your browser for authentication. Supports Google, Email, Passkey, and more.
+
+### 2. Check Status
 
 ```bash
 xion-toolkit status
 ```
 
-Output:
 ```json
 {
   "success": true,
   "network": "testnet",
   "authenticated": true,
-  "xion_address": "xion1abc123...",
-  "config_path": "~/.xion-toolkit/config.json"
-}
-```
-
-### 2. Login
-
-```bash
-xion-toolkit auth login
-```
-
-This opens your browser for OAuth2 authorization and saves tokens securely.
-
-Output:
-```json
-{
-  "success": true,
-  "network": "testnet",
-  "authenticated": true,
-  "token_type": "Bearer",
-  "expires_in": 3600,
   "xion_address": "xion1abc123..."
 }
 ```
 
-### 3. Manage Treasuries
+### 3. Create a Treasury
 
 ```bash
-# List treasuries
+# Create and fund a new treasury
+xion-toolkit treasury create --fund 1000000uxion
+
+# Or predict the address first (without deploying)
+xion-toolkit treasury create --predict --salt "my-treasury-v1"
+```
+
+### 4. Manage Your Treasury
+
+```bash
+# List all treasuries
 xion-toolkit treasury list
+
+# Fund a treasury
+xion-toolkit treasury fund xion1... --amount 1000000uxion
+
+# Withdraw funds
+xion-toolkit treasury withdraw xion1... --amount 500000uxion --to xion1recipient...
+
+# Export for backup
+xion-toolkit treasury export --output backup.json
 ```
 
-Output:
-```json
-{
-  "success": true,
-  "treasuries": [
-    {
-      "address": "xion1def456...",
-      "balance": "10000000",
-      "denom": "uxion",
-      "admin": "xion1abc123..."
-    }
-  ],
-  "count": 1
-}
-```
-
-```bash
-# Query treasury details
-xion-toolkit treasury query xion1def456...
-
-# Fund a treasury (1 XION = 1,000,000 uxion)
-xion-toolkit treasury fund xion1def456... --amount 1000000
-
-# Withdraw from a treasury
-xion-toolkit treasury withdraw xion1def456... --amount 500000 --to xion1recipient...
-```
-
-### 4. Configure Grants and Fees
-
-```bash
-# Configure authz grant for sending funds
-xion-toolkit treasury grant-config add xion1def456... \
-  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
-  --grant-auth-type send \
-  --grant-spend-limit "1000000uxion" \
-  --grant-description "Allow sending funds"
-
-# Configure fee allowance for gasless transactions
-xion-toolkit treasury fee-config set xion1def456... \
-  --fee-allowance-type basic \
-  --fee-spend-limit "5000000uxion" \
-  --fee-description "Basic fee allowance"
-```
-
-### 5. Admin Management
-
-```bash
-# Propose new admin
-xion-toolkit treasury admin propose xion1def456... \
-  --new-admin xion1newadmin...
-
-# Accept admin role (called by pending admin)
-xion-toolkit treasury admin accept xion1def456...
-
-# Cancel proposed admin
-xion-toolkit treasury admin cancel xion1def456...
-```
-
-### Error Handling
-
-All errors return structured JSON with actionable hints:
-
-```json
-{
-  "success": false,
-  "error": "Not authenticated",
-  "error_code": "NOT_AUTHENTICATED",
-  "hint": "Run 'xion-toolkit auth login' to authenticate"
-}
-```
-
-## Contract Commands
-
-```bash
-# Instantiate a contract
-xion-toolkit contract instantiate \
-  --code-id 1260 \
-  --label "my-contract" \
-  --msg instantiate-msg.json
-
-# Instantiate with predictable address (instantiate2)
-xion-toolkit contract instantiate2 \
-  --code-id 1260 \
-  --label "my-contract" \
-  --msg instantiate-msg.json \
-  --salt "01020304"
-
-# Execute a message on a deployed contract
-xion-toolkit contract execute \
-  --contract xion1abc123... \
-  --msg execute-msg.json
-
-# Execute with funds
-xion-toolkit contract execute \
-  --contract xion1abc123... \
-  --msg execute-msg.json \
-  --funds "1000000uxion"
-
-# Query a smart contract (read-only, no auth required)
-xion-toolkit contract query \
-  --contract xion1abc123... \
-  --msg query.json
-```
-
-## CLI Reference
-
-For detailed documentation, see [docs/cli-reference.md](./docs/cli-reference.md).
-
-### Asset (NFT)
+### 5. Create an NFT Collection
 
 ```bash
 # List available NFT types
 xion-toolkit asset types
 
-# Create NFT collection
+# Create a collection
 xion-toolkit asset create --type cw721-base --name "My Collection" --symbol "NFT"
 
-# Mint NFT token
+# Mint tokens
 xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
-
-# Mint with royalties (CW2981)
-xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1... \
-  --asset-type cw2981-royalties \
-  --royalty-address xion1... --royalty-percentage 0.05
-
-# Predict contract address
-xion-toolkit asset predict --type cw721-base --name "My Collection" \
-  --symbol "NFT" --salt "my-unique-salt"
-
-# Batch mint from JSON file
-xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
-
-# Query NFT contract
-xion-toolkit asset query --contract xion1... --msg '{"nft_info": {"token_id": "1"}}'
 ```
+
+---
+
+## Common Tasks
+
+### Configure Permissions (Grants)
+
+Allow your treasury to perform specific actions:
+
+```bash
+# Allow sending funds (up to 1 XION)
+xion-toolkit treasury grant-config add xion1... \
+  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
+  --grant-auth-type send \
+  --grant-spend-limit "1000000uxion"
+```
+
+### Configure Gasless Fees
+
+Set up fee allowance for gasless transactions:
+
+```bash
+xion-toolkit treasury fee-config set xion1... \
+  --fee-allowance-type basic \
+  --fee-spend-limit "5000000uxion"
+```
+
+### Batch Operations
+
+Manage multiple treasuries at once:
+
+```bash
+# Create a config file (see examples/batch-fund.json)
+xion-toolkit treasury batch fund --config funds.json
+
+# Configure grants for multiple treasuries
+xion-toolkit treasury batch grant-config --config grants.json
+```
+
+### Transfer Admin Rights
+
+```bash
+# Propose new admin
+xion-toolkit treasury admin propose xion1... --new-admin xion1new...
+
+# New admin accepts (run by the new admin)
+xion-toolkit treasury admin accept xion1...
+```
+
+---
+
+## Command Reference
 
 ### Authentication
 
-```bash
-xion-toolkit auth login [--port <PORT>]   # OAuth2 login
-xion-toolkit auth logout                  # Clear credentials
-xion-toolkit auth status                  # Check auth status
-xion-toolkit auth refresh                 # Refresh token
-```
+| Command | Description |
+|---------|-------------|
+| `xion-toolkit auth login` | Login via OAuth2 (browser) |
+| `xion-toolkit auth logout` | Clear stored credentials |
+| `xion-toolkit auth status` | Check authentication status |
+| `xion-toolkit auth refresh` | Refresh access token |
 
 ### Treasury
 
+| Command | Description |
+|---------|-------------|
+| `treasury list` | List all your treasuries |
+| `treasury query <address>` | Get treasury details |
+| `treasury create` | Create a new treasury |
+| `treasury fund <address> --amount` | Fund a treasury |
+| `treasury withdraw <address> --amount --to` | Withdraw funds |
+| `treasury export [--output]` | Export treasury configs |
+| `treasury import <address> --from-file` | Import treasury config |
+
+**Predicted Address:**
 ```bash
-# Basic operations
-xion-toolkit treasury list                       # List treasuries
-xion-toolkit treasury query <address>            # Query details
-xion-toolkit treasury fund <address> --amount N  # Fund treasury
-xion-toolkit treasury withdraw <address> --amount N --to <recipient>  # Withdraw
-
-# Export/Import (backup & migration)
-xion-toolkit treasury export <address> [--output file.json]  # Export config
-xion-toolkit treasury import <address> --from-file config.json [--dry-run]  # Import config
-
-# Grant configuration
-xion-toolkit treasury grant-config add <address> [options]     # Add grant
-xion-toolkit treasury grant-config remove <address> --type-url <url>  # Remove grant
-xion-toolkit treasury grant-config list <address>              # List grants
-
-# Fee configuration
-xion-toolkit treasury fee-config set <address> [options]    # Set fee config
-xion-toolkit treasury fee-config remove <address> --grantee <address> # Remove fee allowance
-xion-toolkit treasury fee-config query <address>            # Query fee config
-
-# Admin management
-xion-toolkit treasury admin propose <address> --new-admin <address>   # Propose new admin
-xion-toolkit treasury admin accept <address>                   # Accept admin role
-xion-toolkit treasury admin cancel <address>                   # Cancel proposed admin
-
-# Parameters
-xion-toolkit treasury params update <address> [options]        # Update treasury params
+treasury create --predict --salt <salt>  # Get address before deploying
 ```
+
+**Batch Operations:**
+```bash
+treasury batch fund --config <file>           # Fund multiple
+treasury batch grant-config --config <file>   # Configure multiple
+```
+
+### Asset (NFT)
+
+| Command | Description |
+|---------|-------------|
+| `asset types` | List NFT contract types |
+| `asset create --type --name --symbol` | Create NFT collection |
+| `asset mint --contract --token-id --owner` | Mint NFT |
+| `asset predict --type --name --symbol --salt` | Predict contract address |
+| `asset batch-mint --contract --tokens-file` | Batch mint tokens |
+| `asset query --contract --msg` | Query NFT contract |
 
 ### Contract
 
-```bash
-# Contract instantiation
-xion-toolkit contract instantiate --code-id <id> --label <label> --msg <file> [options]
-xion-toolkit contract instantiate2 --code-id <id> --label <label> --msg <file> [options]
-
-# Contract execution
-xion-toolkit contract execute --contract <address> --msg <file> [--funds <amount>]
-
-# Contract query (read-only, no auth required)
-xion-toolkit contract query --contract <address> --msg <file>
-```
+| Command | Description |
+|---------|-------------|
+| `contract instantiate --code-id --label --msg` | Deploy contract |
+| `contract instantiate2 --code-id --label --msg --salt` | Deploy with predicted address |
+| `contract execute --contract --msg` | Execute contract message |
+| `contract query --contract --msg` | Query contract (read-only) |
 
 ### Configuration
 
-```bash
-xion-toolkit config show                  # Show config
-xion-toolkit config set-network <network> # Switch network
-xion-toolkit status                       # Show status
-```
+| Command | Description |
+|---------|-------------|
+| `config show` | Show current config |
+| `config set-network <network>` | Switch network |
+| `status` | Show status |
 
-### Global Options
+---
+
+## Global Options
 
 ```bash
 xion-toolkit --network <testnet|mainnet>  # Network override
+xion-toolkit --output <format>             # Output format
 xion-toolkit --help                        # Show help
 xion-toolkit --version                     # Show version
 ```
 
-## Networks
+### Output Formats
 
-| Network | OAuth API | Chain ID | Status |
-|---------|-----------|----------|--------|
-| testnet | https://oauth2.testnet.burnt.com | xion-testnet-2 | Default |
-| mainnet | https://oauth2.burnt.com | xion-mainnet-1 | Production |
+| Format | Use Case |
+|--------|----------|
+| `json` (default) | Human reading, debugging |
+| `json-compact` | CI/CD pipelines, parsing |
+| `github-actions` | GitHub Actions workflow commands |
 
 ```bash
-# Switch networks
-xion-toolkit config set-network testnet
-xion-toolkit --network mainnet status
+xion-toolkit treasury list --output json-compact
 ```
 
-## Output Format
+---
 
-All commands output JSON for easy Agent integration:
+## Networks
 
-```json
-{
-  "success": true,
-  "treasuries": [...],
-  "count": 1
-}
+| Network | Description |
+|---------|-------------|
+| `testnet` | Default, for development |
+| `mainnet` | Production |
+
+```bash
+xion-toolkit config set-network mainnet
+xion-toolkit --network testnet status
 ```
+
+---
+
+## Error Handling
 
 Errors include actionable hints:
 
 ```json
 {
   "success": false,
-  "error": "Treasury not found",
-  "error_code": "TREASURY_NOT_FOUND",
-  "hint": "Verify the address or run 'treasury list' to see available treasuries"
+  "error": "Not authenticated",
+  "error_code": "EAUTH001",
+  "hint": "Run 'xion-toolkit auth login' to authenticate"
 }
 ```
 
+See [docs/ERROR-CODES.md](./docs/ERROR-CODES.md) for all error codes.
+
+Exit codes are standardized for CI/CD — see [docs/EXIT-CODES.md](./docs/EXIT-CODES.md).
+
+---
+
 ## Security
 
-- **PKCE (RFC 7636)** - Prevents authorization code interception
-- **AES-256-GCM** - Encrypted credential storage
-- **Localhost Only** - Callback server only accepts localhost
-- **HTTPS Only** - All external communications encrypted
+- **No Private Keys** — Uses OAuth2 and MetaAccount authentication
+- **PKCE (RFC 7636)** — Prevents authorization code interception
+- **AES-256-GCM** — Encrypted credential storage
+- **Localhost Only** — Callback server only accepts localhost
+- **HTTPS Only** — All communications encrypted
+
+---
 
 ## Documentation
 
-### For AI Agents
+| Document | Description |
+|----------|-------------|
+| [CLI Reference](./docs/cli-reference.md) | Detailed command docs |
+| [Quick Reference](./docs/QUICK-REFERENCE.md) | Condensed reference for AI |
+| [Error Codes](./docs/ERROR-CODES.md) | Complete error reference |
+| [Exit Codes](./docs/EXIT-CODES.md) | CI/CD exit codes |
+| [Configuration](./docs/configuration.md) | Setup guide |
 
-- **[INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md)** - Installation guide for AI Agents
-- **[QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md)** - Condensed CLI reference (~260 lines)
-- **[ERROR-CODES.md](./docs/ERROR-CODES.md)** - Complete error code reference
+---
 
-### For Developers
+## For AI Agents
 
-- [CLI Reference](./docs/cli-reference.md) - Detailed command documentation
-- [Configuration Guide](./docs/configuration.md) - Setup and configuration
-- [Skills Guide](./docs/skills-guide.md) - Skills usage overview
+If you want your AI Agent to install and use this toolkit, give it this instruction:
+
+```
+Follow this guide https://raw.githubusercontent.com/burnt-labs/xion-agent-toolkit/main/INSTALL-FOR-AGENTS.md to install and configure the Xion Agent Toolkit skills for AI agents.
+```
+
+For building AI agents with this toolkit:
+- See [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for integration instructions
+- Use [QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md) for condensed CLI reference
+
+---
 
 ## Resources
 
 - [Xion Documentation](https://docs.burnt.com/xion)
 - [Developer Portal](https://dev.testnet2.burnt.com)
-- [Agent Skills Format](https://agentskills.io/)
-- [Contributing Guide](CONTRIBUTING.md)
-- [xion-skills](https://github.com/burnt-labs/xion-skills) - Advanced chain operations (xiond)
+- [Contributing Guide](./CONTRIBUTING.md)
+- [xion-skills](https://github.com/burnt-labs/xion-skills) — Advanced chain operations
+
+---
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+Apache License 2.0 — see [LICENSE](LICENSE) for details.

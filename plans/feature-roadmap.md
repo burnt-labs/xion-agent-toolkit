@@ -1,7 +1,7 @@
 ---
 status: Active
 created_at: 2026-03-13
-updated_at: 2026-03-14
+updated_at: 2026-03-15
 ---
 
 # Feature Roadmap: xion-agent-toolkit
@@ -14,46 +14,166 @@ This document outlines the feature roadmap for the Xion Agent Toolkit.
 
 All planned Phase 1 features have been implemented and tested.
 
+**Phase 2 P1 Completed: 2026-03-15**
+
+Error Recovery Enhancement and Transaction Monitoring implemented.
+
 ---
 
-## Future Considerations
+## Phase 2: Ecosystem Polish
+
+Phase 2 focuses on improving developer experience, code quality, and production readiness.
 
 | Feature | Priority | Complexity | Status |
 |---------|----------|------------|--------|
-| CW20 Token Support | P2 | Medium | Proposed |
-| Transaction Wait (xion-skills) | P3 | Low | Deferred |
-| Multi-sig Wallet Support | P3 | High | Proposed |
-| IBC Transfer Enhancement | P3 | Medium | Proposed |
+| Error Recovery Enhancement | P1 | Medium | ✅ Done (2026-03-15) |
+| Transaction Monitoring | P1 | Low | ✅ Done (2026-03-15) |
+| `shared/` Module Implementation | P2 | Low | ✅ Done (2026-03-15) |
+| Skills Test Framework | P2 | Medium | ✅ Done (2026-03-15) |
+| CI/CD Integration Output | P2 | Low | ✅ Done (2026-03-15) |
+
+### 2.1 Error Recovery Enhancement (P1) ✅
+
+**Completed: 2026-03-15**
+
+- 40+ structured error codes (EAUTH, ETREASURY, EASSET, EBATCH, ECONFIG, ENETWORK, ETX)
+- Exponential backoff retry logic
+- Refactored oauth2_api.rs, treasury/api_client.rs, treasury/manager.rs
+- Documentation in `docs/ERROR-CODES.md`
+
+### 2.2 Transaction Monitoring (P1) ✅
+
+**Completed: 2026-03-15**
+
+```bash
+xion-toolkit tx status <tx_hash> --output json
+xion-toolkit tx wait <tx_hash> --timeout 60 --interval 2 --output json
+```
+
+- Query transaction status from RPC
+- Wait for confirmation with configurable timeout
+- Proper exit codes (0=success, 1=failure/timeout)
+
+### 2.3 `shared/` Module Implementation (P2) ✅
+
+**Completed: 2026-03-15** (as part of Error Recovery)
+
+- `src/shared/error.rs` - Structured error types
+- `src/shared/retry.rs` - Retry logic with exponential backoff
+- Re-exports for backward compatibility
+
+### 2.4 Skills Test Framework (P2) ✅
+
+**Completed: 2026-03-15**
+
+- Created `tests/skills/` directory with skill-specific E2E tests
+- Added mock/stub support for testing without network access
+- 48 tests, 58 mock scenarios
+- Documented testing patterns in skill SKILL.md files
+- CI integration completed
+
+### 2.5 CI/CD Integration Output (P2) ✅
+
+**Completed: 2026-03-15**
+
+- Extended `OutputFormat` enum with `JsonCompact` and `GitHubActions` variants
+- Created `ExecuteContext` for passing output format to command handlers
+- Implemented GitHub Actions workflow commands (`::notice::`, `::error::`, etc.)
+- Created `src/shared/exit_codes.rs` with 41 mapped exit codes
+- Created `docs/EXIT-CODES.md` documentation
+
+**Usage:**
+```bash
+xion-toolkit auth status --output json           # Pretty-printed (default)
+xion-toolkit auth status --output json-compact   # Single-line JSON
+xion-toolkit auth status --output github-actions # GitHub Actions format
+```
+
+**Acceptance Criteria:**
+- [x] GitHub Actions format outputs workflow commands
+- [x] Exit codes documented and consistent
+- [x] JSON output is parseable by standard tools (jq)
+
+### ~~2.6 Treasury Analytics (P3)~~ — Removed
+
+**Removed: 2026-03-15** — On-chain queries are too heavy for this toolkit. Analytics features should be handled by external indexing services.
 
 ---
 
-## Proposed Features
+## Phase 3: Advanced Features
 
-### 1. CW20 Token Support (P2)
+| Feature | Priority | Complexity | Status |
+|---------|----------|------------|--------|
+| Predicted Address Computation | P1 | Low | ✅ Done (2026-03-15) |
+| Batch Treasury Operations | P2 | Medium | ✅ Done (2026-03-15) |
 
-Extend Asset Builder to support fungible tokens (CW20).
+### 3.1 Predicted Address Computation (P1) ✅
 
+**Completed: 2026-03-15**
+
+- Created `src/shared/instantiate2.rs` with address computation logic
+- Added `--predict` and `--salt` flags to `treasury create`
+- Auto-detects salt encoding (UTF-8 or hex)
+- 17 new unit tests
+
+**Usage:**
 ```bash
-xion-toolkit asset create --type cw20-base --name "My Token" --symbol "TKN" --decimals 6
-xion-toolkit asset mint --contract xion1... --recipient xion1... --amount 1000000
+# Predict address without deploying
+xion-toolkit treasury create --predict --salt "my-salt"
+# Output: {"success":true,"data":{"predicted_address":"xion1...","salt":"my-salt","code_id":1260}}
+
+# Deploy with same salt to get same address
+xion-toolkit treasury create --salt "my-salt"
 ```
 
-### 2. Transaction Wait (Deferred to xion-skills)
+**Acceptance Criteria:**
+- [x] `treasury create --predict` returns predicted address
+- [x] Predicted address matches actual deployment
+- [x] Checksum validation implemented
 
-Add transaction wait functionality to xion-skills for polling until confirmation.
+### 3.2 Batch Treasury Operations (P2) ✅
 
+**Completed: 2026-03-15**
+
+- Added `treasury batch fund` subcommand
+- Added `treasury batch grant-config` subcommand
+- Enhanced `treasury export` for bulk export
+- Partial failure handling with detailed reports
+
+**Usage:**
 ```bash
-# This will be in xion-skills, not xion-agent-toolkit
-bash wait-tx.sh <txhash> [--timeout 60] [--interval 2]
+# Batch fund treasuries
+xion-toolkit treasury batch fund --config funds.json
+
+# Batch configure grants
+xion-toolkit treasury batch grant-config --config grants.json
+
+# Export all treasuries
+xion-toolkit treasury export --output treasuries.json
 ```
 
-### 3. Multi-sig Wallet Support (P3)
+**Acceptance Criteria:**
+- [x] Batch fund from JSON config
+- [x] Apply same grant config to multiple treasuries
+- [x] Export all treasury configs
 
-Support for multi-signature treasury management.
+### ~~3.3 IBC Transfer Enhancement~~ — Removed
 
-### 4. IBC Transfer Enhancement (P3)
+**Removed: 2026-03-15** — Not needed for current roadmap.
 
-Improved cross-chain transfer experience with channel auto-discovery.
+### ~~3.4 Multi-sig Treasury Support~~ — Removed
+
+**Removed: 2026-03-15** — Not needed for current roadmap.
+
+---
+
+## Deferred Features
+
+These features are acknowledged but deferred to external projects or future consideration.
+
+| Feature | Reason | Alternative |
+|---------|--------|-------------|
+| Transaction Wait (standalone) | Better suited for xion-skills | Use `bash wait-tx.sh` from xion-skills |
 
 ---
 
@@ -96,4 +216,7 @@ Improved cross-chain transfer experience with channel auto-discovery.
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-03-15 | @project-manager | Phase 3 completed (Predicted Address ✅, Batch Treasury Ops ✅, IBC/Multi-sig removed) | ✅ Done |
+| 2026-03-15 | @project-manager | Phase 2 P2 completed (Skills Test Framework ✅, CI/CD Integration Output ✅, Treasury Analytics removed) | ✅ Done |
+| 2026-03-15 | @project-manager | Phase 2 P1 features completed (Error Recovery, Transaction Monitoring, shared module) | ✅ Done |
 | 2026-03-14 | @project-manager | All Phase 1 features completed | ✅ Done |

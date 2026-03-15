@@ -3,6 +3,7 @@ use clap::{Args, Subcommand};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::cli::ExecuteContext;
 use crate::treasury::types::{
     AuthorizationInput, FeeConfigInput, GrantConfigInput, TreasuryCreateRequest,
     TreasuryParamsInput,
@@ -55,6 +56,10 @@ pub enum TreasuryCommands {
     #[command(subcommand)]
     Params(ParamsCommands),
 
+    /// Batch operations for multiple treasuries
+    #[command(subcommand)]
+    Batch(BatchCommands),
+
     /// Query on-chain data (authz grants, fee allowances)
     #[command(subcommand)]
     ChainQuery(ChainQueryCommands),
@@ -66,11 +71,29 @@ pub enum TreasuryCommands {
     Import(ImportArgs),
 }
 
+/// Batch operations subcommands
+#[derive(Subcommand)]
+pub enum BatchCommands {
+    /// Fund multiple treasuries from a config file
+    Fund {
+        /// Path to JSON config file containing funding operations
+        #[arg(long, value_name = "FILE")]
+        config: PathBuf,
+    },
+
+    /// Configure grants for multiple treasuries from a config file
+    GrantConfig {
+        /// Path to JSON config file containing grant configurations
+        #[arg(long, value_name = "FILE")]
+        config: PathBuf,
+    },
+}
+
 /// Export treasury configuration arguments
 #[derive(Debug, Args)]
 pub struct ExportArgs {
-    /// Treasury contract address
-    pub address: String,
+    /// Treasury contract address (optional, exports all if not provided)
+    pub address: Option<String>,
 
     /// Output file path (optional, defaults to stdout)
     #[arg(long)]
@@ -290,6 +313,17 @@ pub struct CreateArgs {
     #[arg(long)]
     pub is_oauth2_app: bool,
 
+    /// Predict address without deploying (dry-run mode)
+    /// When set, returns the predicted treasury address without creating it.
+    #[arg(long)]
+    pub predict: bool,
+
+    /// Salt for deterministic address computation (required with --predict)
+    /// Can be a UTF-8 string or hex-encoded bytes.
+    /// Example: "my-treasury-v1" or "6d792d74726561737572792d7631"
+    #[arg(long, requires = "predict")]
+    pub salt: Option<String>,
+
     // Fee grant flags
     /// Fee allowance type: basic, periodic, or allowed-msg
     #[arg(long)]
@@ -329,28 +363,31 @@ pub struct CreateArgs {
     pub grant_spend_limit: Option<String>,
 }
 
-pub async fn handle_command(cmd: TreasuryCommands) -> Result<()> {
+pub async fn handle_command(cmd: TreasuryCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        TreasuryCommands::List => handle_list().await,
-        TreasuryCommands::Query { address } => handle_query(&address).await,
-        TreasuryCommands::Create(args) => handle_create(*args).await,
-        TreasuryCommands::Fund { address, amount } => handle_fund(&address, &amount).await,
-        TreasuryCommands::Withdraw { address, amount } => handle_withdraw(&address, &amount).await,
-        TreasuryCommands::GrantConfig(sub) => handle_grant_config(sub).await,
-        TreasuryCommands::FeeConfig(sub) => handle_fee_config(sub).await,
-        TreasuryCommands::Admin(sub) => handle_admin(sub).await,
-        TreasuryCommands::Params(sub) => handle_params(sub).await,
-        TreasuryCommands::ChainQuery(sub) => handle_chain_query(sub).await,
-        TreasuryCommands::Export(args) => handle_export(args).await,
-        TreasuryCommands::Import(args) => handle_import(args).await,
+        TreasuryCommands::List => handle_list(ctx).await,
+        TreasuryCommands::Query { address } => handle_query(&address, ctx).await,
+        TreasuryCommands::Create(args) => handle_create(*args, ctx).await,
+        TreasuryCommands::Fund { address, amount } => handle_fund(&address, &amount, ctx).await,
+        TreasuryCommands::Withdraw { address, amount } => {
+            handle_withdraw(&address, &amount, ctx).await
+        }
+        TreasuryCommands::GrantConfig(sub) => handle_grant_config(sub, ctx).await,
+        TreasuryCommands::FeeConfig(sub) => handle_fee_config(sub, ctx).await,
+        TreasuryCommands::Admin(sub) => handle_admin(sub, ctx).await,
+        TreasuryCommands::Params(sub) => handle_params(sub, ctx).await,
+        TreasuryCommands::ChainQuery(sub) => handle_chain_query(sub, ctx).await,
+        TreasuryCommands::Export(args) => handle_export(args, ctx).await,
+        TreasuryCommands::Import(args) => handle_import(args, ctx).await,
+        TreasuryCommands::Batch(sub) => handle_batch(sub, ctx).await,
     }
 }
 
-async fn handle_list() -> Result<()> {
+async fn handle_list(ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info("Listing treasury contracts...");
 
@@ -367,7 +404,7 @@ async fn handle_list() -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // List treasuries
@@ -378,7 +415,7 @@ async fn handle_list() -> Result<()> {
                 "treasuries": treasuries,
                 "count": treasuries.len()
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -386,16 +423,16 @@ async fn handle_list() -> Result<()> {
                 "error": format!("Failed to list treasuries: {}", e),
                 "code": "TREASURY_LIST_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_query(address: &str) -> Result<()> {
+async fn handle_query(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Querying treasury: {}", address));
 
@@ -412,7 +449,7 @@ async fn handle_query(address: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Query treasury
@@ -422,7 +459,7 @@ async fn handle_query(address: &str) -> Result<()> {
                 "success": true,
                 "treasury": treasury
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -430,16 +467,21 @@ async fn handle_query(address: &str) -> Result<()> {
                 "error": format!("Failed to query treasury: {}", e),
                 "code": "TREASURY_QUERY_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_create(args: CreateArgs) -> Result<()> {
+async fn handle_create(args: CreateArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
+
+    // Handle prediction mode separately
+    if args.predict {
+        return handle_predict_address(&args, ctx).await;
+    }
 
     print_info("Creating treasury contract...");
 
@@ -466,12 +508,12 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Call manager to create treasury
     match manager.create(request).await {
-        Ok(result) => print_json(&result),
+        Ok(result) => print_formatted(&result, ctx.output_format()),
         Err(e) => {
             let error_msg = e.to_string();
             let (code, suggestion) =
@@ -500,9 +542,91 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
                 "code": code,
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
+}
+
+/// Handle treasury address prediction (dry-run mode)
+async fn handle_predict_address(args: &CreateArgs, ctx: &ExecuteContext) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::shared::instantiate2::{predict_treasury_address, validate_salt};
+    use crate::treasury::api_client::TreasuryApiClient;
+    use crate::utils::output::{print_formatted, print_info};
+
+    print_info("Predicting treasury address...");
+
+    // Validate salt is provided
+    let salt_str = args
+        .salt
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("--salt is required when using --predict"))?;
+
+    // Validate salt format
+    let encoding = crate::shared::instantiate2::detect_salt_encoding(salt_str);
+    validate_salt(salt_str, encoding)?;
+
+    // Create manager to get authentication and network config
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+
+    // Check authentication to get creator address
+    if !oauth_client.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_formatted(&result, ctx.output_format());
+    }
+
+    // Get user credentials for creator address
+    let credentials = oauth_client
+        .get_credentials()?
+        .ok_or_else(|| anyhow::anyhow!("No credentials found. Please run 'xion auth login'."))?;
+
+    let creator = credentials
+        .xion_address
+        .ok_or_else(|| anyhow::anyhow!("No Xion address found in credentials."))?;
+
+    // Create API client to fetch code info
+    let api_client = TreasuryApiClient::new(
+        network_config.oauth_api_url.clone(),
+        network_config.indexer_url.clone(),
+        network_config.rpc_url.clone(),
+    );
+
+    // Get code info for the treasury code ID
+    let code_id = network_config.treasury_code_id;
+    let code_info = api_client
+        .get_code_info(code_id)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to fetch code info: {}", e))?;
+
+    // Parse checksum
+    let checksum_bytes = hex::decode(&code_info.checksum)
+        .map_err(|e| anyhow::anyhow!("Invalid checksum format: {}", e))?;
+
+    // Compute predicted address
+    let predicted = predict_treasury_address(&creator, code_id, salt_str, &checksum_bytes)?;
+
+    // Output result
+    let result = serde_json::json!({
+        "success": true,
+        "data": {
+            "predicted_address": predicted.address,
+            "salt": salt_str,
+            "salt_hex": predicted.salt_hex,
+            "code_id": predicted.code_id,
+            "checksum": predicted.checksum,
+            "creator": predicted.creator,
+            "network": network_config.network_name
+        }
+    });
+
+    print_formatted(&result, ctx.output_format())
 }
 
 /// Load treasury configuration from JSON file
@@ -658,11 +782,11 @@ pub fn validate_create_request(request: &TreasuryCreateRequest) -> Result<()> {
     Ok(())
 }
 
-async fn handle_fund(address: &str, amount: &str) -> Result<()> {
+async fn handle_fund(address: &str, amount: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Funding treasury {} with {}...", address, amount));
 
@@ -679,7 +803,7 @@ async fn handle_fund(address: &str, amount: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Fund treasury
@@ -691,7 +815,7 @@ async fn handle_fund(address: &str, amount: &str) -> Result<()> {
                 "amount": result.amount,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -721,16 +845,16 @@ async fn handle_fund(address: &str, amount: &str) -> Result<()> {
                 "code": code,
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
+async fn handle_withdraw(address: &str, amount: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Withdrawing {} from treasury {} to your meta account...",
@@ -750,7 +874,7 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Withdraw from treasury
@@ -762,7 +886,7 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
                 "amount": result.amount,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -794,7 +918,7 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
                 "code": code,
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -803,7 +927,7 @@ async fn handle_withdraw(address: &str, amount: &str) -> Result<()> {
 // Grant Config Handlers
 // ============================================================================
 
-async fn handle_grant_config(cmd: GrantConfigCommands) -> Result<()> {
+async fn handle_grant_config(cmd: GrantConfigCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
         GrantConfigCommands::Add {
             address,
@@ -834,13 +958,14 @@ async fn handle_grant_config(cmd: GrantConfigCommands) -> Result<()> {
                 &filter_type,
                 keys.as_deref(),
                 preset.as_deref(),
+                ctx,
             )
             .await
         }
         GrantConfigCommands::Remove { address, type_url } => {
-            handle_grant_config_remove(&address, &type_url).await
+            handle_grant_config_remove(&address, &type_url, ctx).await
         }
-        GrantConfigCommands::List { address } => handle_grant_config_list(&address).await,
+        GrantConfigCommands::List { address } => handle_grant_config_list(&address, ctx).await,
     }
 }
 
@@ -859,11 +984,12 @@ async fn handle_grant_config_add(
     filter_type: &str,
     keys: Option<&str>,
     preset: Option<&str>,
+    ctx: &ExecuteContext,
 ) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Adding grant config to treasury {}...", address));
 
@@ -904,7 +1030,7 @@ async fn handle_grant_config_add(
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Add grant config
@@ -917,7 +1043,7 @@ async fn handle_grant_config_add(
                 "type_url": result.type_url,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -925,7 +1051,7 @@ async fn handle_grant_config_add(
                 "error": format!("Failed to add grant config: {}", e),
                 "code": "GRANT_CONFIG_ADD_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -1160,11 +1286,15 @@ fn build_grant_config_from_flags(
     })
 }
 
-async fn handle_grant_config_remove(address: &str, type_url: &str) -> Result<()> {
+async fn handle_grant_config_remove(
+    address: &str,
+    type_url: &str,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Removing grant config {} from treasury {}...",
@@ -1184,7 +1314,7 @@ async fn handle_grant_config_remove(address: &str, type_url: &str) -> Result<()>
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Remove grant config
@@ -1196,7 +1326,7 @@ async fn handle_grant_config_remove(address: &str, type_url: &str) -> Result<()>
                 "operation": result.operation,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1204,16 +1334,16 @@ async fn handle_grant_config_remove(address: &str, type_url: &str) -> Result<()>
                 "error": format!("Failed to remove grant config: {}", e),
                 "code": "GRANT_CONFIG_REMOVE_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_grant_config_list(address: &str) -> Result<()> {
+async fn handle_grant_config_list(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Listing grant configs for treasury {}...",
@@ -1233,7 +1363,7 @@ async fn handle_grant_config_list(address: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // List grant configs
@@ -1245,7 +1375,7 @@ async fn handle_grant_config_list(address: &str) -> Result<()> {
                 "grant_configs": configs,
                 "count": configs.len()
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1253,7 +1383,7 @@ async fn handle_grant_config_list(address: &str) -> Result<()> {
                 "error": format!("Failed to list grant configs: {}", e),
                 "code": "GRANT_CONFIG_LIST_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -1262,24 +1392,28 @@ async fn handle_grant_config_list(address: &str) -> Result<()> {
 // Fee Config Handlers
 // ============================================================================
 
-async fn handle_fee_config(cmd: FeeConfigCommands) -> Result<()> {
+async fn handle_fee_config(cmd: FeeConfigCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
         FeeConfigCommands::Set {
             address,
             fee_config,
-        } => handle_fee_config_set(&address, &fee_config).await,
+        } => handle_fee_config_set(&address, &fee_config, ctx).await,
         FeeConfigCommands::Remove { address, grantee } => {
-            handle_fee_config_remove(&address, &grantee).await
+            handle_fee_config_remove(&address, &grantee, ctx).await
         }
-        FeeConfigCommands::Query { address } => handle_fee_config_query(&address).await,
+        FeeConfigCommands::Query { address } => handle_fee_config_query(&address, ctx).await,
     }
 }
 
-async fn handle_fee_config_set(address: &str, config_path: &PathBuf) -> Result<()> {
+async fn handle_fee_config_set(
+    address: &str,
+    config_path: &PathBuf,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Setting fee config for treasury {}...", address));
 
@@ -1302,7 +1436,7 @@ async fn handle_fee_config_set(address: &str, config_path: &PathBuf) -> Result<(
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Set fee config
@@ -1314,7 +1448,7 @@ async fn handle_fee_config_set(address: &str, config_path: &PathBuf) -> Result<(
                 "operation": result.operation,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1322,16 +1456,20 @@ async fn handle_fee_config_set(address: &str, config_path: &PathBuf) -> Result<(
                 "error": format!("Failed to set fee config: {}", e),
                 "code": "FEE_CONFIG_SET_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_fee_config_remove(address: &str, grantee: &str) -> Result<()> {
+async fn handle_fee_config_remove(
+    address: &str,
+    grantee: &str,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Revoking fee allowance from grantee {} for treasury {}...",
@@ -1351,7 +1489,7 @@ async fn handle_fee_config_remove(address: &str, grantee: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Revoke allowance
@@ -1363,7 +1501,7 @@ async fn handle_fee_config_remove(address: &str, grantee: &str) -> Result<()> {
                 "operation": result.operation,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1371,16 +1509,16 @@ async fn handle_fee_config_remove(address: &str, grantee: &str) -> Result<()> {
                 "error": format!("Failed to revoke allowance: {}", e),
                 "code": "REVOKE_ALLOWANCE_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_fee_config_query(address: &str) -> Result<()> {
+async fn handle_fee_config_query(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Querying fee config for treasury {}...", address));
 
@@ -1397,7 +1535,7 @@ async fn handle_fee_config_query(address: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Query fee config
@@ -1408,7 +1546,7 @@ async fn handle_fee_config_query(address: &str) -> Result<()> {
                 "treasury_address": address,
                 "fee_config": config
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Ok(None) => {
             let response = serde_json::json!({
@@ -1417,7 +1555,7 @@ async fn handle_fee_config_query(address: &str) -> Result<()> {
                 "fee_config": null,
                 "message": "No fee config set"
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1425,7 +1563,7 @@ async fn handle_fee_config_query(address: &str) -> Result<()> {
                 "error": format!("Failed to query fee config: {}", e),
                 "code": "FEE_CONFIG_QUERY_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -1434,21 +1572,21 @@ async fn handle_fee_config_query(address: &str) -> Result<()> {
 // Admin Management Handlers
 // ============================================================================
 
-async fn handle_admin(cmd: AdminCommands) -> Result<()> {
+async fn handle_admin(cmd: AdminCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
         AdminCommands::Propose { address, new_admin } => {
-            handle_admin_propose(&address, &new_admin).await
+            handle_admin_propose(&address, &new_admin, ctx).await
         }
-        AdminCommands::Accept { address } => handle_admin_accept(&address).await,
-        AdminCommands::Cancel { address } => handle_admin_cancel(&address).await,
+        AdminCommands::Accept { address } => handle_admin_accept(&address, ctx).await,
+        AdminCommands::Cancel { address } => handle_admin_cancel(&address, ctx).await,
     }
 }
 
-async fn handle_admin_propose(address: &str, new_admin: &str) -> Result<()> {
+async fn handle_admin_propose(address: &str, new_admin: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Proposing new admin {} for treasury {}...",
@@ -1468,7 +1606,7 @@ async fn handle_admin_propose(address: &str, new_admin: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Propose admin
@@ -1481,7 +1619,7 @@ async fn handle_admin_propose(address: &str, new_admin: &str) -> Result<()> {
                 "new_admin": result.new_admin,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1489,16 +1627,16 @@ async fn handle_admin_propose(address: &str, new_admin: &str) -> Result<()> {
                 "error": format!("Failed to propose admin: {}", e),
                 "code": "PROPOSE_ADMIN_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_admin_accept(address: &str) -> Result<()> {
+async fn handle_admin_accept(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Accepting admin role for treasury {}...", address));
 
@@ -1515,7 +1653,7 @@ async fn handle_admin_accept(address: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Accept admin
@@ -1527,7 +1665,7 @@ async fn handle_admin_accept(address: &str) -> Result<()> {
                 "operation": result.operation,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1535,16 +1673,16 @@ async fn handle_admin_accept(address: &str) -> Result<()> {
                 "error": format!("Failed to accept admin: {}", e),
                 "code": "ACCEPT_ADMIN_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_admin_cancel(address: &str) -> Result<()> {
+async fn handle_admin_cancel(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Canceling proposed admin for treasury {}...",
@@ -1564,7 +1702,7 @@ async fn handle_admin_cancel(address: &str) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Cancel proposed admin
@@ -1576,7 +1714,7 @@ async fn handle_admin_cancel(address: &str) -> Result<()> {
                 "operation": result.operation,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1584,7 +1722,7 @@ async fn handle_admin_cancel(address: &str) -> Result<()> {
                 "error": format!("Failed to cancel proposed admin: {}", e),
                 "code": "CANCEL_ADMIN_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -1593,7 +1731,7 @@ async fn handle_admin_cancel(address: &str) -> Result<()> {
 // Params Management Handlers
 // ============================================================================
 
-async fn handle_params(cmd: ParamsCommands) -> Result<()> {
+async fn handle_params(cmd: ParamsCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
         ParamsCommands::Update {
             address,
@@ -1610,6 +1748,7 @@ async fn handle_params(cmd: ParamsCommands) -> Result<()> {
                 name,
                 is_oauth2_app,
                 metadata,
+                ctx,
             )
             .await
         }
@@ -1623,11 +1762,12 @@ async fn handle_params_update(
     name: Option<String>,
     is_oauth2_app: bool,
     metadata: Option<String>,
+    ctx: &ExecuteContext,
 ) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Updating params for treasury {}...", address));
 
@@ -1657,7 +1797,7 @@ async fn handle_params_update(
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Update params
@@ -1668,7 +1808,7 @@ async fn handle_params_update(
                 "treasury_address": result.treasury_address,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1676,7 +1816,7 @@ async fn handle_params_update(
                 "error": format!("Failed to update params: {}", e),
                 "code": "UPDATE_PARAMS_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -1685,18 +1825,18 @@ async fn handle_params_update(
 // Query Handlers (On-Chain)
 // ============================================================================
 
-async fn handle_chain_query(cmd: ChainQueryCommands) -> Result<()> {
+async fn handle_chain_query(cmd: ChainQueryCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        ChainQueryCommands::Grants { address } => handle_query_grants(&address).await,
-        ChainQueryCommands::Allowances { address } => handle_query_allowances(&address).await,
+        ChainQueryCommands::Grants { address } => handle_query_grants(&address, ctx).await,
+        ChainQueryCommands::Allowances { address } => handle_query_allowances(&address, ctx).await,
     }
 }
 
-async fn handle_query_grants(address: &str) -> Result<()> {
+async fn handle_query_grants(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Querying authz grants for treasury {}...",
@@ -1718,7 +1858,7 @@ async fn handle_query_grants(address: &str) -> Result<()> {
                 "grants": grants,
                 "count": grants.len()
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1726,16 +1866,16 @@ async fn handle_query_grants(address: &str) -> Result<()> {
                 "error": format!("Failed to query authz grants: {}", e),
                 "code": "QUERY_GRANTS_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_query_allowances(address: &str) -> Result<()> {
+async fn handle_query_allowances(address: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!(
         "Querying fee allowances for treasury {}...",
@@ -1757,7 +1897,7 @@ async fn handle_query_allowances(address: &str) -> Result<()> {
                 "allowances": allowances,
                 "count": allowances.len()
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -1765,7 +1905,7 @@ async fn handle_query_allowances(address: &str) -> Result<()> {
                 "error": format!("Failed to query fee allowances: {}", e),
                 "code": "QUERY_ALLOWANCES_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
@@ -1774,61 +1914,168 @@ async fn handle_query_allowances(address: &str) -> Result<()> {
 // Export Handlers
 // ============================================================================
 
-async fn handle_export(args: ExportArgs) -> Result<()> {
+async fn handle_export(args: ExportArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
+    use crate::treasury::types::TreasuryExportConfig;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
-    print_info(&format!(
-        "Exporting treasury configuration for {}...",
-        args.address
-    ));
+    // Determine if we're exporting single or all treasuries
+    if let Some(address) = args.address {
+        // Single treasury export
+        print_info(&format!(
+            "Exporting treasury configuration for {}...",
+            address
+        ));
 
-    // Create manager
-    let config_manager = ConfigManager::new()?;
-    let network_config = config_manager.get_network_config()?;
-    let oauth_client = OAuthClient::new(network_config.clone())?;
-    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+        // Create manager
+        let config_manager = ConfigManager::new()?;
+        let network_config = config_manager.get_network_config()?;
+        let oauth_client = OAuthClient::new(network_config.clone())?;
+        let manager = TreasuryManager::new(oauth_client, network_config.clone());
 
-    // Check authentication (needed for indexer queries)
-    if !manager.is_authenticated()? {
-        let result = serde_json::json!({
-            "success": false,
-            "error": "Not authenticated. Please run 'xion auth login' first.",
-            "code": "NOT_AUTHENTICATED"
-        });
-        return print_json(&result);
-    }
-
-    // Export treasury state
-    match manager.export_treasury(&args.address).await {
-        Ok(export_data) => {
-            // Build the output JSON
-            let output = serde_json::json!({
-                "success": true,
-                "data": export_data
-            });
-
-            // Output to file or stdout
-            if let Some(ref output_path) = args.output {
-                // Write to file
-                let json_string = serde_json::to_string_pretty(&output)?;
-                fs::write(output_path, json_string)?;
-                eprintln!("[INFO] Exported treasury config to: {}", output_path);
-                Ok(())
-            } else {
-                // Output to stdout
-                print_json(&output)
-            }
-        }
-        Err(e) => {
+        // Check authentication (needed for indexer queries)
+        if !manager.is_authenticated()? {
             let result = serde_json::json!({
                 "success": false,
-                "error": format!("Failed to export treasury: {}", e),
-                "code": "EXPORT_FAILED"
+                "error": "Not authenticated. Please run 'xion auth login' first.",
+                "code": "NOT_AUTHENTICATED"
             });
-            print_json(&result)
+            return print_formatted(&result, ctx.output_format());
+        }
+
+        // Export treasury state
+        match manager.export_treasury(&address).await {
+            Ok(export_data) => {
+                // Build the output JSON
+                let output = serde_json::json!({
+                    "success": true,
+                    "data": export_data
+                });
+
+                // Output to file or stdout
+                if let Some(ref output_path) = args.output {
+                    // Write to file
+                    let json_string = serde_json::to_string_pretty(&output)?;
+                    fs::write(output_path, json_string)?;
+                    eprintln!("[INFO] Exported treasury config to: {}", output_path);
+                    Ok(())
+                } else {
+                    // Output to stdout
+                    print_formatted(&output, ctx.output_format())
+                }
+            }
+            Err(e) => {
+                let result = serde_json::json!({
+                    "success": false,
+                    "error": format!("Failed to export treasury: {}", e),
+                    "code": "EXPORT_FAILED"
+                });
+                print_formatted(&result, ctx.output_format())
+            }
+        }
+    } else {
+        // Bulk export - list all treasuries and export each
+        print_info("Exporting all treasury configurations...");
+
+        // Create manager
+        let config_manager = ConfigManager::new()?;
+        let network_config = config_manager.get_network_config()?;
+        let oauth_client = OAuthClient::new(network_config.clone())?;
+        let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+        // Check authentication (needed for indexer queries)
+        if !manager.is_authenticated()? {
+            let result = serde_json::json!({
+                "success": false,
+                "error": "Not authenticated. Please run 'xion auth login' first.",
+                "code": "NOT_AUTHENTICATED"
+            });
+            return print_formatted(&result, ctx.output_format());
+        }
+
+        // List all treasuries
+        let treasuries = match manager.list().await {
+            Ok(t) => t,
+            Err(e) => {
+                let result = serde_json::json!({
+                    "success": false,
+                    "error": format!("Failed to list treasuries: {}", e),
+                    "code": "EXPORT_LIST_FAILED"
+                });
+                return print_formatted(&result, ctx.output_format());
+            }
+        };
+
+        if treasuries.is_empty() {
+            let result = serde_json::json!({
+                "success": true,
+                "data": {
+                    "exported_at": chrono::Utc::now().to_rfc3339(),
+                    "network": ctx.network,
+                    "treasuries": [],
+                    "count": 0
+                }
+            });
+            return print_formatted(&result, ctx.output_format());
+        }
+
+        // Export each treasury
+        let mut export_results = Vec::new();
+        let mut failed_exports = Vec::new();
+
+        for (i, treasury) in treasuries.iter().enumerate() {
+            eprintln!(
+                "[INFO] Exporting treasury {}/{}: {}",
+                i + 1,
+                treasuries.len(),
+                treasury.address
+            );
+
+            match manager.export_treasury(&treasury.address).await {
+                Ok(export_data) => {
+                    export_results.push(export_data);
+                }
+                Err(e) => {
+                    eprintln!(
+                        "[WARN] Failed to export treasury {}: {}",
+                        treasury.address, e
+                    );
+                    failed_exports.push((treasury.address.clone(), e.to_string()));
+                }
+            }
+        }
+
+        // Build the bulk export config
+        let export_config = TreasuryExportConfig {
+            exported_at: chrono::Utc::now().to_rfc3339(),
+            network: ctx.network.clone(),
+            treasuries: export_results,
+        };
+
+        // Build the output
+        let output = serde_json::json!({
+            "success": true,
+            "data": export_config,
+            "failed_count": failed_exports.len(),
+            "failed": if failed_exports.is_empty() { None } else { Some(failed_exports) }
+        });
+
+        // Output to file or stdout
+        if let Some(ref output_path) = args.output {
+            // Write to file
+            let json_string = serde_json::to_string_pretty(&output)?;
+            fs::write(output_path, json_string)?;
+            eprintln!(
+                "[INFO] Exported {} treasury configs to: {}",
+                export_config.treasuries.len(),
+                output_path
+            );
+            Ok(())
+        } else {
+            // Output to stdout
+            print_formatted(&output, ctx.output_format())
         }
     }
 }
@@ -1837,12 +2084,12 @@ async fn handle_export(args: ExportArgs) -> Result<()> {
 // Import Handlers
 // ============================================================================
 
-async fn handle_import(args: ImportArgs) -> Result<()> {
+async fn handle_import(args: ImportArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::treasury::types::TreasuryExportData;
     use crate::treasury::TreasuryManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     if args.dry_run {
         print_info(&format!(
@@ -1907,7 +2154,7 @@ async fn handle_import(args: ImportArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Import treasury configuration
@@ -1915,16 +2162,290 @@ async fn handle_import(args: ImportArgs) -> Result<()> {
         .import_treasury(&args.address, &export_data, args.dry_run)
         .await
     {
-        Ok(result) => print_json(&result),
+        Ok(result) => print_formatted(&result, ctx.output_format()),
         Err(e) => {
             let result = serde_json::json!({
                 "success": false,
                 "error": format!("Failed to import treasury: {}", e),
                 "code": "IMPORT_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
+}
+
+// ============================================================================
+// Batch Operation Handlers
+// ============================================================================
+
+async fn handle_batch(cmd: BatchCommands, ctx: &ExecuteContext) -> Result<()> {
+    match cmd {
+        BatchCommands::Fund { config } => handle_batch_fund(&config, ctx).await,
+        BatchCommands::GrantConfig { config } => handle_batch_grant_config(&config, ctx).await,
+    }
+}
+
+async fn handle_batch_fund(config_path: &PathBuf, ctx: &ExecuteContext) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::types::BatchFundConfig;
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_formatted, print_info};
+
+    print_info(&format!(
+        "Loading batch fund config from: {}",
+        config_path.display()
+    ));
+
+    // Load config file
+    let config_content = fs::read_to_string(config_path)
+        .map_err(|e| anyhow::anyhow!("Failed to read config file: {}", e))?;
+    let config: BatchFundConfig = serde_json::from_str(&config_content)
+        .map_err(|e| anyhow::anyhow!("Invalid config file format: {}", e))?;
+
+    // Validate config
+    if config.operations.is_empty() {
+        return Err(anyhow::anyhow!("Config file contains no operations"));
+    }
+
+    print_info(&format!(
+        "Executing batch fund for {} treasuries...",
+        config.operations.len()
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_formatted(&result, ctx.output_format());
+    }
+
+    // Execute operations sequentially (to avoid nonce issues)
+    let mut results = Vec::new();
+    let mut successful = 0;
+    let mut failed = 0;
+
+    for (i, operation) in config.operations.iter().enumerate() {
+        eprintln!(
+            "[INFO] Funding treasury {}/{}: {} with {}",
+            i + 1,
+            config.operations.len(),
+            operation.address,
+            operation.amount
+        );
+
+        match manager.fund(&operation.address, &operation.amount).await {
+            Ok(result) => {
+                eprintln!(
+                    "[INFO] Successfully funded {}: tx_hash={}",
+                    operation.address, result.tx_hash
+                );
+                results.push(serde_json::json!({
+                    "address": operation.address,
+                    "status": "success",
+                    "amount": operation.amount,
+                    "tx_hash": result.tx_hash
+                }));
+                successful += 1;
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to fund: {}", e);
+                eprintln!("[ERROR] {}: {}", operation.address, error_msg);
+                results.push(serde_json::json!({
+                    "address": operation.address,
+                    "status": "failed",
+                    "amount": operation.amount,
+                    "error": error_msg
+                }));
+                failed += 1;
+            }
+        }
+    }
+
+    // Build summary report
+    let summary = serde_json::json!({
+        "success": true,
+        "data": {
+            "total": config.operations.len(),
+            "successful": successful,
+            "failed": failed,
+            "results": results
+        }
+    });
+
+    eprintln!(
+        "[INFO] Batch fund complete: {}/{} successful",
+        successful,
+        config.operations.len()
+    );
+
+    print_formatted(&summary, ctx.output_format())
+}
+
+async fn handle_batch_grant_config(config_path: &PathBuf, ctx: &ExecuteContext) -> Result<()> {
+    use crate::config::ConfigManager;
+    use crate::oauth::OAuthClient;
+    use crate::treasury::types::{AuthorizationInput, BatchGrantConfig, GrantConfigInput};
+    use crate::treasury::TreasuryManager;
+    use crate::utils::output::{print_formatted, print_info};
+
+    print_info(&format!(
+        "Loading batch grant config from: {}",
+        config_path.display()
+    ));
+
+    // Load config file
+    let config_content = fs::read_to_string(config_path)
+        .map_err(|e| anyhow::anyhow!("Failed to read config file: {}", e))?;
+    let config: BatchGrantConfig = serde_json::from_str(&config_content)
+        .map_err(|e| anyhow::anyhow!("Invalid config file format: {}", e))?;
+
+    // Validate config
+    if config.treasuries.is_empty() {
+        return Err(anyhow::anyhow!("Config file contains no treasuries"));
+    }
+
+    // Validate required fields
+    if config.message_type_url.is_empty() {
+        return Err(anyhow::anyhow!("message_type_url is required in config"));
+    }
+
+    print_info(&format!(
+        "Executing batch grant-config for {} treasuries...",
+        config.treasuries.len()
+    ));
+
+    // Create manager
+    let config_manager = ConfigManager::new()?;
+    let network_config = config_manager.get_network_config()?;
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let manager = TreasuryManager::new(oauth_client, network_config.clone());
+
+    // Check authentication
+    if !manager.is_authenticated()? {
+        let result = serde_json::json!({
+            "success": false,
+            "error": "Not authenticated. Please run 'xion auth login' first.",
+            "code": "NOT_AUTHENTICATED"
+        });
+        return print_formatted(&result, ctx.output_format());
+    }
+
+    // Build authorization based on grant type
+    let authorization = match config.grant_type.as_str() {
+        "send" => {
+            let spend_limit = config
+                .spend_limit
+                .clone()
+                .ok_or_else(|| anyhow::anyhow!("spend_limit is required for 'send' grant type"))?;
+            AuthorizationInput::Send {
+                spend_limit,
+                allow_list: None,
+            }
+        }
+        "generic" => AuthorizationInput::Generic,
+        _ => {
+            return Err(anyhow::anyhow!(
+                "Unsupported grant_type: {}. Supported: send, generic",
+                config.grant_type
+            ));
+        }
+    };
+
+    // Execute operations sequentially (to avoid nonce issues)
+    let mut results = Vec::new();
+    let mut successful = 0;
+    let mut failed = 0;
+
+    for (i, treasury) in config.treasuries.iter().enumerate() {
+        eprintln!(
+            "[INFO] Configuring grant for treasury {}/{}: {}",
+            i + 1,
+            config.treasuries.len(),
+            treasury.address
+        );
+
+        // Use treasury-specific spend limit if provided, otherwise use global
+        let treasury_authorization = if let Some(ref spend_limit) = treasury.spend_limit {
+            match config.grant_type.as_str() {
+                "send" => AuthorizationInput::Send {
+                    spend_limit: spend_limit.clone(),
+                    allow_list: None,
+                },
+                _ => authorization.clone(),
+            }
+        } else {
+            authorization.clone()
+        };
+
+        let grant_config = GrantConfigInput {
+            type_url: config.message_type_url.clone(),
+            description: config
+                .description
+                .clone()
+                .unwrap_or_else(|| format!("Batch grant config for {}", config.message_type_url)),
+            authorization: treasury_authorization,
+            optional: false,
+        };
+
+        match manager
+            .add_grant_config(&treasury.address, grant_config)
+            .await
+        {
+            Ok(result) => {
+                eprintln!(
+                    "[INFO] Successfully configured grant for {}: tx_hash={}",
+                    treasury.address, result.tx_hash
+                );
+                results.push(serde_json::json!({
+                    "address": treasury.address,
+                    "status": "success",
+                    "grant_type": config.grant_type,
+                    "tx_hash": result.tx_hash
+                }));
+                successful += 1;
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to configure grant: {}", e);
+                eprintln!("[ERROR] {}: {}", treasury.address, error_msg);
+                results.push(serde_json::json!({
+                    "address": treasury.address,
+                    "status": "failed",
+                    "grant_type": config.grant_type,
+                    "error": error_msg
+                }));
+                failed += 1;
+            }
+        }
+    }
+
+    // Build summary report
+    let summary = serde_json::json!({
+        "success": true,
+        "data": {
+            "total": config.treasuries.len(),
+            "successful": successful,
+            "failed": failed,
+            "results": results
+        }
+    });
+
+    eprintln!(
+        "[INFO] Batch grant-config complete: {}/{} successful",
+        successful,
+        config.treasuries.len()
+    );
+
+    print_formatted(&summary, ctx.output_format())
 }
 
 // ============================================================================

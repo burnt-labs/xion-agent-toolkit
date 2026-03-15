@@ -8,8 +8,12 @@ Complete reference for the Xion Agent Toolkit CLI commands.
 
 - [Usage Examples](#usage-examples)
 - [Global Options](#global-options)
+  - [Output Formats](#output-formats)
 - [Authentication Commands](#authentication-commands)
 - [Treasury Commands](#treasury-commands)
+  - [`treasury create`](#treasury-create)
+  - [`treasury batch fund`](#treasury-batch-fund)
+  - [`treasury batch grant-config`](#treasury-batch-grant-config)
   - [`treasury export`](#treasury-export)
   - [`treasury import`](#treasury-import)
 - [Contract Commands](#contract-commands)
@@ -23,6 +27,7 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`asset query`](#asset-query)
 - [Configuration Commands](#configuration-commands)
 - [Output Format](#output-format)
+- [Exit Codes](#exit-codes)
 
 ---
 
@@ -233,9 +238,35 @@ These options can be used with any command:
 
 ```bash
 xion-toolkit --network <NETWORK> <command>  # Network override (testnet, mainnet)
+xion-toolkit --output <FORMAT> <command>    # Output format (json, json-compact, github-actions)
 xion-toolkit --help                          # Show help
 xion-toolkit --version                       # Show version
 ```
+
+### Output Formats
+
+| Format | Description | Use Case |
+|--------|-------------|----------|
+| `json` | Pretty-printed JSON (default) | Human reading, debugging |
+| `json-compact` | Single-line JSON | CI/CD logging, pipe to jq |
+| `github-actions` | GitHub Actions workflow commands | CI/CD pipelines |
+
+**Examples:**
+
+```bash
+# Default (pretty JSON)
+xion-toolkit treasury list --output json
+
+# Compact JSON for CI pipelines
+xion-toolkit treasury list --output json-compact
+# Output: {"success":true,"treasuries":[...],"count":2}
+
+# GitHub Actions format (outputs workflow commands)
+xion-toolkit treasury create --output github-actions
+# Output: ::set-output name=address::xion1...
+```
+
+For standardized exit codes, see [EXIT-CODES.md](./EXIT-CODES.md).
 
 ---
 
@@ -587,6 +618,8 @@ xion-toolkit treasury create [options]
 - `--icon-url <URL>` - Treasury icon URL (required if not using --config)
 - `--name <NAME>` - Treasury display name
 - `--is-oauth2-app` - Mark as OAuth2 application
+- `--predict` - Predict address without deploying (dry-run mode)
+- `--salt <SALT>` - Salt for deterministic address (required with --predict)
 
 **Fee Grant Options:**
 - `--fee-allowance-type <TYPE>` - Fee allowance type: basic, periodic
@@ -672,6 +705,43 @@ xion-toolkit treasury create \
   --is-oauth2-app
 ```
 
+**Predict Address (without deploying):**
+
+Use `--predict` to compute the treasury address before deployment. This is useful for:
+- Pre-configuring grants and permissions
+- Setting up monitoring before deployment
+- Integration with other contracts
+
+```bash
+# Predict address with string salt
+xion-toolkit treasury create --predict --salt "my-treasury-v1"
+# Output: {"success":true,"predicted_address":"xion1...","salt":"my-treasury-v1","code_id":1260}
+
+# Predict address with hex salt
+xion-toolkit treasury create --predict --salt "6d792d74726561737572792d7631"
+```
+
+Output (prediction):
+```json
+{
+  "success": true,
+  "predicted_address": "xion1abc123...",
+  "salt": "my-treasury-v1",
+  "code_id": 1260,
+  "creator": "xion1sender..."
+}
+```
+
+Output (error - missing salt with predict):
+```json
+{
+  "success": false,
+  "error": "--salt is required when using --predict",
+  "code": "INVALID_INPUT",
+  "suggestion": "Provide a unique salt value with --salt <value>"
+}
+```
+
 Output (error - missing required fields):
 ```json
 {
@@ -696,6 +766,8 @@ Output (error - network error):
 - Treasury code ID: 1260 (testnet), 63 (mainnet)
 - Creator becomes the initial admin
 - Consider setting up grants and fee allowances during creation
+- `--predict` returns the computed address without deploying
+- Salt can be a UTF-8 string or hex-encoded bytes
 
 ---
 
@@ -1473,6 +1545,141 @@ Output (error - no pending proposal):
 
 ---
 
+### `treasury batch fund`
+
+Fund multiple treasuries from a configuration file.
+
+**Usage:**
+```bash
+xion-toolkit treasury batch fund --config <FILE>
+```
+
+**Options:**
+- `--config <FILE>` - JSON config file with funding operations (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+- `--output <FORMAT>` - Output format (json, json-compact, github-actions)
+
+**Config File Format:**
+```json
+{
+  "operations": [
+    {"address": "xion1abc123...", "amount": "1000000uxion"},
+    {"address": "xion1def456...", "amount": "500000uxion"},
+    {"address": "xion1ghi789...", "amount": "250000uxion"}
+  ]
+}
+```
+
+**Examples:**
+
+Fund multiple treasuries:
+```bash
+xion-toolkit treasury batch fund --config funds.json
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "total": 3,
+  "successful": 3,
+  "failed": 0,
+  "results": [
+    {"address": "xion1abc123...", "status": "success", "tx_hash": "A1B2C3..."},
+    {"address": "xion1def456...", "status": "success", "tx_hash": "D4E5F6..."},
+    {"address": "xion1ghi789...", "status": "success", "tx_hash": "G7H8I9..."}
+  ]
+}
+```
+
+Output (partial failure):
+```json
+{
+  "success": true,
+  "total": 3,
+  "successful": 2,
+  "failed": 1,
+  "results": [
+    {"address": "xion1abc123...", "status": "success", "tx_hash": "A1B2C3..."},
+    {"address": "xion1def456...", "status": "failed", "error": "Insufficient balance"},
+    {"address": "xion1ghi789...", "status": "success", "tx_hash": "G7H8I9..."}
+  ]
+}
+```
+
+Compact output for CI:
+```bash
+xion-toolkit treasury batch fund --config funds.json --output json-compact
+```
+
+**Notes:**
+- Operations execute sequentially, not in parallel
+- Partial failures do not stop execution
+- Progress messages written to stderr
+- Use `--output json-compact` for minimal CI logging
+
+---
+
+### `treasury batch grant-config`
+
+Configure grants for multiple treasuries from a configuration file.
+
+**Usage:**
+```bash
+xion-toolkit treasury batch grant-config --config <FILE>
+```
+
+**Options:**
+- `--config <FILE>` - JSON config file with grant configurations (required)
+- `--network <NETWORK>` - Network override (testnet, mainnet)
+- `--output <FORMAT>` - Output format (json, json-compact, github-actions)
+
+**Config File Format:**
+```json
+{
+  "grant_type": "send",
+  "message_type_url": "/cosmos.bank.v1beta1.MsgSend",
+  "spend_limit": "1000000uxion",
+  "description": "Allow sending funds from treasury",
+  "treasuries": [
+    {"address": "xion1abc123..."},
+    {"address": "xion1def456...", "spend_limit": "500000uxion"},
+    {"address": "xion1ghi789..."}
+  ]
+}
+```
+
+**Examples:**
+
+Configure grants for multiple treasuries:
+```bash
+xion-toolkit treasury batch grant-config --config grants.json
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "grant_type": "send",
+  "message_type_url": "/cosmos.bank.v1beta1.MsgSend",
+  "total": 3,
+  "successful": 3,
+  "failed": 0,
+  "results": [
+    {"address": "xion1abc123...", "status": "success", "tx_hash": "A1B2C3..."},
+    {"address": "xion1def456...", "status": "success", "tx_hash": "D4E5F6..."},
+    {"address": "xion1ghi789...", "status": "success", "tx_hash": "G7H8I9..."}
+  ]
+}
+```
+
+**Notes:**
+- Grant type can be: `send`, `generic`, or `contract-execution`
+- Treasury-specific `spend_limit` overrides the default
+- Partial failures do not stop execution
+
+---
+
 ### `treasury params update`
 
 Updates Treasury parameters.
@@ -1642,11 +1849,11 @@ Export treasury configuration for backup or migration.
 
 **Usage:**
 ```bash
-xion-toolkit treasury export <ADDRESS> [--output <FILE>]
+xion-toolkit treasury export [ADDRESS] [--output <FILE>]
 ```
 
 **Arguments:**
-- `ADDRESS` - Treasury contract address (required)
+- `ADDRESS` - Treasury contract address (optional, exports all if not provided)
 
 **Options:**
 - `--output <FILE>` - Output file path (optional, default: stdout)
@@ -1654,7 +1861,7 @@ xion-toolkit treasury export <ADDRESS> [--output <FILE>]
 
 **Examples:**
 
-Export to stdout:
+Export single treasury to stdout:
 ```bash
 xion-toolkit treasury export xion1abc123def456...
 ```
@@ -1693,7 +1900,7 @@ Output:
 }
 ```
 
-Export to file:
+Export single treasury to file:
 ```bash
 xion-toolkit treasury export xion1abc123def456... --output treasury-backup.json
 ```
@@ -1708,10 +1915,46 @@ Output:
 }
 ```
 
+**Bulk Export (all treasuries):**
+
+When no address is provided, exports all treasuries:
+```bash
+xion-toolkit treasury export --output all-treasuries.json
+```
+
+Output:
+```json
+{
+  "success": true,
+  "exported_at": "2026-03-15T00:00:00Z",
+  "network": "testnet",
+  "treasuries": [
+    {
+      "address": "xion1abc123...",
+      "admin": "xion1admin...",
+      "balance": {"uxion": "1000000"},
+      "params": {...},
+      "grants": [...],
+      "fee_config": {...}
+    },
+    {
+      "address": "xion1def456...",
+      "admin": "xion1admin...",
+      "balance": {"uxion": "500000"},
+      "params": {...},
+      "grants": [...],
+      "fee_config": {...}
+    }
+  ],
+  "count": 2
+}
+```
+
 **Notes:**
 - Exports admin, params, fee_config, and grant_configs
 - Use for backup, migration, or configuration sharing
 - Output is compatible with `treasury import`
+- Bulk export queries all user's treasuries
 
 ---
 
@@ -2316,8 +2559,29 @@ All commands output JSON to stdout for easy Agent integration. The output always
 
 ---
 
+## Exit Codes
+
+The CLI returns standardized exit codes for CI/CD integration. See [EXIT-CODES.md](./EXIT-CODES.md) for the complete reference.
+
+**Quick Reference:**
+
+| Range | Category |
+|-------|----------|
+| 0 | Success |
+| 2-19 | Authentication errors |
+| 20-39 | Configuration errors |
+| 40-59 | Network errors |
+| 60-79 | Transaction errors |
+| 80-99 | Treasury errors |
+| 100-119 | Asset errors |
+| 120-139 | Batch errors |
+
+---
+
 ## See Also
 
 - [README.md](../README.md) - Project overview and quick start
+- [QUICK-REFERENCE.md](./QUICK-REFERENCE.md) - Condensed CLI reference for AI agents
+- [EXIT-CODES.md](./EXIT-CODES.md) - Standardized exit codes for CI/CD
 - [SKILL.md](../skills/xion-treasury/SKILL.md) - Skill documentation for Agent integration
 - [Contributing Guide](../CONTRIBUTING.md) - Contribution guidelines
