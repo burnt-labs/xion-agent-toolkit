@@ -7,8 +7,10 @@ use clap::Subcommand;
 use tracing::info;
 
 use crate::config::ConfigManager;
+use crate::shared::error::{TxError, XionError};
 use crate::tx::TxClient;
-use crate::utils::output::{print_info, print_json};
+use crate::tx::TxStatus;
+use crate::utils::output::{print_error_response, print_info, print_json};
 
 #[derive(Subcommand)]
 pub enum TxCommands {
@@ -61,7 +63,8 @@ async fn handle_status(hash: String) -> Result<()> {
                 "Transaction status retrieved: {:?} at height {:?}",
                 tx_info.status, tx_info.height
             );
-            print_json(&tx_info)
+            print_json(&tx_info)?;
+            Ok(())
         }
         Ok(None) => {
             // This shouldn't happen with current implementation, but handle it anyway
@@ -69,17 +72,15 @@ async fn handle_status(hash: String) -> Result<()> {
                 "tx_hash": hash,
                 "status": "pending"
             });
-            print_json(&result)
+            print_json(&result)?;
+            Ok(())
         }
         Err(e) => {
             info!("Failed to query transaction: {}", e);
-            let result = serde_json::json!({
-                "success": false,
-                "error": e.to_string(),
-                "code": "TX_QUERY_FAILED",
-                "hint": "Failed to query transaction from RPC. Check network connection and transaction hash."
-            });
-            print_json(&result)
+            let tx_error = TxError::QueryFailed(e.to_string());
+            let xion_error: XionError = tx_error.into();
+            print_error_response(&xion_error)?;
+            std::process::exit(1);
         }
     }
 }
@@ -113,38 +114,42 @@ async fn handle_wait(hash: String, timeout: u64, interval: u64) -> Result<()> {
 
             // Print summary to stderr for human consumption
             match result.status {
-                crate::tx::TxStatus::Success => {
+                TxStatus::Success => {
                     eprintln!("[INFO] Transaction confirmed successfully!");
                     if let Some(ref tx_info) = result.tx_info {
                         eprintln!("[INFO] Block height: {}", tx_info.height.unwrap_or(0));
                         eprintln!("[INFO] Gas used: {}", tx_info.gas_used.unwrap_or(0));
                     }
+                    print_json(&result)?;
+                    Ok(())
                 }
-                crate::tx::TxStatus::Failed => {
+                TxStatus::Failed => {
                     eprintln!("[INFO] Transaction failed!");
                     if let Some(ref tx_info) = result.tx_info {
                         if let Some(ref error) = tx_info.error {
                             eprintln!("[INFO] Error: {}", error);
                         }
                     }
+                    print_json(&result)?;
+                    std::process::exit(1);
                 }
-                crate::tx::TxStatus::Timeout => {
+                TxStatus::Timeout => {
                     eprintln!("[INFO] Timeout waiting for transaction confirmation");
+                    print_json(&result)?;
+                    std::process::exit(1);
                 }
-                _ => {}
+                _ => {
+                    print_json(&result)?;
+                    Ok(())
+                }
             }
-
-            print_json(&result)
         }
         Err(e) => {
             info!("Failed to wait for transaction: {}", e);
-            let result = serde_json::json!({
-                "success": false,
-                "error": e.to_string(),
-                "code": "TX_WAIT_FAILED",
-                "hint": "Failed to wait for transaction. Check network connection and parameters."
-            });
-            print_json(&result)
+            let tx_error = TxError::WaitFailed(e.to_string());
+            let xion_error: XionError = tx_error.into();
+            print_error_response(&xion_error)?;
+            std::process::exit(1);
         }
     }
 }

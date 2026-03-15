@@ -249,7 +249,7 @@ impl TxClient {
                     );
 
                     // Check if transaction is in a final state
-                    if tx_info.status.is_final() && !tx_info.status.is_pending() {
+                    if tx_info.status.is_final() {
                         let wait_time_ms = elapsed.as_millis() as u64;
 
                         info!(

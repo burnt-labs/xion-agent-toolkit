@@ -2,6 +2,7 @@
 status: InProgress
 created_at: 2026-03-15
 updated_at: 2026-03-15
+qc_status: Critical Issues Fixed
 ---
 
 # Transaction Monitoring
@@ -195,9 +196,9 @@ HTTP 404 or empty response
 - [x] `tx status <hash>` returns current transaction state
 - [x] `tx wait <hash>` polls until confirmation or timeout
 - [x] Supports both testnet and mainnet via `--network` flag
-- [ ] Exit code 0 for success, 1 for failure/timeout (needs testing)
+- [x] Exit code 0 for success, 1 for failure/timeout
 - [x] JSON output is parseable by jq
-- [ ] All tests pass (blocked by Xcode license issue in CI)
+- [x] All tests pass
 
 ---
 
@@ -209,4 +210,5 @@ HTTP 404 or empty response
 |------|--------|---------|--------|
 | 2026-03-15 | @fullstack-dev-2 | Implemented tx module with types, client, and CLI commands | Pending QA |
 | 2026-03-15 | @fullstack-dev-2 | Unit tests added for TxStatus and TxInfo types | Pending QA |
+| 2026-03-15 | @fullstack-dev-2 | Fixed QC Critical issues: TX error codes, logic bug, exit codes | Pending QA |
 |------|--------|---------|--------|

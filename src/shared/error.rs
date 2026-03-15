@@ -123,6 +123,16 @@ pub enum XionErrorCode {
     ENETWORK007,
     /// TLS error
     ENETWORK008,
+
+    // ========================================================================
+    // Transaction Errors (ETX001-ETX099)
+    // ========================================================================
+    /// Transaction query failed
+    ETX001,
+    /// Transaction wait failed
+    ETX002,
+    /// Transaction timeout
+    ETX003,
 }
 
 impl XionErrorCode {
@@ -178,6 +188,11 @@ impl XionErrorCode {
             XionErrorCode::ENETWORK006 => "Connection refused",
             XionErrorCode::ENETWORK007 => "DNS resolution failed",
             XionErrorCode::ENETWORK008 => "TLS error",
+
+            // Transaction
+            XionErrorCode::ETX001 => "Transaction query failed",
+            XionErrorCode::ETX002 => "Transaction wait failed",
+            XionErrorCode::ETX003 => "Transaction timeout",
         }
     }
 
@@ -241,6 +256,11 @@ impl XionErrorCode {
             XionErrorCode::ENETWORK006 => "Server is not accepting connections, check endpoint",
             XionErrorCode::ENETWORK007 => "Check DNS settings and network connectivity",
             XionErrorCode::ENETWORK008 => "Check TLS certificates and HTTPS configuration",
+
+            // Transaction
+            XionErrorCode::ETX001 => "Check network connection and transaction hash",
+            XionErrorCode::ETX002 => "Check network connection and wait parameters",
+            XionErrorCode::ETX003 => "Transaction took too long to confirm, check chain status",
         }
     }
 
@@ -300,6 +320,7 @@ impl XionErrorCode {
             | XionErrorCode::ENETWORK006
             | XionErrorCode::ENETWORK007
             | XionErrorCode::ENETWORK008 => "NETWORK",
+            XionErrorCode::ETX001 | XionErrorCode::ETX002 | XionErrorCode::ETX003 => "TX",
         }
     }
 }
@@ -439,6 +460,10 @@ pub enum XionError {
     #[error("{0}")]
     Network(#[source] NetworkError),
 
+    /// Transaction error
+    #[error("{0}")]
+    Tx(#[source] TxError),
+
     /// IO error
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
@@ -466,6 +491,7 @@ impl XionError {
             XionError::Batch(e) => e.code(),
             XionError::Config(e) => e.code(),
             XionError::Network(e) => e.code(),
+            XionError::Tx(e) => e.code(),
             XionError::Io(_) => XionErrorCode::ECONFIG002,
             XionError::Serialization(_) => XionErrorCode::ECONFIG002,
             XionError::Generic { code, .. } => *code,
@@ -481,6 +507,7 @@ impl XionError {
             XionError::Batch(e) => e.hint(),
             XionError::Config(e) => e.hint(),
             XionError::Network(e) => e.hint(),
+            XionError::Tx(e) => e.hint(),
             XionError::Io(_) => "Check file permissions and disk space".to_string(),
             XionError::Serialization(_) => "Check JSON format and structure".to_string(),
             XionError::Generic { hint, .. } => hint.clone(),
@@ -749,6 +776,33 @@ impl NetworkError {
     }
 }
 
+/// Transaction operation errors
+#[derive(Debug, Error)]
+pub enum TxError {
+    #[error("Transaction query failed: {0}")]
+    QueryFailed(String),
+
+    #[error("Transaction wait failed: {0}")]
+    WaitFailed(String),
+
+    #[error("Transaction timeout: {0}")]
+    Timeout(String),
+}
+
+impl TxError {
+    pub fn code(&self) -> XionErrorCode {
+        match self {
+            TxError::QueryFailed(_) => XionErrorCode::ETX001,
+            TxError::WaitFailed(_) => XionErrorCode::ETX002,
+            TxError::Timeout(_) => XionErrorCode::ETX003,
+        }
+    }
+
+    pub fn hint(&self) -> String {
+        self.code().hint().to_string()
+    }
+}
+
 // Implement From traits for easy conversion
 
 impl From<AuthError> for XionError {
@@ -784,6 +838,12 @@ impl From<ConfigError> for XionError {
 impl From<NetworkError> for XionError {
     fn from(e: NetworkError) -> Self {
         XionError::Network(e)
+    }
+}
+
+impl From<TxError> for XionError {
+    fn from(e: TxError) -> Self {
+        XionError::Tx(e)
     }
 }
 

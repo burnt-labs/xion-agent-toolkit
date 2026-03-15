@@ -50,7 +50,7 @@ pub mod retry;
 // Re-export commonly used types
 pub use error::{
     AssetError, AuthError, BatchError, ConfigError, ErrorDetail, ErrorResponse, NetworkError,
-    TreasuryError, XionError, XionErrorCode, XionResult,
+    TreasuryError, TxError, XionError, XionErrorCode, XionResult,
 };
 pub use retry::{
     is_retryable_reqwest_error, is_retryable_status, reqwest_to_xion_error, with_retry,
