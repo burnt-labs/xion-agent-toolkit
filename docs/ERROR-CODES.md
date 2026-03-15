@@ -1,185 +1,346 @@
 # Error Codes Reference
 
-> Complete error code reference for AI Agents. All errors return JSON format: `{"success": false, "error": "...", "code": "...", "suggestion": "..."}`
+> Complete error code reference for AI Agents and developers. All errors return structured JSON format.
 
-## Authentication Errors
+## Error Response Format
 
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `NOT_AUTHENTICATED` | Not authenticated | Run `xion-toolkit auth login` |
-| `TOKEN_EXPIRED` | Token has expired | Run `xion-toolkit auth refresh` |
-| `AUTH_LOGIN_FAILED` | Login failed | Retry or check browser for authorization |
-| `AUTH_LOGOUT_FAILED` | Logout failed | Try again or manually clear credentials |
-| `AUTH_REFRESH_FAILED` | Token refresh failed | Session expired, run `auth login` to re-authenticate |
-| `PORT_IN_USE` | Callback port already in use | Use `--port <different-port>` for login |
-| `CALLBACK_TIMEOUT` | Callback server timeout | Re-initiate login flow |
-| `STATE_MISMATCH` | OAuth state parameter mismatch | Security error, restart login flow |
-| `INVALID_CODE` | Authorization code invalid | Restart login flow |
-| `PKCE_FAILED` | PKCE generation failed | Retry login |
+### JSON Output (default for scripts/agents)
 
-## Treasury Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `TREASURY_NOT_FOUND` | Treasury not found | Verify address, check network |
-| `TREASURY_LIST_FAILED` | Failed to list treasuries | Check network connection, verify auth |
-| `TREASURY_QUERY_FAILED` | Failed to query treasury | Verify address is valid treasury |
-| `TREASURY_CREATE_FAILED` | Failed to create treasury | Check parameters, ensure sufficient balance |
-| `INSUFFICIENT_BALANCE` | Not enough balance | Fund the treasury or account |
-| `INVALID_AMOUNT` | Invalid amount format | Use format `amountdenom` (e.g., `1000000uxion`) |
-| `INVALID_ADDRESS` | Invalid address format | Use valid bech32 address starting with `xion1` |
-| `UNAUTHORIZED` | Not authorized | Only admin can perform this action |
-| `GRANT_CONFIG_ADD_FAILED` | Failed to add grant config | Check grant parameters |
-| `GRANT_CONFIG_REMOVE_FAILED` | Failed to remove grant config | Verify grant exists |
-| `GRANT_CONFIG_LIST_FAILED` | Failed to list grants | Network error or invalid address |
-| `FEE_CONFIG_SET_FAILED` | Failed to set fee config | Check fee parameters |
-| `FEE_CONFIG_QUERY_FAILED` | Failed to query fee config | Network error |
-| `REVOKE_ALLOWANCE_FAILED` | Failed to revoke allowance | Verify allowance exists |
-| `PROPOSE_ADMIN_FAILED` | Failed to propose admin | Check admin address validity |
-| `ACCEPT_ADMIN_FAILED` | Failed to accept admin | Must be pending admin |
-| `CANCEL_ADMIN_FAILED` | Failed to cancel admin | Must be current admin |
-| `UPDATE_PARAMS_FAILED` | Failed to update params | Check parameter values |
-| `EXPORT_FAILED` | Export failed | Verify treasury address |
-| `IMPORT_FAILED` | Import failed | Check import file format |
-| `QUERY_GRANTS_FAILED` | Query grants failed | Network error |
-| `QUERY_ALLOWANCES_FAILED` | Query allowances failed | Network error |
-
-## Network & API Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `NETWORK_ERROR` | Connection failed | Check internet connection |
-| `TIMEOUT` | Request timed out | Retry or check network |
-| `API_ERROR` | API request failed | Check API endpoint status |
-| `RPC_ERROR` | RPC call failed | Verify RPC endpoint |
-| `HTTPS_REQUIRED` | HTTPS required | Use https:// endpoint |
-| `CERTIFICATE_ERROR` | SSL certificate error | Check system certificates |
-
-## Input & Validation Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `INVALID_INPUT` | Invalid input | Check command syntax |
-| `INVALID_JSON` | Invalid JSON format | Validate JSON syntax |
-| `MISSING_REQUIRED` | Missing required field | Check required arguments |
-| `INVALID_DENOM` | Invalid denomination | Use valid denom (uxion, uusdc, etc.) |
-| `INVALID_COIN_FORMAT` | Invalid coin format | Use format `amountdenom` |
-| `INVALID_TYPE_URL` | Invalid message type URL | Check type URL format |
-| `INVALID_AUTH_TYPE` | Invalid authorization type | Use: generic, send, stake, ibc-transfer, contract-execution |
-| `INVALID_FEE_TYPE` | Invalid fee allowance type | Use: basic, periodic, allowed-msg |
-| `INVALID_FILTER_TYPE` | Invalid filter type | Use: allow_all, accepted_keys |
-| `EMPTY_VALUE` | Empty value not allowed | Provide non-empty value |
-
-## Encoding Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `ENCODING_FAILED` | Protobuf encoding failed | Check input data format |
-| `DECODING_FAILED` | Failed to decode data | Verify data integrity |
-| `BASE64_ERROR` | Base64 encoding failed | Check input data |
-| `SERIALIZATION_ERROR` | Serialization failed | Check data structure |
-
-## Configuration Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `CONFIG_ERROR` | Configuration error | Check config file |
-| `CONFIG_NOT_FOUND` | Configuration not found | Run `config init` or create config |
-| `NETWORK_NOT_FOUND` | Network not found | Use `testnet` or `mainnet` |
-| `CREDENTIALS_NOT_FOUND` | Credentials not found | Run `auth login` |
-| `CREDENTIALS_CORRUPTED` | Credentials corrupted | Run `auth login` to re-authenticate |
-| `ENCRYPTION_FAILED` | Encryption failed | Check encryption key |
-| `DECRYPTION_FAILED` | Decryption failed | Credentials may be corrupted |
-
-## Contract Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `CONTRACT_INSTANTIATION_FAILED` | Contract instantiation failed | Check code ID, msg format |
-| `CONTRACT_EXECUTION_FAILED` | Contract execution failed | Check contract address, msg, funds |
-| `CONTRACT_QUERY_FAILED` | Contract query failed | Verify contract address |
-| `INVALID_CONTRACT_ADDRESS` | Invalid contract address | Use valid bech32 contract address |
-| `INVALID_MSG_FORMAT` | Invalid message format | Check JSON message syntax |
-| `INVALID_FUNDS` | Invalid funds format | Use format `amountdenom` |
-| `CODE_ID_NOT_FOUND` | Code ID not found | Verify code ID exists on chain |
-| `INVALID_LABEL` | Invalid label | Use alphanumeric label |
-
-## Asset Builder Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `INVALID_ASSET_TYPE` | Unknown asset type | Use: cw721-base, cw2981-royalties, cw721-expiration, cw721-metadata-onchain, cw721-non-transferable |
-| `CODE_ID_NOT_FOUND` | Code ID not configured | Check network configuration |
-| `MISSING_REQUIRED_FIELD` | Required field missing | Check required arguments |
-| `INSTANTIATION_FAILED` | Contract instantiation failed | Check instantiate message format |
-| `MINT_FAILED` | Token minting failed | Check mint parameters |
-| `QUERY_FAILED` | Contract query failed | Verify contract address |
-| `INVALID_OPTION_FOR_TYPE` | Option not valid for asset type | Royalty options require cw2981-royalties, expires-at requires cw721-expiration |
-| `INVALID_ROYALTY_PERCENTAGE` | Royalty percentage must be 0.0-1.0 | Use decimal format (0.05 for 5%) |
-| `INCOMPLETE_ROYALTY_INFO` | Both royalty-address and royalty-percentage required | Provide both or neither |
-| `FILE_NOT_FOUND` | Tokens file not found | Check file path |
-| `FILE_PARSE_ERROR` | Failed to parse tokens file | Validate JSON format |
-
-## OAuth2 API Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `OAUTH2_ERROR` | OAuth2 API error | Check OAuth2 service status |
-| `INVALID_GRANT` | Invalid grant | Authorization code expired or invalid |
-| `INVALID_CLIENT` | Invalid client ID | Check client ID configuration |
-| `INVALID_REDIRECT_URI` | Invalid redirect URI | Redirect URI must match registration |
-| `UNAUTHORIZED_CLIENT` | Unauthorized client | Client not authorized for this flow |
-| `UNSUPPORTED_GRANT_TYPE` | Unsupported grant type | Use authorization_code or refresh_token |
-| `INVALID_SCOPE` | Invalid scope | Check requested scopes |
-| `ACCESS_DENIED` | Access denied | User denied authorization |
-
-## Transaction Errors
-
-| Code | Message | Suggestion |
-|------|---------|------------|
-| `BROADCAST_FAILED` | Transaction broadcast failed | Check network, gas settings |
-| `SIGNING_FAILED` | Transaction signing failed | Check credentials, session key |
-| `INVALID_TX` | Invalid transaction | Check transaction format |
-| `GAS_ESTIMATION_FAILED` | Gas estimation failed | Set gas manually |
-| `OUT_OF_GAS` | Out of gas | Increase gas limit |
-| `TX_TIMEOUT` | Transaction timeout | Check transaction status on explorer |
-| `NONCE_ERROR` | Nonce error | Refresh credentials |
-
-## Common Error Patterns
-
-### Error Response Format
 ```json
 {
   "success": false,
-  "error": "Human-readable error message",
-  "code": "ERROR_CODE",
-  "suggestion": "Actionable remediation hint"
+  "error": {
+    "code": "ETREASURY001",
+    "message": "Treasury not found: xion1...",
+    "hint": "Run 'xion-toolkit treasury list' to see available treasuries.",
+    "retryable": false
+  }
 }
 ```
 
-### Error Handling Best Practices
+### Human-readable Output
 
-1. **Check `NOT_AUTHENTICATED` first** - Most common error
-2. **Verify network** - testnet vs mainnet mismatch
-3. **Validate addresses** - Must be bech32 format starting with `xion1`
-4. **Check balances** - `INSUFFICIENT_BALANCE` is common
-5. **Retry on timeout** - Network errors are often transient
+```
+Error [ETREASURY001]: Treasury not found: xion1...
 
-### Quick Troubleshooting
+Hint: Run 'xion-toolkit treasury list' to see available treasuries.
+```
+
+---
+
+## Error Code Schema
+
+Format: `E{MODULE}{NUMBER}`
+
+| Module | Code Range | Description |
+|--------|------------|-------------|
+| AUTH | EAUTH001-EAUTH099 | Authentication errors |
+| TREASURY | ETREASURY001-ETREASURY099 | Treasury operations |
+| ASSET | EASSET001-EASSET099 | Asset builder |
+| BATCH | EBATCH001-EBATCH099 | Batch operations |
+| CONFIG | ECONFIG001-ECONFIG099 | Configuration |
+| NETWORK | ENETWORK001-ENETWORK099 | Network/API |
+
+---
+
+## Authentication Errors (EAUTH001-EAUTH099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| EAUTH001 | Not authenticated | Run 'xion-toolkit auth login' first | No |
+| EAUTH002 | Token expired | Token refreshed automatically, please retry | Yes |
+| EAUTH003 | Refresh token expired | Re-login required: 'xion-toolkit auth login' | No |
+| EAUTH004 | Invalid credentials | Check your credentials and try again | No |
+| EAUTH005 | OAuth2 callback failed | Ensure callback URL is accessible and try again | No |
+| EAUTH006 | PKCE verification failed | PKCE verification mismatch, restart login flow | No |
+| EAUTH007 | Authentication timeout | Authentication took too long, please try again | No |
+
+### Authentication Troubleshooting
 
 ```bash
-# 1. Check authentication
+# Check authentication status
 xion-toolkit auth status
 
-# 2. Check network
+# Re-authenticate
+xion-toolkit auth login
+
+# Check current network
 xion-toolkit config show
+```
 
-# 3. Verify address format
-echo "Address should start with xion1..."
+---
 
-# 4. Check balance
+## Treasury Errors (ETREASURY001-ETREASURY099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| ETREASURY001 | Treasury not found | Run 'xion-toolkit treasury list' to see available treasuries | No |
+| ETREASURY002 | Insufficient balance | Fund treasury with 'xion-toolkit treasury fund' | No |
+| ETREASURY003 | Invalid treasury address | Verify the treasury address is a valid bech32 address | No |
+| ETREASURY004 | Treasury creation failed | Check parameters and try again | No |
+| ETREASURY005 | Treasury operation failed | Check treasury state and try again | No |
+| ETREASURY006 | Grant config not found | Run 'xion-toolkit treasury grant-config list' to see available grants | No |
+| ETREASURY007 | Fee config not found | Run 'xion-toolkit treasury fee-config query' to check fee config | No |
+| ETREASURY008 | Not authorized for treasury operation | Ensure you are the admin of this treasury | No |
+| ETREASURY009 | Treasury already exists | Use a different salt or address for the new treasury | No |
+
+### Treasury Troubleshooting
+
+```bash
+# List all treasuries
+xion-toolkit treasury list
+
+# Query treasury details
 xion-toolkit treasury query <ADDRESS>
 
-# 5. Refresh token if expired
-xion-toolkit auth refresh
+# Fund treasury
+xion-toolkit treasury fund <ADDRESS> <AMOUNT>
+
+# Check grant configs
+xion-toolkit treasury grant-config list <ADDRESS>
+
+# Check fee config
+xion-toolkit treasury fee-config query <ADDRESS>
 ```
+
+---
+
+## Asset Builder Errors (EASSET001-EASSET099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| EASSET001 | Invalid metadata | Check JSON structure against schema | No |
+| EASSET002 | Asset creation failed | Check asset configuration and try again | No |
+| EASSET003 | Invalid asset configuration | Verify all required fields are present | No |
+| EASSET004 | Code ID not found | Check available code IDs with 'xion-toolkit asset code-ids' | No |
+| EASSET005 | Invalid schema | Validate your schema against the expected format | No |
+
+### Asset Builder Troubleshooting
+
+```bash
+# Check available code IDs
+xion-toolkit asset code-ids
+
+# Validate metadata JSON
+cat metadata.json | jq .
+
+# Create asset with debug output
+xion-toolkit asset create --debug
+```
+
+---
+
+## Batch Errors (EBATCH001-EBATCH099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| EBATCH001 | Batch too large | Maximum 50 messages per batch | No |
+| EBATCH002 | Batch execution failed | Check individual message errors and retry | No |
+| EBATCH003 | Partial batch failure | Some operations succeeded, check results for details | No |
+| EBATCH004 | Invalid batch item | Verify batch item format and content | No |
+
+### Batch Troubleshooting
+
+```bash
+# Validate batch file
+cat batch.json | jq .
+
+# Check batch size
+jq '.messages | length' batch.json
+
+# Run with debug output
+xion-toolkit batch execute batch.json --debug
+```
+
+---
+
+## Configuration Errors (ECONFIG001-ECONFIG099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| ECONFIG001 | Configuration not found | Run 'xion-toolkit config init' to create configuration | No |
+| ECONFIG002 | Invalid configuration | Check configuration file format and values | No |
+| ECONFIG003 | Encryption failed | Check encryption key availability | No |
+| ECONFIG004 | Decryption failed | Check encryption key matches the one used for encryption | No |
+| ECONFIG005 | Network not found in configuration | Specify network with '--network' flag or update config | No |
+
+### Configuration Troubleshooting
+
+```bash
+# Show current configuration
+xion-toolkit config show
+
+# Check configuration file
+cat ~/.xion-toolkit/config.json
+
+# Check credentials exist
+ls ~/.xion-toolkit/credentials/
+
+# Re-initialize configuration
+xion-toolkit config init
+```
+
+---
+
+## Network Errors (ENETWORK001-ENETWORK099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| ENETWORK001 | Connection timeout | Check network connectivity, will retry | Yes |
+| ENETWORK002 | Rate limited | Wait and retry, or reduce request frequency | Yes |
+| ENETWORK003 | Service unavailable | Service is temporarily unavailable, retry later | Yes |
+| ENETWORK004 | Invalid response from server | Server returned unexpected data, check API version | No |
+| ENETWORK005 | Request failed | Check network settings and API endpoint | No |
+| ENETWORK006 | Connection refused | Server is not accepting connections, check endpoint | Yes |
+| ENETWORK007 | DNS resolution failed | Check DNS settings and network connectivity | Yes |
+| ENETWORK008 | TLS error | Check TLS certificates and HTTPS configuration | No |
+
+### Retry Behavior
+
+Network errors with `retryable: true` are automatically retried with exponential backoff:
+
+| Attempt | Delay | Max Delay |
+|---------|-------|-----------|
+| 1 | 100ms | 5000ms |
+| 2 | 200ms | 5000ms |
+| 3 | 400ms | 5000ms |
+
+### Network Troubleshooting
+
+```bash
+# Check API endpoint
+curl -I https://oauth2.testnet.burnt.com/health
+
+# Check RPC endpoint
+curl https://rpc.xion-testnet-2.burnt.com:443/status
+
+# Test with verbose output
+xion-toolkit --verbose treasury list
+```
+
+---
+
+## Common Error Patterns
+
+### 1. Check Authentication First
+
+Most errors stem from authentication issues:
+
+```bash
+xion-toolkit auth status
+```
+
+### 2. Verify Network Configuration
+
+Ensure you're on the correct network:
+
+```bash
+xion-toolkit config show
+xion-toolkit config set network testnet
+```
+
+### 3. Validate Addresses
+
+All addresses must be valid bech32 format starting with `xion1`:
+
+```bash
+# Valid address format
+xion1abc123def456...
+```
+
+### 4. Check Balances
+
+Insufficient balance is a common error:
+
+```bash
+xion-toolkit treasury query <ADDRESS>
+```
+
+### 5. Handle Rate Limiting
+
+If you encounter rate limiting (ENETWORK002):
+
+- Wait before retrying
+- Reduce request frequency
+- Use batch operations for multiple items
+
+---
+
+## Error Handling in Scripts
+
+### Bash Example
+
+```bash
+#!/bin/bash
+
+output=$(xion-toolkit treasury list 2>&1)
+if echo "$output" | jq -e '.success == false' > /dev/null 2>&1; then
+    code=$(echo "$output" | jq -r '.error.code')
+    case $code in
+        EAUTH001)
+            echo "Not authenticated, running login..."
+            xion-toolkit auth login
+            ;;
+        ENETWORK001|ENETWORK002|ENETWORK003)
+            echo "Network error, will auto-retry..."
+            sleep 5
+            xion-toolkit treasury list
+            ;;
+        *)
+            echo "Error: $code"
+            echo "$output" | jq -r '.error.hint'
+            exit 1
+            ;;
+    esac
+fi
+```
+
+### Python Example
+
+```python
+import subprocess
+import json
+
+def run_command(cmd):
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        data = json.loads(result.stdout)
+        if not data.get('success', True):
+            error = data.get('error', {})
+            code = error.get('code')
+            if code == 'EAUTH001':
+                print("Not authenticated, running login...")
+                subprocess.run(['xion-toolkit', 'auth', 'login'])
+                return run_command(cmd)  # Retry
+            elif error.get('retryable', False):
+                print(f"Retryable error: {code}, retrying...")
+                return run_command(cmd)
+            else:
+                raise Exception(f"{code}: {error.get('message')}")
+        return data
+    except json.JSONDecodeError:
+        raise Exception(f"Failed to parse output: {result.stderr}")
+```
+
+---
+
+## Quick Reference Card
+
+| Scenario | Likely Code | Solution |
+|----------|-------------|----------|
+| Not logged in | EAUTH001 | `xion-toolkit auth login` |
+| Token expired | EAUTH002 | Automatic refresh |
+| Session expired | EAUTH003 | Re-login |
+| Treasury missing | ETREASURY001 | `xion-toolkit treasury list` |
+| No balance | ETREASURY002 | Fund treasury |
+| Network timeout | ENETWORK001 | Auto-retry |
+| Rate limited | ENETWORK002 | Wait and retry |
+| Config missing | ECONFIG001 | `xion-toolkit config init` |
+
+---
+
+## Version History
+
+| Version | Changes |
+|---------|---------|
+| 0.7.0 | Introduced structured error codes with `E{MODULE}{NUMBER}` format |

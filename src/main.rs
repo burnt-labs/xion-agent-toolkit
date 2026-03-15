@@ -1,16 +1,7 @@
-mod account;
-mod api;
-mod asset_builder;
-mod batch;
-mod cli;
-mod config;
-mod oauth;
-mod treasury;
-mod utils;
-
 use anyhow::Result;
 use clap::Parser;
-use cli::{Cli, Commands};
+use xion_agent_toolkit::cli::{Cli, Commands};
+use xion_agent_toolkit::cli;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -37,6 +28,7 @@ async fn main() -> Result<()> {
         Commands::Account(account_cmd) => cli::handle_account_command(account_cmd).await?,
         Commands::Batch(batch_cmd) => cli::handle_batch_command(batch_cmd).await?,
         Commands::Asset(asset_cmd) => cli::handle_asset_command(asset_cmd).await?,
+        Commands::Tx(tx_cmd) => cli::handle_tx_command(tx_cmd).await?,
     }
 
     Ok(())

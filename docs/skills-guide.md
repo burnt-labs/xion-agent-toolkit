@@ -13,12 +13,14 @@ Skills are bash scripts that provide AI Agents with structured, JSON-output capa
 
 ## Installation
 
+Install to global skills directory for all common agents (Cursor, Claude Code, Codex, OpenClaw):
+
 ```bash
 # Install all xion-agent-toolkit skills
-npx skills add burnt-labs/xion-agent-toolkit
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
 
 # Optional: xion-skills for xiond CLI operations
-npx skills add burnt-labs/xion-skills
+npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
 ```
 
 ## Available Skills

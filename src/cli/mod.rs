@@ -5,6 +5,7 @@ pub mod batch;
 pub mod config;
 pub mod contract;
 pub mod treasury;
+pub mod tx;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -60,6 +61,10 @@ pub enum Commands {
     #[command(subcommand)]
     Asset(asset::AssetCommands),
 
+    /// Transaction monitoring commands
+    #[command(subcommand)]
+    Tx(tx::TxCommands),
+
     /// Show current status (network, auth, etc.)
     Status,
 }
@@ -90,6 +95,10 @@ pub async fn handle_batch_command(cmd: batch::BatchCommands) -> Result<()> {
 
 pub async fn handle_asset_command(cmd: asset::AssetCommands) -> Result<()> {
     asset::handle_command(cmd).await
+}
+
+pub async fn handle_tx_command(cmd: tx::TxCommands) -> Result<()> {
+    tx::handle_command(cmd).await
 }
 
 pub fn handle_status_command() -> Result<()> {

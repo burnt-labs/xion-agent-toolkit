@@ -138,11 +138,11 @@ Point users to [burnt-labs/xion-skills](https://github.com/burnt-labs/xion-skill
 ## Installation
 
 ```bash
-# Install toolkit skills
-npx skills add burnt-labs/xion-agent-toolkit
+# Install toolkit skills (global: Cursor, Claude Code, Codex, OpenClaw)
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
 
 # Install xiond skills (for advanced scenarios)
-npx skills add burnt-labs/xion-skills
+npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
 ```
 
 ## Network Configuration

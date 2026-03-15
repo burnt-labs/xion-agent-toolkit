@@ -118,7 +118,7 @@ After installing xion-toolkit, you can:
 
 3. **Install xion-skills** (for xiond CLI operations like chain queries and contract deployment):
    ```bash
-   npx skills add burnt-labs/xion-skills
+   npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
    ```
 
 ## Dependency Graph

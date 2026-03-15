@@ -10,5 +10,7 @@ pub mod batch;
 pub mod cli;
 pub mod config;
 pub mod oauth;
+pub mod shared;
 pub mod treasury;
+pub mod tx;
 pub mod utils;

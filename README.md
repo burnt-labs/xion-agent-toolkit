@@ -111,18 +111,6 @@ npx skills add burnt-labs/xion-agent-toolkit
 npx skills add burnt-labs/xion-skills
 ```
 
-### Installing via skills.sh (Recommended)
-
-Install all skills with a single command using [skills.sh](https://skills.sh):
-
-```bash
-# Install xion-agent-toolkit skills (includes xion-toolkit-init, xion-oauth2, xion-treasury)
-npx skills add burnt-labs/xion-agent-toolkit
-
-# Optionally, also install xion-skills for xiond CLI operations
-npx skills add burnt-labs/xion-skills
-```
-
 ### Using Skills
 
 After installation via skills.sh, the `xion-toolkit` CLI is available and wrapped by skills for agent use.

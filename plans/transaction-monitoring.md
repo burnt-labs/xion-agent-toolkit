@@ -1,5 +1,5 @@
 ---
-status: Todo
+status: InProgress
 created_at: 2026-03-15
 updated_at: 2026-03-15
 ---
@@ -26,27 +26,27 @@ Add transaction status tracking and waiting capabilities with configurable timeo
 ## Tasks
 
 ### 1. Transaction Types
-- [ ] Create `src/tx/` module directory
-- [ ] Create `src/tx/mod.rs` with module exports
-- [ ] Create `src/tx/types.rs` with:
+- [x] Create `src/tx/` module directory
+- [x] Create `src/tx/mod.rs` with module exports
+- [x] Create `src/tx/types.rs` with:
   - `TxStatus` enum: `Pending`, `Success`, `Failed`, `Timeout`
   - `TxInfo` struct: `tx_hash`, `status`, `height`, `timestamp`, `gas_used`, `error` (optional)
   - `TxWaitResult` struct: `status`, `tx_info` (optional), `wait_time_ms`
 
 ### 2. Transaction Client
-- [ ] Create `src/tx/client.rs` with `TxClient`
-- [ ] Implement `get_tx(hash: &str) -> Result<Option<TxInfo>>`
+- [x] Create `src/tx/client.rs` with `TxClient`
+- [x] Implement `get_tx(hash: &str) -> Result<Option<TxInfo>>`
   - Query RPC endpoint: `{rpc_url}/tx?hash=0x{hash}`
   - Parse response into `TxInfo`
   - Handle "not found" case (pending transaction)
-- [ ] Implement `wait_tx(hash: &str, timeout: u64, interval: u64) -> Result<TxWaitResult>`
+- [x] Implement `wait_tx(hash: &str, timeout: u64, interval: u64) -> Result<TxWaitResult>`
   - Poll `get_tx` until success/failure or timeout
   - Use tokio::time for async waiting
   - Return timeout status if exceeded
 
 ### 3. CLI Commands
-- [ ] Create `src/cli/tx.rs` with command handlers
-- [ ] Add `TxCommands` enum to `src/cli/mod.rs`:
+- [x] Create `src/cli/tx.rs` with command handlers
+- [x] Add `TxCommands` enum to `src/cli/mod.rs`:
   ```rust
   enum TxCommands {
       Status {
@@ -61,11 +61,11 @@ Add transaction status tracking and waiting capabilities with configurable timeo
       },
   }
   ```
-- [ ] Implement `handle_status` command
-- [ ] Implement `handle_wait` command with progress indicator (stderr)
+- [x] Implement `handle_status` command
+- [x] Implement `handle_wait` command with progress indicator (stderr)
 
 ### 4. Output Formatting
-- [ ] JSON output for `tx status`:
+- [x] JSON output for `tx status`:
   ```json
   {
     "tx_hash": "ABC123...",
@@ -75,7 +75,7 @@ Add transaction status tracking and waiting capabilities with configurable timeo
     "gas_used": 150000
   }
   ```
-- [ ] JSON output for `tx wait`:
+- [x] JSON output for `tx wait`:
   ```json
   {
     "status": "success",
@@ -83,7 +83,7 @@ Add transaction status tracking and waiting capabilities with configurable timeo
     "tx_info": { ... }
   }
   ```
-- [ ] Human output with colored status indicators
+- [ ] Human output with colored status indicators (deferred)
 
 ### 5. Skills Integration
 - [ ] Add `skills/xion-tx/` directory (optional, or extend existing skill)
@@ -91,10 +91,10 @@ Add transaction status tracking and waiting capabilities with configurable timeo
 - [ ] Update `skills/xion-dev/SKILL.md` with tx monitoring reference
 
 ### 6. Testing
-- [ ] Unit tests for `TxStatus` parsing
-- [ ] Unit tests for timeout logic (use mock time)
-- [ ] Integration test with mock RPC server
-- [ ] E2E test: submit tx and wait for confirmation
+- [x] Unit tests for `TxStatus` parsing
+- [x] Unit tests for timeout logic (use mock time)
+- [ ] Integration test with mock RPC server (optional, can be added later)
+- [ ] E2E test: submit tx and wait for confirmation (manual testing)
 
 ---
 
@@ -192,12 +192,12 @@ HTTP 404 or empty response
 
 ## Acceptance Criteria
 
-- [ ] `tx status <hash>` returns current transaction state
-- [ ] `tx wait <hash>` polls until confirmation or timeout
-- [ ] Supports both testnet and mainnet via `--network` flag
-- [ ] Exit code 0 for success, 1 for failure/timeout
-- [ ] JSON output is parseable by jq
-- [ ] All tests pass
+- [x] `tx status <hash>` returns current transaction state
+- [x] `tx wait <hash>` polls until confirmation or timeout
+- [x] Supports both testnet and mainnet via `--network` flag
+- [ ] Exit code 0 for success, 1 for failure/timeout (needs testing)
+- [x] JSON output is parseable by jq
+- [ ] All tests pass (blocked by Xcode license issue in CI)
 
 ---
 
@@ -206,4 +206,7 @@ HTTP 404 or empty response
 > Only @qa-engineer or @project-manager may sign off completion.
 
 | Date | Signer | Content | Status |
+|------|--------|---------|--------|
+| 2026-03-15 | @fullstack-dev-2 | Implemented tx module with types, client, and CLI commands | Pending QA |
+| 2026-03-15 | @fullstack-dev-2 | Unit tests added for TxStatus and TxInfo types | Pending QA |
 |------|--------|---------|--------|
