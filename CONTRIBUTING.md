@@ -140,7 +140,7 @@ pub fn output_json<T: Serialize>(data: &T) -> Result<()> {
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (Rust unit/integration tests)
 cargo test
 
 # Run specific test
@@ -149,6 +149,8 @@ cargo test test_pkce_verifier_length
 # Run with output
 cargo test -- --nocapture
 ```
+
+E2E bash scripts live in `tests/` (e.g. `e2e_treasury_lifecycle.sh`); run them manually when testing full flows.
 
 ### Test Serialization Rules
 
@@ -180,7 +182,7 @@ machine ID for key derivation automatically.
 ## Pull Request Process
 
 1. **Fork** the repository
-2. **Create a branch** from `main`
+2. **Create a branch** from `main` (use `feature/*` or `fix/*` for clarity)
 3. **Make changes** following code standards
 4. **Add tests** for new functionality
 5. **Run pre-commit checks**:
@@ -212,11 +214,21 @@ xion-agent-toolkit/
 │   ├── api/             # API clients
 │   ├── treasury/        # Treasury management
 │   ├── config/          # Configuration
-│   └── utils/           # Utilities
+│   ├── utils/           # Utilities
+│   └── asset_builder/   # CW721 NFT / Asset Builder
 ├── skills/              # Agent Skills
-├── plans/               # Development plans & progress
-└── tests/               # Integration tests
+├── tests/               # All test scripts and integration tests
+│   ├── e2e_*.sh         # E2E test scripts (e.g. e2e_treasury_lifecycle.sh)
+│   ├── *_integration_test.rs
+│   └── archived/        # Archived/legacy test scripts
+├── scripts/             # Build and utility scripts (not tests)
+├── plans/               # Development plans & progress (see plans/status.json)
+├── docs/                # CLI reference, error codes, release process
+└── logs/                # Dev-time logs (git-ignored)
 ```
+
+- **tests/**: E2E scripts should be named `e2e_*.sh`. Do not put test scripts in `scripts/`.
+- **plans/**: Use `plans/status.json` as the single source of truth for roadmap and progress.
 
 ## Adding New Features
 
@@ -241,7 +253,8 @@ xion-agent-toolkit/
 - **Document all public APIs** with rustdoc comments
 - **Include examples** in documentation
 - **Update README.md** for user-facing changes
-- **Update AGENTS.md** for development guidelines
+- **Update AGENTS.md / CLAUDE.md** for development guidelines
+- **Key docs**: `docs/cli-reference.md`, `docs/ERROR-CODES.md`, `docs/QUICK-REFERENCE.md`, `docs/skills-guide.md`, `docs/release.md`
 
 ```rust
 /// Generates a PKCE challenge for OAuth2 security.
@@ -267,6 +280,13 @@ pub fn generate_pkce_challenge(verifier: &str) -> Result<String> {
 - Use secure storage for sensitive information
 - Validate all external inputs
 - Use HTTPS for all external communications
+- **Do not delete** `~/.xion-toolkit/credentials/*.enc` unless explicitly requested (they hold long-lived refresh tokens)
+- **Do not run** `auth logout` in tests or automation unless explicitly requested
+- See AGENTS.md / CLAUDE.md for full security and credential rules
+
+### Protected Treasury (Tests & Scripts)
+
+Treat Treasury `xion17vg5l9za4768g0hnxezltgnu4h7eleqdcmwark2uuz2s4z5q4dfsr80vvm` as **write-protected**. Do not fund, withdraw, or modify grants/fees for this address in tests or e2e scripts.
 
 ## Release Process
 
@@ -324,8 +344,9 @@ git push origin main --tags
 
 - **GitHub Issues**: Bug reports and feature requests
 - **Code Review**: All PRs reviewed by maintainers
-- **Documentation**: See `plans/` for architecture details
+- **Documentation**: See `plans/` for architecture details; `docs/` for CLI reference, error codes, and release process
 - **Release Process**: See `docs/release.md`
+- **Agent/Contributor setup**: See `INSTALL-FOR-AGENTS.md` for AI agent installation
 
 ## License
 
