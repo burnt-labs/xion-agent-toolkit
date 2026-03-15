@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
-use xion_agent_toolkit::cli::{Cli, Commands};
-use xion_agent_toolkit::cli;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use xion_agent_toolkit::cli;
+use xion_agent_toolkit::cli::{Cli, Commands};
 
 #[tokio::main]
 async fn main() -> Result<()> {

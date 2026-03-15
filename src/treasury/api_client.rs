@@ -3,7 +3,6 @@
 //! Client for communicating with Xion's Treasury API Service.
 //! Supports listing, querying, and managing treasury contracts.
 
-use anyhow::{Context, Result};
 use chrono::DateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -11,6 +10,8 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, instrument, warn};
+
+use crate::shared::error::{NetworkError, TreasuryError, XionResult};
 
 use super::types::{
     BroadcastRequest, BroadcastResponse, QueryOptions, TreasuryInfo, TreasuryListItem,
@@ -185,11 +186,13 @@ impl TreasuryApiClient {
         execute_msg: &T,
         funds: Option<&[super::types::Coin]>,
         memo: &str,
-    ) -> Result<String> {
+    ) -> XionResult<String> {
         // Serialize execute message to JSON, then convert to number array
         // (OAuth2 API's JSON object path uses `fromPartial` which expects
         // bytes fields as array-like objects, not base64 strings)
-        let msg_json = serde_json::to_string(execute_msg)?;
+        let msg_json = serde_json::to_string(execute_msg).map_err(|e| {
+            TreasuryError::OperationFailed(format!("Failed to serialize execute message: {}", e))
+        })?;
         let msg_bytes = msg_json.as_bytes();
 
         debug!("Execute message JSON:\n{}", msg_json);
@@ -255,9 +258,14 @@ impl TreasuryApiClient {
         label: &str,
         admin: Option<&str>,
         memo: &str,
-    ) -> Result<String> {
+    ) -> XionResult<String> {
         // Serialize instantiate message to JSON, then convert to number array
-        let msg_json = serde_json::to_string(instantiate_msg)?;
+        let msg_json = serde_json::to_string(instantiate_msg).map_err(|e| {
+            TreasuryError::OperationFailed(format!(
+                "Failed to serialize instantiate message: {}",
+                e
+            ))
+        })?;
         let msg_bytes = msg_json.as_bytes();
 
         debug!("Instantiate message JSON:\n{}", msg_json);
@@ -319,9 +327,14 @@ impl TreasuryApiClient {
         salt: &[u8],
         admin: Option<&str>,
         memo: &str,
-    ) -> Result<String> {
+    ) -> XionResult<String> {
         // Serialize instantiate message to JSON, then convert to number array
-        let msg_json = serde_json::to_string(instantiate_msg)?;
+        let msg_json = serde_json::to_string(instantiate_msg).map_err(|e| {
+            TreasuryError::OperationFailed(format!(
+                "Failed to serialize instantiate2 message: {}",
+                e
+            ))
+        })?;
         let msg_bytes = msg_json.as_bytes();
 
         debug!("Instantiate2 message JSON:\n{}", msg_json);
@@ -392,7 +405,7 @@ impl TreasuryApiClient {
     /// # }
     /// ```
     #[instrument(skip(self, access_token))]
-    pub async fn list_treasuries(&self, access_token: &str) -> Result<Vec<TreasuryListItem>> {
+    pub async fn list_treasuries(&self, access_token: &str) -> XionResult<Vec<TreasuryListItem>> {
         // Extract user address from access token (format: {userId}:{grantId}:{secret})
         let user_address = extract_address_from_token(access_token)?;
 
@@ -403,12 +416,12 @@ impl TreasuryApiClient {
         );
         debug!("Listing treasuries from DaoDao Indexer: {}", url);
 
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to send list treasuries request to indexer")?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            NetworkError::RequestFailed(format!(
+                "Failed to send list treasuries request to indexer: {}",
+                e
+            ))
+        })?;
 
         let status = response.status();
         debug!("List treasuries response status: {}", status);
@@ -418,18 +431,17 @@ impl TreasuryApiClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            anyhow::bail!(
+            return Err(NetworkError::InvalidResponse(format!(
                 "List treasuries failed with status {}: {}",
-                status,
-                error_text
-            );
+                status, error_text
+            ))
+            .into());
         }
 
         // Parse indexer response - it returns a direct array, not wrapped in an object
-        let indexer_items: Vec<IndexerTreasuryItem> = response
-            .json()
-            .await
-            .context("Failed to parse indexer response")?;
+        let indexer_items: Vec<IndexerTreasuryItem> = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse indexer response: {}", e))
+        })?;
 
         // Convert indexer items to TreasuryListItem
         let treasuries: Vec<TreasuryListItem> = indexer_items
@@ -522,7 +534,7 @@ impl TreasuryApiClient {
         access_token: &str,
         address: &str,
         _options: QueryOptions,
-    ) -> Result<TreasuryInfo> {
+    ) -> XionResult<TreasuryInfo> {
         // Use DaoDao Indexer to query treasury info
         // Extract user address from token to build the list URL
         let user_address = extract_address_from_token(access_token)?;
@@ -533,12 +545,12 @@ impl TreasuryApiClient {
         );
         debug!("Querying treasury from DaoDao Indexer: {}", url);
 
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to send query treasury request to indexer")?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            NetworkError::RequestFailed(format!(
+                "Failed to send query treasury request to indexer: {}",
+                e
+            ))
+        })?;
 
         let status = response.status();
         debug!("Query treasury response status: {}", status);
@@ -548,24 +560,23 @@ impl TreasuryApiClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            anyhow::bail!(
+            return Err(NetworkError::InvalidResponse(format!(
                 "Query treasury failed with status {}: {}",
-                status,
-                error_text
-            );
+                status, error_text
+            ))
+            .into());
         }
 
         // Parse indexer response - direct array
-        let indexer_items: Vec<IndexerTreasuryItem> = response
-            .json()
-            .await
-            .context("Failed to parse indexer response")?;
+        let indexer_items: Vec<IndexerTreasuryItem> = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse indexer response: {}", e))
+        })?;
 
         // Find the specific treasury by address
         let item = indexer_items
             .iter()
             .find(|item| item.contract_address == address)
-            .ok_or_else(|| anyhow::anyhow!("Treasury {} not found", address))?;
+            .ok_or_else(|| TreasuryError::NotFound(address.to_string()))?;
 
         // Convert to TreasuryInfo
         let treasury = self.indexer_item_to_treasury_info(item)?;
@@ -575,7 +586,10 @@ impl TreasuryApiClient {
     }
 
     /// Convert IndexerTreasuryItem to TreasuryInfo
-    fn indexer_item_to_treasury_info(&self, item: &IndexerTreasuryItem) -> Result<TreasuryInfo> {
+    fn indexer_item_to_treasury_info(
+        &self,
+        item: &IndexerTreasuryItem,
+    ) -> XionResult<TreasuryInfo> {
         // Get uxion balance
         let balance = item
             .balances
@@ -665,7 +679,7 @@ impl TreasuryApiClient {
         &self,
         access_token: &str,
         request: BroadcastRequest,
-    ) -> Result<BroadcastResponse> {
+    ) -> XionResult<BroadcastResponse> {
         let url = format!("{}/api/v1/transaction", self.base_url);
         debug!("Broadcasting transaction to: {}", url);
 
@@ -676,7 +690,12 @@ impl TreasuryApiClient {
             .json(&request)
             .send()
             .await
-            .context("Failed to send broadcast transaction request")?;
+            .map_err(|e| {
+                NetworkError::RequestFailed(format!(
+                    "Failed to send broadcast transaction request: {}",
+                    e
+                ))
+            })?;
 
         let status = response.status();
         debug!("Broadcast transaction response status: {}", status);
@@ -686,17 +705,19 @@ impl TreasuryApiClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            anyhow::bail!(
+            return Err(NetworkError::InvalidResponse(format!(
                 "Broadcast transaction failed with status {}: {}",
-                status,
-                error_text
-            );
+                status, error_text
+            ))
+            .into());
         }
 
-        let result: BroadcastResponse = response
-            .json()
-            .await
-            .context("Failed to parse broadcast transaction response")?;
+        let result: BroadcastResponse = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!(
+                "Failed to parse broadcast transaction response: {}",
+                e
+            ))
+        })?;
 
         debug!("Successfully broadcast transaction: {}", result.tx_hash);
         Ok(result)
@@ -744,7 +765,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         amount: &str,
         from_address: &str,
-    ) -> Result<BroadcastResponse> {
+    ) -> XionResult<BroadcastResponse> {
         debug!(
             "Funding treasury {} with {} from {}",
             treasury_address, amount, from_address
@@ -810,7 +831,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         amount: &str,
         from_address: &str,
-    ) -> Result<BroadcastResponse> {
+    ) -> XionResult<BroadcastResponse> {
         debug!(
             "Withdrawing {} from treasury {} to {}",
             amount, treasury_address, from_address
@@ -925,7 +946,7 @@ impl TreasuryApiClient {
         treasury_code_id: u64,
         request: super::types::CreateTreasuryRequest,
         salt: &[u8],
-    ) -> Result<super::types::CreateTreasuryResult> {
+    ) -> XionResult<super::types::CreateTreasuryResult> {
         debug!("Creating treasury with code ID: {}", treasury_code_id);
 
         // Build the instantiation message
@@ -984,7 +1005,7 @@ impl TreasuryApiClient {
         access_token: &str,
         _admin_address: &str,
         tx_hash: &str,
-    ) -> Result<String> {
+    ) -> XionResult<String> {
         debug!("Waiting for treasury creation to be indexed");
 
         // Initial delay to allow indexing
@@ -996,12 +1017,13 @@ impl TreasuryApiClient {
         loop {
             // Check if we've exceeded the timeout
             if start_time.elapsed() >= timeout {
-                anyhow::bail!(
+                return Err(TreasuryError::OperationFailed(format!(
                     "Treasury creation timed out after {} seconds. Transaction was broadcast successfully (tx_hash: {}). \
                      The treasury may still be created. Check the transaction status manually or wait a few moments and list your treasuries.",
                     DEFAULT_POLL_TIMEOUT_SECS,
                     tx_hash
-                );
+                ))
+                .into());
             }
 
             // List treasuries and look for the newly created one
@@ -1082,11 +1104,13 @@ impl TreasuryApiClient {
         &self,
         contract_address: &str,
         query_msg: &serde_json::Value,
-    ) -> Result<serde_json::Value> {
+    ) -> XionResult<serde_json::Value> {
         debug!("Querying contract: {}", contract_address);
 
         // Step 1: Serialize query message to JSON string
-        let query_json = serde_json::to_string(query_msg)?;
+        let query_json = serde_json::to_string(query_msg).map_err(|e| {
+            TreasuryError::OperationFailed(format!("Failed to serialize query message: {}", e))
+        })?;
         debug!("Query message JSON: {}", query_json);
 
         // Step 2: Base64 encode the JSON string
@@ -1100,12 +1124,9 @@ impl TreasuryApiClient {
         debug!("Query URL: {}", url);
 
         // Step 4: Make GET request
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to send contract query request")?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            NetworkError::RequestFailed(format!("Failed to send contract query request: {}", e))
+        })?;
 
         let status = response.status();
         debug!("Query response status: {}", status);
@@ -1115,11 +1136,11 @@ impl TreasuryApiClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            anyhow::bail!(
+            return Err(NetworkError::InvalidResponse(format!(
                 "Contract query failed with status {}: {}",
-                status,
-                error_text
-            );
+                status, error_text
+            ))
+            .into());
         }
 
         // Step 5: Parse response - double-encoded format
@@ -1129,18 +1150,22 @@ impl TreasuryApiClient {
             data: String,
         }
 
-        let query_response: QueryResponse = response
-            .json()
-            .await
-            .context("Failed to parse query response")?;
+        let query_response: QueryResponse = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse query response: {}", e))
+        })?;
 
         // Step 6: Base64 decode the data field
-        let decoded =
-            base64_decode(&query_response.data).context("Failed to decode base64 query result")?;
+        let decoded = base64_decode(&query_response.data).map_err(|e| {
+            TreasuryError::OperationFailed(format!("Failed to decode base64 query result: {}", e))
+        })?;
 
         // Step 7: Parse decoded string as JSON
-        let result: serde_json::Value = serde_json::from_str(&decoded)
-            .context("Failed to parse decoded query result as JSON")?;
+        let result: serde_json::Value = serde_json::from_str(&decoded).map_err(|e| {
+            TreasuryError::OperationFailed(format!(
+                "Failed to parse decoded query result as JSON: {}",
+                e
+            ))
+        })?;
 
         debug!("Query result: {:?}", result);
         Ok(result)
@@ -1174,16 +1199,13 @@ impl TreasuryApiClient {
     /// # }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_code_info(&self, code_id: u64) -> Result<CodeInfo> {
+    pub async fn get_code_info(&self, code_id: u64) -> XionResult<CodeInfo> {
         let url = format!("{}/cosmwasm/wasm/v1/code/{}", self.rpc_url, code_id);
         debug!("Fetching code info from: {}", url);
 
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to send code info request")?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            NetworkError::RequestFailed(format!("Failed to send code info request: {}", e))
+        })?;
 
         let status = response.status();
         debug!("Code info response status: {}", status);
@@ -1193,18 +1215,17 @@ impl TreasuryApiClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            anyhow::bail!(
+            return Err(NetworkError::InvalidResponse(format!(
                 "Code info query failed with status {}: {}",
-                status,
-                error_text
-            );
+                status, error_text
+            ))
+            .into());
         }
 
         // Parse response
-        let code_response: CodeInfoResponse = response
-            .json()
-            .await
-            .context("Failed to parse code info response")?;
+        let code_response: CodeInfoResponse = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse code info response: {}", e))
+        })?;
 
         // Convert checksum to lowercase hex
         let checksum = code_response.code_info.data_hash.to_lowercase();
@@ -1256,7 +1277,7 @@ struct CodeInfoData {
 /// - All fields use snake_case naming (matching the CosmWasm contract)
 fn build_treasury_instantiate_msg(
     request: &super::types::CreateTreasuryRequest,
-) -> Result<serde_json::Value> {
+) -> XionResult<serde_json::Value> {
     // Build the metadata JSON string
     let metadata = serde_json::json!({
         "name": request.name.as_deref().unwrap_or(""),
@@ -1337,18 +1358,18 @@ fn build_treasury_instantiate_msg(
 // ============================================================================
 
 /// Parse a coin string (e.g., "1000000uxion") into (amount, denom)
-fn parse_coin(coin: &str) -> Result<(String, String)> {
+fn parse_coin(coin: &str) -> XionResult<(String, String)> {
     // Find where digits end and letters begin
     let split_pos = coin
         .chars()
         .position(|c| !c.is_ascii_digit())
-        .ok_or_else(|| anyhow::anyhow!("Invalid coin format: {}", coin))?;
+        .ok_or_else(|| TreasuryError::InvalidAddress(format!("Invalid coin format: {}", coin)))?;
 
     let amount = coin[..split_pos].to_string();
     let denom = coin[split_pos..].to_string();
 
     if amount.is_empty() || denom.is_empty() {
-        anyhow::bail!("Invalid coin format: {}", coin);
+        return Err(TreasuryError::InvalidAddress(format!("Invalid coin format: {}", coin)).into());
     }
 
     Ok((amount, denom))
@@ -1358,17 +1379,22 @@ fn parse_coin(coin: &str) -> Result<(String, String)> {
 ///
 /// Token format: {userId}:{grantId}:{secret}
 /// userId is the user's Xion address (starts with "xion1")
-fn extract_address_from_token(token: &str) -> Result<String> {
+fn extract_address_from_token(token: &str) -> XionResult<String> {
     let parts: Vec<&str> = token.split(':').collect();
     if parts.len() != 3 {
-        anyhow::bail!("Invalid access token format: expected 3 parts separated by ':'");
+        return Err(TreasuryError::InvalidAddress(
+            "Invalid access token format: expected 3 parts separated by ':'".to_string(),
+        )
+        .into());
     }
 
     let address = parts[0].to_string();
     if !address.starts_with("xion1") {
-        anyhow::bail!(
+        return Err(TreasuryError::InvalidAddress(
             "Invalid access token: userId must be a valid Xion address (starts with 'xion1')"
-        );
+                .to_string(),
+        )
+        .into());
     }
 
     Ok(address)
@@ -1395,12 +1421,14 @@ fn base64_encode(input: &str) -> String {
 }
 
 /// Base64 decode a string
-fn base64_decode(input: &str) -> Result<String> {
+fn base64_decode(input: &str) -> XionResult<String> {
     use base64::{engine::general_purpose::STANDARD, Engine as _};
-    let bytes = STANDARD
-        .decode(input)
-        .context("Failed to decode base64 string")?;
-    String::from_utf8(bytes).context("Decoded base64 is not valid UTF-8")
+    let bytes = STANDARD.decode(input).map_err(|e| {
+        TreasuryError::OperationFailed(format!("Failed to decode base64 string: {}", e))
+    })?;
+    String::from_utf8(bytes).map_err(|e| {
+        TreasuryError::OperationFailed(format!("Decoded base64 is not valid UTF-8: {}", e)).into()
+    })
 }
 
 // ============================================================================
@@ -1427,7 +1455,7 @@ impl TreasuryApiClient {
         type_url: &str,
         grant_config: super::types::GrantConfigInput,
         from_address: &str,
-    ) -> Result<super::types::GrantConfigResult> {
+    ) -> XionResult<super::types::GrantConfigResult> {
         debug!(
             "Adding grant config for type_url: {} to treasury: {}",
             type_url, treasury_address
@@ -1481,7 +1509,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         type_url: &str,
         from_address: &str,
-    ) -> Result<super::types::GrantConfigResult> {
+    ) -> XionResult<super::types::GrantConfigResult> {
         debug!(
             "Removing grant config for type_url: {} from treasury: {}",
             type_url, treasury_address
@@ -1518,7 +1546,7 @@ impl TreasuryApiClient {
         &self,
         access_token: &str,
         treasury_address: &str,
-    ) -> Result<Vec<super::types::GrantConfigInfo>> {
+    ) -> XionResult<Vec<super::types::GrantConfigInfo>> {
         debug!("Listing grant configs for treasury: {}", treasury_address);
 
         // Query the treasury info which includes grant configs
@@ -1572,7 +1600,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         fee_config: super::types::FeeConfigInput,
         from_address: &str,
-    ) -> Result<super::types::FeeConfigResult> {
+    ) -> XionResult<super::types::FeeConfigResult> {
         debug!("Setting fee config for treasury: {}", treasury_address);
 
         // Encode the fee allowance
@@ -1625,7 +1653,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         grantee: &str,
         from_address: &str,
-    ) -> Result<super::types::FeeConfigResult> {
+    ) -> XionResult<super::types::FeeConfigResult> {
         debug!(
             "Revoking allowance from grantee: {} for treasury: {}",
             grantee, treasury_address
@@ -1661,7 +1689,7 @@ impl TreasuryApiClient {
         &self,
         access_token: &str,
         treasury_address: &str,
-    ) -> Result<Option<super::types::FeeConfigInfo>> {
+    ) -> XionResult<Option<super::types::FeeConfigInfo>> {
         debug!("Querying fee config for treasury: {}", treasury_address);
         // Query the treasury info which includes fee config
         let options = QueryOptions {
@@ -1720,7 +1748,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         new_admin: &str,
         from_address: &str,
-    ) -> Result<super::types::AdminResult> {
+    ) -> XionResult<super::types::AdminResult> {
         debug!(
             "Proposing new admin {} for treasury: {}",
             new_admin, treasury_address
@@ -1766,7 +1794,7 @@ impl TreasuryApiClient {
         access_token: &str,
         treasury_address: &str,
         from_address: &str,
-    ) -> Result<super::types::AdminResult> {
+    ) -> XionResult<super::types::AdminResult> {
         debug!("Accepting admin role for treasury: {}", treasury_address);
 
         // Create the accept_admin message (matches contract's ExecuteMsg)
@@ -1807,7 +1835,7 @@ impl TreasuryApiClient {
         access_token: &str,
         treasury_address: &str,
         from_address: &str,
-    ) -> Result<super::types::AdminResult> {
+    ) -> XionResult<super::types::AdminResult> {
         debug!(
             "Canceling proposed admin for treasury: {}",
             treasury_address
@@ -1857,7 +1885,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         params: super::types::UpdateParamsInput,
         from_address: &str,
-    ) -> Result<super::types::ParamsResult> {
+    ) -> XionResult<super::types::ParamsResult> {
         debug!("Updating params for treasury: {}", treasury_address);
 
         // Validate that at least one parameter is provided
@@ -1867,7 +1895,9 @@ impl TreasuryApiClient {
             && params.is_oauth2_app.is_none()
             && params.metadata.is_none()
         {
-            anyhow::bail!("At least one parameter must be provided for update (redirect_url, icon_url, name, is_oauth2_app, or metadata)");
+            return Err(TreasuryError::OperationFailed(
+                "At least one parameter must be provided for update (redirect_url, icon_url, name, is_oauth2_app, or metadata)".to_string()
+            ).into());
         }
 
         // Build metadata by merging provided fields
@@ -1875,9 +1905,9 @@ impl TreasuryApiClient {
         let mut metadata_obj = match params.metadata.clone() {
             Some(v) if v.is_object() => v,
             Some(_) => {
-                anyhow::bail!(
-                    "--metadata must be a JSON object (e.g., '{{\"key\": \"value\"}}'), not a primitive or array"
-                );
+                return Err(TreasuryError::OperationFailed(
+                    "--metadata must be a JSON object (e.g., '{\"key\": \"value\"}'), not a primitive or array".to_string()
+                ).into());
             }
             None => serde_json::json!({}),
         };
@@ -1952,7 +1982,7 @@ impl TreasuryApiClient {
         treasury_address: &str,
         grant_configs: Vec<(String, super::types::GrantConfigInput)>,
         from_address: &str,
-    ) -> Result<super::types::BatchGrantConfigResult> {
+    ) -> XionResult<super::types::BatchGrantConfigResult> {
         debug!(
             "Adding {} grant configs in batch to treasury: {}",
             grant_configs.len(),
@@ -2040,7 +2070,7 @@ impl TreasuryApiClient {
     pub async fn list_authz_grants(
         &self,
         treasury_address: &str,
-    ) -> Result<Vec<super::types::AuthzGrantInfo>> {
+    ) -> XionResult<Vec<super::types::AuthzGrantInfo>> {
         debug!("Listing authz grants for treasury: {}", treasury_address);
 
         // Query authz grants via RPC
@@ -2050,17 +2080,18 @@ impl TreasuryApiClient {
             self.rpc_url, treasury_address
         );
 
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to query authz grants")?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            NetworkError::RequestFailed(format!("Failed to query authz grants: {}", e))
+        })?;
 
         let status = response.status();
         if !status.is_success() {
             let error_text = response.text().await.unwrap_or_default();
-            anyhow::bail!("Failed to query authz grants: {} - {}", status, error_text);
+            return Err(NetworkError::InvalidResponse(format!(
+                "Failed to query authz grants: {} - {}",
+                status, error_text
+            ))
+            .into());
         }
 
         // Parse the response
@@ -2077,10 +2108,9 @@ impl TreasuryApiClient {
             expiration: Option<String>,
         }
 
-        let grants_response: AuthzGrantsResponse = response
-            .json()
-            .await
-            .context("Failed to parse authz grants response")?;
+        let grants_response: AuthzGrantsResponse = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse authz grants response: {}", e))
+        })?;
 
         // Convert to AuthzGrantInfo
         let grants: Vec<super::types::AuthzGrantInfo> = grants_response
@@ -2121,7 +2151,7 @@ impl TreasuryApiClient {
     pub async fn list_fee_allowances(
         &self,
         treasury_address: &str,
-    ) -> Result<Vec<super::types::FeeAllowanceInfo>> {
+    ) -> XionResult<Vec<super::types::FeeAllowanceInfo>> {
         debug!("Listing fee allowances for treasury: {}", treasury_address);
 
         // Query fee allowances via RPC
@@ -2131,21 +2161,18 @@ impl TreasuryApiClient {
             self.rpc_url, treasury_address
         );
 
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to query fee allowances")?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            NetworkError::RequestFailed(format!("Failed to query fee allowances: {}", e))
+        })?;
 
         let status = response.status();
         if !status.is_success() {
             let error_text = response.text().await.unwrap_or_default();
-            anyhow::bail!(
+            return Err(NetworkError::InvalidResponse(format!(
                 "Failed to query fee allowances: {} - {}",
-                status,
-                error_text
-            );
+                status, error_text
+            ))
+            .into());
         }
 
         // Parse the response
@@ -2161,10 +2188,9 @@ impl TreasuryApiClient {
             allowance: Option<serde_json::Value>,
         }
 
-        let allowances_response: FeeAllowancesResponse = response
-            .json()
-            .await
-            .context("Failed to parse fee allowances response")?;
+        let allowances_response: FeeAllowancesResponse = response.json().await.map_err(|e| {
+            NetworkError::InvalidResponse(format!("Failed to parse fee allowances response: {}", e))
+        })?;
 
         // Convert to FeeAllowanceInfo
         let allowances: Vec<super::types::FeeAllowanceInfo> = allowances_response
@@ -2272,7 +2298,7 @@ impl TreasuryApiClient {
         &self,
         access_token: &str,
         treasury_address: &str,
-    ) -> Result<super::types::TreasuryExportData> {
+    ) -> XionResult<super::types::TreasuryExportData> {
         debug!("Exporting treasury state for: {}", treasury_address);
 
         // Query basic treasury info from indexer

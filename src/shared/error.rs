@@ -787,6 +787,40 @@ impl From<NetworkError> for XionError {
     }
 }
 
+// Implement From for crate::treasury::encoding::EncodingError
+// This is in a separate impl block to handle the cross-module import
+impl From<crate::treasury::encoding::EncodingError> for XionError {
+    fn from(e: crate::treasury::encoding::EncodingError) -> Self {
+        XionError::Treasury(TreasuryError::OperationFailed(e.to_string()))
+    }
+}
+
+// Implement From<anyhow::Error> for backward compatibility with modules not yet migrated
+impl From<anyhow::Error> for XionError {
+    fn from(e: anyhow::Error) -> Self {
+        // Try to extract a more specific error type from the message
+        let err_str = e.to_string();
+
+        // Check for common auth errors
+        if err_str.contains("Not authenticated") || err_str.contains("Please login") {
+            return XionError::Auth(AuthError::NotAuthenticated(err_str));
+        }
+        if err_str.contains("Token expired") || err_str.contains("refresh") {
+            return XionError::Auth(AuthError::TokenExpired(err_str));
+        }
+        if err_str.contains("Refresh token expired") {
+            return XionError::Auth(AuthError::RefreshTokenExpired(err_str));
+        }
+
+        // Default to a generic error
+        XionError::Generic {
+            code: XionErrorCode::ECONFIG002,
+            message: err_str,
+            hint: "Check the error message for details".to_string(),
+        }
+    }
+}
+
 /// Result type alias for XionError
 pub type XionResult<T> = std::result::Result<T, XionError>;
 

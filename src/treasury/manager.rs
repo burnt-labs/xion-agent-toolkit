@@ -3,13 +3,13 @@
 //! High-level manager for treasury operations with automatic token refresh
 //! and caching support.
 
-use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, instrument};
 
 use crate::config::NetworkConfig;
 use crate::oauth::OAuthClient;
+use crate::shared::error::{AuthError, TreasuryError, XionError, XionResult};
 
 use super::api_client::TreasuryApiClient;
 use super::cache::TreasuryCache;
@@ -187,7 +187,7 @@ impl TreasuryManager {
     /// # }
     /// ```
     #[instrument(skip(self))]
-    pub async fn list(&self) -> Result<Vec<TreasuryListItem>> {
+    pub async fn list(&self) -> XionResult<Vec<TreasuryListItem>> {
         debug!("Listing treasuries");
 
         // Check cache first
@@ -265,7 +265,7 @@ impl TreasuryManager {
     /// # }
     /// ```
     #[instrument(skip(self))]
-    pub async fn query(&self, address: &str) -> Result<TreasuryInfo> {
+    pub async fn query(&self, address: &str) -> XionResult<TreasuryInfo> {
         debug!("Querying treasury: {}", address);
 
         // Check cache first
@@ -340,7 +340,7 @@ impl TreasuryManager {
     /// ```
     #[allow(dead_code)]
     #[instrument(skip(self))]
-    pub async fn get_balance(&self, address: &str) -> Result<String> {
+    pub async fn get_balance(&self, address: &str) -> XionResult<String> {
         debug!("Getting balance for treasury: {}", address);
 
         let treasury = self.query(address).await?;
@@ -384,8 +384,8 @@ impl TreasuryManager {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn is_authenticated(&self) -> Result<bool> {
-        self.oauth_client.is_authenticated()
+    pub fn is_authenticated(&self) -> XionResult<bool> {
+        Ok(self.oauth_client.is_authenticated()?)
     }
 
     /// Clear cache
@@ -470,17 +470,18 @@ impl TreasuryManager {
     pub async fn create(
         &self,
         request: super::types::TreasuryCreateRequest,
-    ) -> Result<TreasuryInfo> {
+    ) -> XionResult<TreasuryInfo> {
         debug!("Creating treasury");
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let admin_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Step 1: Encode params metadata
@@ -502,7 +503,7 @@ impl TreasuryManager {
             .grant_configs
             .iter()
             .map(encode_grant_config_input)
-            .collect::<Result<Vec<_>>>()?
+            .collect::<XionResult<Vec<_>>>()?
             .into_iter()
             .unzip();
 
@@ -619,17 +620,18 @@ impl TreasuryManager {
     /// # Returns
     /// Fund result with transaction hash
     #[instrument(skip(self))]
-    pub async fn fund(&self, address: &str, amount: &str) -> Result<FundResult> {
+    pub async fn fund(&self, address: &str, amount: &str) -> XionResult<FundResult> {
         debug!("Funding treasury {} with {}", address, amount);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -661,17 +663,18 @@ impl TreasuryManager {
     /// # Returns
     /// Withdraw result with transaction hash
     #[instrument(skip(self))]
-    pub async fn withdraw(&self, address: &str, amount: &str) -> Result<WithdrawResult> {
+    pub async fn withdraw(&self, address: &str, amount: &str) -> XionResult<WithdrawResult> {
         debug!("Withdrawing {} from treasury {}", amount, address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -713,20 +716,21 @@ impl TreasuryManager {
         instantiate_msg: &T,
         label: &str,
         admin: Option<&str>,
-    ) -> Result<InstantiateResult> {
+    ) -> XionResult<InstantiateResult> {
         debug!(
             "Instantiating contract code_id={} with label={}",
             code_id, label
         );
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let sender = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -777,20 +781,21 @@ impl TreasuryManager {
         label: &str,
         salt: Option<&[u8]>,
         admin: Option<&str>,
-    ) -> Result<Instantiate2Result> {
+    ) -> XionResult<Instantiate2Result> {
         debug!(
             "Instantiating contract2 code_id={} with label={}",
             code_id, label
         );
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let sender = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Generate salt if not provided (32 bytes)
@@ -846,17 +851,18 @@ impl TreasuryManager {
         contract: &str,
         execute_msg: &T,
         funds: Option<&str>,
-    ) -> Result<ExecuteResult> {
+    ) -> XionResult<ExecuteResult> {
         debug!("Executing message on contract: {}", contract);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let sender = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Parse funds if provided
@@ -916,17 +922,18 @@ impl TreasuryManager {
         &self,
         address: &str,
         grant_config: super::types::GrantConfigInput,
-    ) -> Result<super::types::GrantConfigResult> {
+    ) -> XionResult<super::types::GrantConfigResult> {
         debug!("Adding grant config to treasury {}", address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -960,20 +967,21 @@ impl TreasuryManager {
         &self,
         address: &str,
         type_url: &str,
-    ) -> Result<super::types::GrantConfigResult> {
+    ) -> XionResult<super::types::GrantConfigResult> {
         debug!(
             "Removing grant config {} from treasury {}",
             type_url, address
         );
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -996,7 +1004,7 @@ impl TreasuryManager {
     pub async fn list_grant_configs(
         &self,
         address: &str,
-    ) -> Result<Vec<super::types::GrantConfigInfo>> {
+    ) -> XionResult<Vec<super::types::GrantConfigInfo>> {
         debug!("Listing grant configs for treasury {}", address);
 
         // Get valid access token
@@ -1025,17 +1033,18 @@ impl TreasuryManager {
         &self,
         address: &str,
         fee_config: super::types::FeeConfigInput,
-    ) -> Result<super::types::FeeConfigResult> {
+    ) -> XionResult<super::types::FeeConfigResult> {
         debug!("Setting fee config for treasury {}", address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -1060,7 +1069,7 @@ impl TreasuryManager {
         &self,
         address: &str,
         grantee: &str,
-    ) -> Result<super::types::FeeConfigResult> {
+    ) -> XionResult<super::types::FeeConfigResult> {
         debug!(
             "Removing fee allowance for grantee {} from treasury {}",
             grantee, address
@@ -1079,11 +1088,11 @@ impl TreasuryManager {
     }
 
     /// Extract address from OAuth2 access token
-    fn extract_address_from_token(token: &str) -> Result<String> {
+    fn extract_address_from_token(token: &str) -> XionResult<String> {
         // Token format: {userId}:{grantId}:{secret}
         let parts: Vec<&str> = token.split(':').collect();
         if parts.len() != 3 {
-            return Err(anyhow::anyhow!("Invalid token format"));
+            return Err(AuthError::NotAuthenticated("Invalid token format".to_string()).into());
         }
         Ok(parts[0].to_string())
     }
@@ -1099,7 +1108,7 @@ impl TreasuryManager {
     pub async fn query_fee_config(
         &self,
         address: &str,
-    ) -> Result<Option<super::types::FeeConfigInfo>> {
+    ) -> XionResult<Option<super::types::FeeConfigInfo>> {
         debug!("Querying fee config for treasury {}", address);
 
         // Get valid access token
@@ -1128,17 +1137,18 @@ impl TreasuryManager {
         &self,
         address: &str,
         new_admin: &str,
-    ) -> Result<super::types::AdminResult> {
+    ) -> XionResult<super::types::AdminResult> {
         debug!("Proposing new admin {} for treasury {}", new_admin, address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -1158,17 +1168,18 @@ impl TreasuryManager {
     /// # Returns
     /// Admin result with transaction hash
     #[instrument(skip(self))]
-    pub async fn accept_admin(&self, address: &str) -> Result<super::types::AdminResult> {
+    pub async fn accept_admin(&self, address: &str) -> XionResult<super::types::AdminResult> {
         debug!("Accepting admin role for treasury {}", address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -1188,17 +1199,21 @@ impl TreasuryManager {
     /// # Returns
     /// Admin result with transaction hash
     #[instrument(skip(self))]
-    pub async fn cancel_proposed_admin(&self, address: &str) -> Result<super::types::AdminResult> {
+    pub async fn cancel_proposed_admin(
+        &self,
+        address: &str,
+    ) -> XionResult<super::types::AdminResult> {
         debug!("Canceling proposed admin for treasury {}", address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -1227,17 +1242,18 @@ impl TreasuryManager {
         &self,
         address: &str,
         params: super::types::UpdateParamsInput,
-    ) -> Result<super::types::ParamsResult> {
+    ) -> XionResult<super::types::ParamsResult> {
         debug!("Updating params for treasury {}", address);
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -1267,7 +1283,7 @@ impl TreasuryManager {
         &self,
         address: &str,
         grant_configs: Vec<(String, super::types::GrantConfigInput)>,
-    ) -> Result<super::types::BatchGrantConfigResult> {
+    ) -> XionResult<super::types::BatchGrantConfigResult> {
         debug!(
             "Adding {} grant configs in batch to treasury {}",
             grant_configs.len(),
@@ -1275,13 +1291,14 @@ impl TreasuryManager {
         );
 
         // Get user credentials to obtain xion_address
-        let credentials = self
-            .oauth_client
-            .get_credentials()?
-            .ok_or_else(|| anyhow::anyhow!("Not authenticated. Please login first."))?;
+        let credentials = self.oauth_client.get_credentials()?.ok_or_else(|| {
+            AuthError::NotAuthenticated("Not authenticated. Please login first.".to_string())
+        })?;
 
         let from_address = credentials.xion_address.ok_or_else(|| {
-            anyhow::anyhow!("User address not found in credentials. Please login again.")
+            AuthError::NotAuthenticated(
+                "User address not found in credentials. Please login again.".to_string(),
+            )
         })?;
 
         // Get valid access token
@@ -1308,7 +1325,7 @@ impl TreasuryManager {
     pub async fn list_authz_grants(
         &self,
         address: &str,
-    ) -> Result<Vec<super::types::AuthzGrantInfo>> {
+    ) -> XionResult<Vec<super::types::AuthzGrantInfo>> {
         debug!("Listing authz grants for treasury {}", address);
 
         // Call API client to list authz grants (no auth required for query)
@@ -1326,7 +1343,7 @@ impl TreasuryManager {
     pub async fn list_fee_allowances(
         &self,
         address: &str,
-    ) -> Result<Vec<super::types::FeeAllowanceInfo>> {
+    ) -> XionResult<Vec<super::types::FeeAllowanceInfo>> {
         debug!("Listing fee allowances for treasury {}", address);
 
         // Call API client to list fee allowances (no auth required for query)
@@ -1348,7 +1365,10 @@ impl TreasuryManager {
     /// # Returns
     /// Treasury export data with all configuration
     #[instrument(skip(self))]
-    pub async fn export_treasury(&self, address: &str) -> Result<super::types::TreasuryExportData> {
+    pub async fn export_treasury(
+        &self,
+        address: &str,
+    ) -> XionResult<super::types::TreasuryExportData> {
         debug!("Exporting treasury configuration for: {}", address);
 
         // Get valid access token
@@ -1381,7 +1401,7 @@ impl TreasuryManager {
         treasury_address: &str,
         import_data: &super::types::TreasuryExportData,
         dry_run: bool,
-    ) -> Result<super::types::ImportResult> {
+    ) -> XionResult<super::types::ImportResult> {
         debug!(
             "Importing configuration to treasury: {} (dry_run={})",
             treasury_address, dry_run
@@ -1528,7 +1548,7 @@ impl TreasuryManager {
         &self,
         treasury_address: &str,
         fee_config: &super::types::FeeConfigInfo,
-    ) -> Result<String> {
+    ) -> XionResult<String> {
         // Determine the fee config type based on available fields
         let fee_input = if let (Some(period), Some(period_spend_limit)) =
             (&fee_config.period, &fee_config.period_spend_limit)
@@ -1565,7 +1585,7 @@ impl TreasuryManager {
         &self,
         treasury_address: &str,
         grant_config: &super::types::GrantConfigInfo,
-    ) -> Result<String> {
+    ) -> XionResult<String> {
         // Use preserved authorization input if available, otherwise default to Generic
         let authorization = grant_config
             .authorization_input
@@ -1637,7 +1657,7 @@ impl TreasuryManager {
         &self,
         contract_address: &str,
         query_msg: &serde_json::Value,
-    ) -> Result<serde_json::Value> {
+    ) -> XionResult<serde_json::Value> {
         debug!("Querying contract: {}", contract_address);
 
         // Call API client to query contract (no auth required for query)
@@ -1657,27 +1677,27 @@ impl TreasuryManager {
 /// - Protobuf Duration format: "86400s"
 /// - Simple number: "86400"
 /// - Human readable: "24h", "1d", "1h30m"
-fn parse_duration_string(s: &str) -> Result<u64> {
+fn parse_duration_string(s: &str) -> XionResult<u64> {
     let s = s.trim();
 
     // Handle empty string
     if s.is_empty() {
-        anyhow::bail!("Empty duration string");
+        return Err(TreasuryError::OperationFailed("Empty duration string".to_string()).into());
     }
 
     // Handle protobuf duration format (e.g., "86400s")
     if s.ends_with('s') && !s.contains('h') && !s.contains('m') && !s.contains('d') {
         let num_str = &s[..s.len() - 1];
-        return num_str
-            .parse::<u64>()
-            .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s));
+        return num_str.parse::<u64>().map_err(|_| {
+            TreasuryError::OperationFailed(format!("Invalid duration: {}", s)).into()
+        });
     }
 
     // Handle simple number (assume seconds)
     if s.chars().all(|c| c.is_ascii_digit()) {
-        return s
-            .parse::<u64>()
-            .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s));
+        return s.parse::<u64>().map_err(|_| {
+            TreasuryError::OperationFailed(format!("Invalid duration: {}", s)).into()
+        });
     }
 
     // Handle human-readable format (e.g., "24h", "1d", "1h30m")
@@ -1688,9 +1708,12 @@ fn parse_duration_string(s: &str) -> Result<u64> {
         if c.is_ascii_digit() {
             current_num.push(c);
         } else {
-            let num: u64 = current_num
-                .parse()
-                .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s))?;
+            let num: u64 = current_num.parse().map_err(|_| {
+                XionError::from(TreasuryError::OperationFailed(format!(
+                    "Invalid duration: {}",
+                    s
+                )))
+            })?;
             current_num.clear();
 
             match c {
@@ -1698,21 +1721,30 @@ fn parse_duration_string(s: &str) -> Result<u64> {
                 'h' => total_seconds += num * 3600,
                 'm' => total_seconds += num * 60,
                 's' => total_seconds += num,
-                _ => anyhow::bail!("Unknown duration unit: {}", c),
+                _ => {
+                    return Err(TreasuryError::OperationFailed(format!(
+                        "Unknown duration unit: {}",
+                        c
+                    ))
+                    .into())
+                }
             }
         }
     }
 
     // Handle trailing number without unit (assume seconds)
     if !current_num.is_empty() {
-        let num: u64 = current_num
-            .parse()
-            .map_err(|_| anyhow::anyhow!("Invalid duration: {}", s))?;
+        let num: u64 = current_num.parse().map_err(|_| {
+            XionError::from(TreasuryError::OperationFailed(format!(
+                "Invalid duration: {}",
+                s
+            )))
+        })?;
         total_seconds += num;
     }
 
     if total_seconds == 0 {
-        anyhow::bail!("Invalid duration: {}", s);
+        return Err(TreasuryError::OperationFailed(format!("Invalid duration: {}", s)).into());
     }
 
     Ok(total_seconds)
@@ -1721,7 +1753,7 @@ fn parse_duration_string(s: &str) -> Result<u64> {
 /// Encode fee config input to chain format
 fn encode_fee_config_input(
     input: &super::types::FeeConfigInput,
-) -> Result<super::types::FeeConfigChain> {
+) -> XionResult<super::types::FeeConfigChain> {
     use super::encoding::{
         encode_allowed_msg_allowance, encode_basic_allowance, encode_periodic_allowance,
         parse_coin_string,
@@ -1799,7 +1831,7 @@ fn encode_fee_config_input(
 /// Encode grant config input to chain format
 fn encode_grant_config_input(
     input: &super::types::GrantConfigInput,
-) -> Result<(String, super::types::GrantConfigChain)> {
+) -> XionResult<(String, super::types::GrantConfigChain)> {
     use super::encoding::{
         encode_contract_execution_authorization, encode_generic_authorization,
         encode_ibc_transfer_authorization, encode_send_authorization, encode_stake_authorization,
@@ -1854,7 +1886,7 @@ fn encode_grant_config_input(
                         allow_list: a.allow_list.clone(),
                     })
                 })
-                .collect::<Result<Vec<_>>>()?;
+                .collect::<XionResult<Vec<_>>>()?;
             let encoded = encode_ibc_transfer_authorization(ibc_allocations)?;
             (
                 "/ibc.applications.transfer.v1.TransferAuthorization".to_string(),
@@ -1877,7 +1909,7 @@ fn encode_grant_config_input(
                         keys: g.keys.clone(),
                     })
                 })
-                .collect::<Result<Vec<_>>>()?;
+                .collect::<XionResult<Vec<_>>>()?;
             let encoded = encode_contract_execution_authorization(contract_grants)?;
             (
                 "/cosmwasm.wasm.v1.ContractExecutionAuthorization".to_string(),
