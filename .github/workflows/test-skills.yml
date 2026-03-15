@@ -1,0 +1,201 @@
+name: Skills Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'skills/**'
+      - 'tests/skills/**'
+      - '.github/workflows/test-skills.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'skills/**'
+      - 'tests/skills/**'
+      - '.github/workflows/test-skills.yml'
+  workflow_dispatch:
+    inputs:
+      mock_mode:
+        description: 'Run in mock mode'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ===========================================================================
+  # Mock Tests - Fast, runs on every PR and push
+  # ===========================================================================
+  mock-tests:
+    name: Mock Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      
+      - name: Validate test framework
+        run: |
+          echo "::group::Validate lib.sh"
+          bash -n tests/skills/lib.sh
+          echo "::endgroup::"
+          
+          echo "::group::Validate run_all.sh"
+          bash -n tests/skills/run_all.sh
+          echo "::endgroup::"
+      
+      - name: Run shellcheck on test scripts
+        if: hashenv('shellcheck') || steps.install-shellcheck.outcome == 'success'
+        run: |
+          echo "::group::Install shellcheck"
+          sudo apt-get install -y shellcheck
+          echo "::endgroup::"
+          
+          echo "::group::Run shellcheck"
+          shellcheck tests/skills/lib.sh tests/skills/run_all.sh || true
+          echo "::endgroup::"
+      
+      - name: Run mock tests
+        env:
+          MOCK_ENABLED: "true"
+          CI: "true"
+        run: |
+          chmod +x tests/skills/*.sh
+          ./tests/skills/run_all.sh
+
+  # ===========================================================================
+  # E2E Tests - Only runs on main branch with secrets
+  # ===========================================================================
+  e2e-tests:
+    name: E2E Tests (Testnet)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Build xion-toolkit
+        run: |
+          cargo build --release
+      
+      - name: Install xion-toolkit
+        run: |
+          echo "$PWD/target/release" >> $GITHUB_PATH
+          ln -sf "$PWD/target/release/xion-toolkit" /usr/local/bin/xion-toolkit || true
+      
+      - name: Verify xion-toolkit installation
+        run: |
+          xion-toolkit --version || echo "Version check failed, checking binary..."
+          ls -la target/release/xion-toolkit
+      
+      - name: Setup credentials
+        env:
+          XION_CI_ENCRYPTION_KEY: ${{ secrets.XION_CI_ENCRYPTION_KEY }}
+          XION_TESTNET_CREDENTIALS: ${{ secrets.XION_TESTNET_CREDENTIALS }}
+        run: |
+          if [[ -n "$XION_CI_ENCRYPTION_KEY" && -n "$XION_TESTNET_CREDENTIALS" ]]; then
+            mkdir -p ~/.xion-toolkit/credentials
+            echo "$XION_TESTNET_CREDENTIALS" | base64 -d > ~/.xion-toolkit/credentials/testnet.enc
+            echo "Credentials configured for testnet"
+          else
+            echo "::warning::E2E credentials not available, E2E tests may be skipped"
+          fi
+      
+      - name: Run E2E tests
+        env:
+          MOCK_ENABLED: "false"
+          CI: "true"
+          XION_CI_ENCRYPTION_KEY: ${{ secrets.XION_CI_ENCRYPTION_KEY }}
+          NETWORK: "testnet"
+        run: |
+          chmod +x tests/skills/*.sh
+          ./tests/skills/run_all.sh || true
+          # Note: E2E tests may be skipped if credentials are not available
+
+  # ===========================================================================
+  # Lint - Check all bash scripts
+  # ===========================================================================
+  lint:
+    name: Lint Shell Scripts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      
+      - name: Lint test framework
+        run: |
+          echo "::group::Lint lib.sh"
+          shellcheck tests/skills/lib.sh
+          echo "::endgroup::"
+          
+          echo "::group::Lint run_all.sh"
+          shellcheck tests/skills/run_all.sh
+          echo "::endgroup::"
+      
+      - name: Lint skill scripts
+        run: |
+          for script in skills/*/scripts/*.sh; do
+            if [[ -f "$script" ]]; then
+              echo "::group::Lint $script"
+              shellcheck "$script" || true  # Don't fail on skill script issues
+              echo "::endgroup::"
+            fi
+          done
+
+  # ===========================================================================
+  # Summary - Combined status for branch protection
+  # ===========================================================================
+  skills-tests-status:
+    name: Skills Tests Status
+    runs-on: ubuntu-latest
+    needs: [mock-tests, lint]
+    if: always()
+    
+    steps:
+      - name: Check overall status
+        run: |
+          if [[ "${{ needs.mock-tests.result }}" == "failure" || "${{ needs.lint.result }}" == "failure" ]]; then
+            echo "::error::Some tests failed"
+            exit 1
+          fi
+          echo "::notice::All required tests passed"
