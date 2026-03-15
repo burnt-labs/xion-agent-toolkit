@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::Subcommand;
 
+use crate::cli::ExecuteContext;
+
 #[derive(Subcommand)]
 pub enum ConfigCommands {
     /// Show current configuration
@@ -22,19 +24,19 @@ pub enum ConfigCommands {
     Reset,
 }
 
-pub fn handle_command(cmd: ConfigCommands) -> Result<()> {
+pub fn handle_command(cmd: ConfigCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        ConfigCommands::Show => handle_show()?,
-        ConfigCommands::SetNetwork { network } => handle_set_network(&network)?,
-        ConfigCommands::Get { key } => handle_get(&key)?,
-        ConfigCommands::Reset => handle_reset()?,
+        ConfigCommands::Show => handle_show(ctx)?,
+        ConfigCommands::SetNetwork { network } => handle_set_network(&network, ctx)?,
+        ConfigCommands::Get { key } => handle_get(&key, ctx)?,
+        ConfigCommands::Reset => handle_reset(ctx)?,
     }
     Ok(())
 }
 
-fn handle_show() -> Result<()> {
+fn handle_show(ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
-    use crate::utils::output::print_json;
+    use crate::utils::output::print_formatted;
 
     let config_manager = ConfigManager::new()?;
     let config = config_manager.load_config()?;
@@ -57,12 +59,12 @@ fn handle_show() -> Result<()> {
         }
     });
 
-    print_json(&result)
+    print_formatted(&result, ctx.output_format())
 }
 
-fn handle_set_network(network: &str) -> Result<()> {
+fn handle_set_network(network: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Switching to network: {}", network));
 
@@ -79,12 +81,12 @@ fn handle_set_network(network: &str) -> Result<()> {
         "oauth_api_url": network_config.oauth_api_url
     });
 
-    print_json(&result)
+    print_formatted(&result, ctx.output_format())
 }
 
-fn handle_get(key: &str) -> Result<()> {
+fn handle_get(key: &str, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
-    use crate::utils::output::print_json;
+    use crate::utils::output::print_formatted;
 
     let config_manager = ConfigManager::new()?;
     let config = config_manager.load_config()?;
@@ -97,7 +99,7 @@ fn handle_get(key: &str) -> Result<()> {
                 "success": false,
                 "error": format!("Unknown configuration key: {}", key)
             });
-            return print_json(&result);
+            return print_formatted(&result, ctx.output_format());
         }
     };
 
@@ -106,12 +108,12 @@ fn handle_get(key: &str) -> Result<()> {
         "value": value
     });
 
-    print_json(&result)
+    print_formatted(&result, ctx.output_format())
 }
 
-fn handle_reset() -> Result<()> {
+fn handle_reset(ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info("Resetting configuration to defaults...");
 
@@ -124,5 +126,5 @@ fn handle_reset() -> Result<()> {
         "network": "testnet"
     });
 
-    print_json(&result)
+    print_formatted(&result, ctx.output_format())
 }

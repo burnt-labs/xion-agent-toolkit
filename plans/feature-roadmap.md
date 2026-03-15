@@ -29,9 +29,8 @@ Phase 2 focuses on improving developer experience, code quality, and production 
 | Error Recovery Enhancement | P1 | Medium | ✅ Done (2026-03-15) |
 | Transaction Monitoring | P1 | Low | ✅ Done (2026-03-15) |
 | `shared/` Module Implementation | P2 | Low | ✅ Done (2026-03-15) |
-| Skills Test Framework | P2 | Medium | Proposed |
-| CI/CD Integration Output | P2 | Low | Proposed |
-| Treasury Analytics | P3 | Medium | Proposed |
+| Skills Test Framework | P2 | Medium | ✅ Done (2026-03-15) |
+| CI/CD Integration Output | P2 | Low | ✅ Done (2026-03-15) |
 
 ### 2.1 Error Recovery Enhancement (P1) ✅
 
@@ -63,51 +62,41 @@ xion-toolkit tx wait <tx_hash> --timeout 60 --interval 2 --output json
 - `src/shared/retry.rs` - Retry logic with exponential backoff
 - Re-exports for backward compatibility
 
-### 2.4 Skills Test Framework (P2)
+### 2.4 Skills Test Framework (P2) ✅
 
-Add dedicated test scripts for skills validation.
+**Completed: 2026-03-15**
 
-**Goals:**
-- Create `tests/skills/` directory with skill-specific E2E tests
-- Add mock/stub support for testing without network access
-- Document testing patterns in skill SKILL.md files
+- Created `tests/skills/` directory with skill-specific E2E tests
+- Added mock/stub support for testing without network access
+- 48 tests, 58 mock scenarios
+- Documented testing patterns in skill SKILL.md files
+- CI integration completed
 
-**Acceptance Criteria:**
-- [ ] Each skill has at least one E2E test
-- [ ] Tests can run offline with mocks
-- [ ] CI runs skill tests automatically
+### 2.5 CI/CD Integration Output (P2) ✅
 
-### 2.5 CI/CD Integration Output (P2)
+**Completed: 2026-03-15**
 
-Improve output formats for CI/CD pipeline integration.
+- Extended `OutputFormat` enum with `JsonCompact` and `GitHubActions` variants
+- Created `ExecuteContext` for passing output format to command handlers
+- Implemented GitHub Actions workflow commands (`::notice::`, `::error::`, etc.)
+- Created `src/shared/exit_codes.rs` with 41 mapped exit codes
+- Created `docs/EXIT-CODES.md` documentation
 
-**Goals:**
-- Add `--format github-actions` for GitHub Actions annotations
-- Add `--format json-compact` for minimal output
-- Add exit codes documentation for scripting
-
-**Acceptance Criteria:**
-- [ ] GitHub Actions format outputs workflow commands
-- [ ] Exit codes documented and consistent
-- [ ] JSON output is parseable by standard tools (jq)
-
-### 2.6 Treasury Analytics (P3)
-
-Add basic analytics and reporting for treasury usage.
-
+**Usage:**
 ```bash
-xion-toolkit treasury analytics <address> --period 7d --output json
+xion-toolkit auth status --output json           # Pretty-printed (default)
+xion-toolkit auth status --output json-compact   # Single-line JSON
+xion-toolkit auth status --output github-actions # GitHub Actions format
 ```
 
-**Goals:**
-- Track balance changes over time
-- Report grant/fee usage statistics
-- Export data in CSV/JSON format
-
 **Acceptance Criteria:**
-- [ ] Balance history tracking
-- [ ] Usage statistics by grant type
-- [ ] Export functionality
+- [x] GitHub Actions format outputs workflow commands
+- [x] Exit codes documented and consistent
+- [x] JSON output is parseable by standard tools (jq)
+
+### ~~2.6 Treasury Analytics (P3)~~ — Removed
+
+**Removed: 2026-03-15** — On-chain queries are too heavy for this toolkit. Analytics features should be handled by external indexing services.
 
 ---
 
@@ -227,5 +216,6 @@ These features are acknowledged but deferred to external projects or future cons
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-03-15 | @project-manager | Phase 2 P2 completed (Skills Test Framework ✅, CI/CD Integration Output ✅, Treasury Analytics removed) | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 2 P1 features completed (Error Recovery, Transaction Monitoring, shared module) | ✅ Done |
 | 2026-03-14 | @project-manager | All Phase 1 features completed | ✅ Done |

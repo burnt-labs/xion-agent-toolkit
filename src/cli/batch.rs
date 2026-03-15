@@ -7,6 +7,7 @@ use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
 use crate::batch::{BatchExecutor, BatchRequest, BatchValidationResult};
+use crate::cli::ExecuteContext;
 
 #[derive(Subcommand)]
 pub enum BatchCommands {
@@ -41,17 +42,17 @@ pub struct ValidateArgs {
     pub from_file: PathBuf,
 }
 
-pub async fn handle_command(cmd: BatchCommands) -> Result<()> {
+pub async fn handle_command(cmd: BatchCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        BatchCommands::Execute(args) => handle_execute(args).await,
-        BatchCommands::Validate(args) => handle_validate(args).await,
+        BatchCommands::Execute(args) => handle_execute(args, ctx).await,
+        BatchCommands::Validate(args) => handle_validate(args, ctx).await,
     }
 }
 
-async fn handle_execute(args: ExecuteArgs) -> Result<()> {
+async fn handle_execute(args: ExecuteArgs, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Loading batch from: {:?}", args.from_file));
 
@@ -76,7 +77,7 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Handle simulation mode
@@ -94,7 +95,7 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                     "gas_estimate": sim_result.gas_estimate,
                     "message_types": sim_result.message_types
                 });
-                return print_json(&result);
+                return print_formatted(&result, ctx.output_format());
             }
             Err(e) => {
                 let result = serde_json::json!({
@@ -102,7 +103,7 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                     "error": format!("Simulation failed: {}", e),
                     "code": "SIMULATION_FAILED"
                 });
-                return print_json(&result);
+                return print_formatted(&result, ctx.output_format());
             }
         }
     }
@@ -123,7 +124,7 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                 "gas_wanted": batch_result.gas_wanted,
                 "message_count": batch_result.message_count
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             let (code, suggestion) = match &e {
@@ -147,13 +148,13 @@ async fn handle_execute(args: ExecuteArgs) -> Result<()> {
                 "code": code,
                 "suggestion": suggestion
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-async fn handle_validate(args: ValidateArgs) -> Result<()> {
-    use crate::utils::output::{print_info, print_json};
+async fn handle_validate(args: ValidateArgs, ctx: &ExecuteContext) -> Result<()> {
+    use crate::utils::output::{print_formatted, print_info};
 
     print_info(&format!("Validating batch from: {:?}", args.from_file));
 
@@ -166,7 +167,7 @@ async fn handle_validate(args: ValidateArgs) -> Result<()> {
                 "error": format!("Failed to load batch file: {}", e),
                 "code": "FILE_LOAD_ERROR"
             });
-            return print_json(&result);
+            return print_formatted(&result, ctx.output_format());
         }
     };
 
@@ -194,7 +195,7 @@ async fn handle_validate(args: ValidateArgs) -> Result<()> {
         },
     };
 
-    print_json(&result)
+    print_formatted(&result, ctx.output_format())
 }
 
 #[cfg(test)]

@@ -6,11 +6,12 @@ use anyhow::Result;
 use clap::Subcommand;
 use tracing::info;
 
+use crate::cli::ExecuteContext;
 use crate::config::ConfigManager;
 use crate::shared::error::{TxError, XionError};
 use crate::tx::TxClient;
 use crate::tx::TxStatus;
-use crate::utils::output::{print_error_response, print_info, print_json};
+use crate::utils::output::{print_error_response, print_formatted, print_info};
 
 #[derive(Subcommand)]
 pub enum TxCommands {
@@ -32,18 +33,18 @@ pub enum TxCommands {
     },
 }
 
-pub async fn handle_command(cmd: TxCommands) -> Result<()> {
+pub async fn handle_command(cmd: TxCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        TxCommands::Status { hash } => handle_status(hash).await,
+        TxCommands::Status { hash } => handle_status(hash, ctx).await,
         TxCommands::Wait {
             hash,
             timeout,
             interval,
-        } => handle_wait(hash, timeout, interval).await,
+        } => handle_wait(hash, timeout, interval, ctx).await,
     }
 }
 
-async fn handle_status(hash: String) -> Result<()> {
+async fn handle_status(hash: String, ctx: &ExecuteContext) -> Result<()> {
     print_info(&format!("Querying transaction status for: {}", hash));
 
     let config_manager = ConfigManager::new()?;
@@ -63,8 +64,7 @@ async fn handle_status(hash: String) -> Result<()> {
                 "Transaction status retrieved: {:?} at height {:?}",
                 tx_info.status, tx_info.height
             );
-            print_json(&tx_info)?;
-            Ok(())
+            print_formatted(&tx_info, ctx.output_format())
         }
         Ok(None) => {
             // This shouldn't happen with current implementation, but handle it anyway
@@ -72,8 +72,7 @@ async fn handle_status(hash: String) -> Result<()> {
                 "tx_hash": hash,
                 "status": "pending"
             });
-            print_json(&result)?;
-            Ok(())
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             info!("Failed to query transaction: {}", e);
@@ -85,7 +84,7 @@ async fn handle_status(hash: String) -> Result<()> {
     }
 }
 
-async fn handle_wait(hash: String, timeout: u64, interval: u64) -> Result<()> {
+async fn handle_wait(hash: String, timeout: u64, interval: u64, ctx: &ExecuteContext) -> Result<()> {
     print_info(&format!(
         "Waiting for transaction: {} (timeout: {}s, interval: {}s)",
         hash, timeout, interval
@@ -120,8 +119,7 @@ async fn handle_wait(hash: String, timeout: u64, interval: u64) -> Result<()> {
                         eprintln!("[INFO] Block height: {}", tx_info.height.unwrap_or(0));
                         eprintln!("[INFO] Gas used: {}", tx_info.gas_used.unwrap_or(0));
                     }
-                    print_json(&result)?;
-                    Ok(())
+                    print_formatted(&result, ctx.output_format())
                 }
                 TxStatus::Failed => {
                     eprintln!("[INFO] Transaction failed!");
@@ -130,17 +128,16 @@ async fn handle_wait(hash: String, timeout: u64, interval: u64) -> Result<()> {
                             eprintln!("[INFO] Error: {}", error);
                         }
                     }
-                    print_json(&result)?;
+                    print_formatted(&result, ctx.output_format())?;
                     std::process::exit(1);
                 }
                 TxStatus::Timeout => {
                     eprintln!("[INFO] Timeout waiting for transaction confirmation");
-                    print_json(&result)?;
+                    print_formatted(&result, ctx.output_format())?;
                     std::process::exit(1);
                 }
                 _ => {
-                    print_json(&result)?;
-                    Ok(())
+                    print_formatted(&result, ctx.output_format())
                 }
             }
         }

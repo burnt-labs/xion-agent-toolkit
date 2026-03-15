@@ -15,10 +15,32 @@
       "updated_at": "2026-03-15",
       "done_at": "2026-03-15",
       "notes": "Completed: 48 tests, 58 mock scenarios, CI integration, skill documentation updates"
+    },
+    {
+      "id": "cicd-integration-output",
+      "title": "CI/CD Integration Output",
+      "file": "plans/cicd-integration-output.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["phase2", "p2", "cicd", "output"],
+      "created_at": "2026-03-15",
+      "updated_at": "2026-03-15",
+      "done_at": "2026-03-15",
+      "notes": "Completed: OutputFormat enum extended, ExecuteContext propagated to all handlers, exit_codes module added, docs/EXIT-CODES.md created. 298 tests passing. ExecuteContext propagation fix applied."
     }
-  ],,
+  ],
   "_notes": {
     "archived": "See plans/archived/README.md for archived plans summary.",
+    "removed": [
+      {
+        "id": "treasury-analytics",
+        "title": "Treasury Analytics",
+        "removed_at": "2026-03-15",
+        "reason": "On-chain queries too heavy for this toolkit; should use external indexing services"
+      }
+    ],
     "completed_phase2_p1": [
       {
         "id": "error-recovery-enhancement",
@@ -35,6 +57,11 @@
       {
         "id": "skills-test-framework",
         "title": "Skills Test Framework",
+        "completed_at": "2026-03-15"
+      },
+      {
+        "id": "cicd-integration-output",
+        "title": "CI/CD Integration Output",
         "completed_at": "2026-03-15"
       }
     ],
@@ -53,7 +80,7 @@
       }
     ],
     "roadmap": "plans/feature-roadmap.md",
-    "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing, CI/CD integration",
+    "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing ✅, CI/CD integration ✅",
     "phase3_summary": "Advanced Features - Multi-sig, IBC, Batch ops, Predicted address"
   }
 }

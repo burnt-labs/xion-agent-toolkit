@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::Subcommand;
 
+use crate::cli::ExecuteContext;
+
 #[derive(Subcommand)]
 pub enum AuthCommands {
     /// Login using OAuth2 flow
@@ -20,20 +22,20 @@ pub enum AuthCommands {
     Refresh,
 }
 
-pub async fn handle_command(cmd: AuthCommands) -> Result<()> {
+pub async fn handle_command(cmd: AuthCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        AuthCommands::Login { port } => handle_login(port).await?,
-        AuthCommands::Logout => handle_logout()?,
-        AuthCommands::Status => handle_status()?,
-        AuthCommands::Refresh => handle_refresh().await?,
+        AuthCommands::Login { port } => handle_login(port, ctx).await?,
+        AuthCommands::Logout => handle_logout(ctx)?,
+        AuthCommands::Status => handle_status(ctx)?,
+        AuthCommands::Refresh => handle_refresh(ctx).await?,
     }
     Ok(())
 }
 
-async fn handle_login(port: Option<u16>) -> Result<()> {
+async fn handle_login(port: Option<u16>, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
     use tracing::info;
 
     let config_manager = ConfigManager::new()?;
@@ -67,7 +69,7 @@ async fn handle_login(port: Option<u16>) -> Result<()> {
                 "xion_address": credentials.xion_address,
                 "expires_at": credentials.expires_at,
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             info!("Login failed: {}", e);
@@ -77,15 +79,15 @@ async fn handle_login(port: Option<u16>) -> Result<()> {
                 "code": "AUTH_LOGIN_FAILED",
                 "suggestion": "Please try again or check your browser for authorization"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-fn handle_logout() -> Result<()> {
+fn handle_logout(ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
     use tracing::info;
 
     print_info("Logging out...");
@@ -107,7 +109,7 @@ fn handle_logout() -> Result<()> {
                 "message": "Logged out successfully",
                 "network": config_manager.get_current_network()
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             info!("Logout failed: {}", e);
@@ -116,15 +118,15 @@ fn handle_logout() -> Result<()> {
                 "error": format!("Logout failed: {}", e),
                 "code": "AUTH_LOGOUT_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
-fn handle_status() -> Result<()> {
+fn handle_status(ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
-    use crate::utils::output::print_json;
+    use crate::utils::output::print_formatted;
     use tracing::info;
 
     let config_manager = ConfigManager::new()?;
@@ -169,13 +171,13 @@ fn handle_status() -> Result<()> {
         info!("User is not authenticated");
     }
 
-    print_json(&result)
+    print_formatted(&result, ctx.output_format())
 }
 
-async fn handle_refresh() -> Result<()> {
+async fn handle_refresh(ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
-    use crate::utils::output::{print_info, print_json};
+    use crate::utils::output::{print_formatted, print_info};
     use tracing::info;
 
     print_info("Refreshing access token...");
@@ -196,7 +198,7 @@ async fn handle_refresh() -> Result<()> {
                 "network": config_manager.get_current_network(),
                 "expires_at": credentials.expires_at
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
         Err(e) => {
             info!("Token refresh failed: {}", e);
@@ -206,7 +208,7 @@ async fn handle_refresh() -> Result<()> {
                 "code": "AUTH_REFRESH_FAILED",
                 "suggestion": "Your session may have expired. Please run 'xion auth login' to re-authenticate."
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }

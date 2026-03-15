@@ -11,9 +11,10 @@ use crate::asset_builder::{
     AssetType, BatchMintInput, BatchMintToken, CreateCollectionInput, MintTokenInput,
     PredictAddressInput,
 };
+use crate::cli::ExecuteContext;
 use crate::config::ConfigManager;
 use crate::oauth::OAuthClient;
-use crate::utils::output::{print_info, print_json};
+use crate::utils::output::{print_formatted, print_info};
 
 /// Asset management commands
 #[derive(Subcommand)]
@@ -174,19 +175,19 @@ pub struct BatchMintArgs {
 }
 
 /// Handle asset commands
-pub async fn handle_command(cmd: AssetCommands) -> Result<()> {
+pub async fn handle_command(cmd: AssetCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        AssetCommands::Create(args) => handle_create(args).await,
-        AssetCommands::Mint(args) => handle_mint(args).await,
-        AssetCommands::Query(args) => handle_query(args).await,
-        AssetCommands::Types => handle_types().await,
-        AssetCommands::Predict(args) => handle_predict(args).await,
-        AssetCommands::BatchMint(args) => handle_batch_mint(args).await,
+        AssetCommands::Create(args) => handle_create(args, ctx).await,
+        AssetCommands::Mint(args) => handle_mint(args, ctx).await,
+        AssetCommands::Query(args) => handle_query(args, ctx).await,
+        AssetCommands::Types => handle_types(ctx).await,
+        AssetCommands::Predict(args) => handle_predict(args, ctx).await,
+        AssetCommands::BatchMint(args) => handle_batch_mint(args, ctx).await,
     }
 }
 
 /// Handle create collection command
-async fn handle_create(args: CreateArgs) -> Result<()> {
+async fn handle_create(args: CreateArgs, ctx: &ExecuteContext) -> Result<()> {
     print_info("Creating NFT collection...");
 
     // Parse asset type
@@ -212,7 +213,7 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Build input
@@ -238,7 +239,7 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
                 "minter": result.minter,
                 "salt": result.salt
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -255,13 +256,13 @@ async fn handle_create(args: CreateArgs) -> Result<()> {
                 "error": format!("Failed to create collection: {}", e),
                 "code": code
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
 /// Handle mint token command
-async fn handle_mint(args: MintArgs) -> Result<()> {
+async fn handle_mint(args: MintArgs, ctx: &ExecuteContext) -> Result<()> {
     print_info(&format!(
         "Minting token {} in contract {}...",
         args.token_id, args.contract
@@ -293,7 +294,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
                     "error": format!("Royalty percentage must be between 0.0 and 1.0. Got: {}", pct),
                     "code": "INVALID_ROYALTY_PERCENTAGE"
                 });
-                return print_json(&result);
+                return print_formatted(&result, ctx.output_format());
             }
         }
 
@@ -304,7 +305,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
                 "error": "Both --royalty-address and --royalty-percentage are required for CW2981 royalties",
                 "code": "INCOMPLETE_ROYALTY_INFO"
             });
-            return print_json(&result);
+            return print_formatted(&result, ctx.output_format());
         }
 
         // 3. Finally validate type compatibility
@@ -314,7 +315,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
                 "error": format!("Royalty options are only valid for cw2981-royalties type. Got: {}", asset_type),
                 "code": "INVALID_OPTION_FOR_TYPE"
             });
-            return print_json(&result);
+            return print_formatted(&result, ctx.output_format());
         }
     }
 
@@ -324,7 +325,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
             "error": format!("--expires-at is only valid for cw721-expiration type. Got: {}", asset_type),
             "code": "INVALID_OPTION_FOR_TYPE"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Check required fields for expiration type
@@ -334,7 +335,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
             "error": "--expires-at is required for cw721-expiration type",
             "code": "MISSING_REQUIRED_FIELD"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Create manager
@@ -350,7 +351,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Parse extension JSON
@@ -383,7 +384,7 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
                 "owner": result.owner,
                 "tx_hash": result.tx_hash
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -402,13 +403,13 @@ async fn handle_mint(args: MintArgs) -> Result<()> {
                 "error": format!("Failed to mint token: {}", e),
                 "code": code
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
 /// Handle query contract command
-async fn handle_query(args: QueryArgs) -> Result<()> {
+async fn handle_query(args: QueryArgs, ctx: &ExecuteContext) -> Result<()> {
     print_info(&format!("Querying contract {}...", args.contract));
 
     // Create manager
@@ -424,7 +425,7 @@ async fn handle_query(args: QueryArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Parse query message
@@ -439,7 +440,7 @@ async fn handle_query(args: QueryArgs) -> Result<()> {
                 "contract_address": result.contract_address,
                 "response": result.response
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let result = serde_json::json!({
@@ -447,13 +448,13 @@ async fn handle_query(args: QueryArgs) -> Result<()> {
                 "error": format!("Failed to query contract: {}", e),
                 "code": "QUERY_FAILED"
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
 /// Handle list types command
-async fn handle_types() -> Result<()> {
+async fn handle_types(ctx: &ExecuteContext) -> Result<()> {
     print_info("Listing available asset types...");
 
     // Get asset types info
@@ -465,11 +466,11 @@ async fn handle_types() -> Result<()> {
         "count": types_info.len()
     });
 
-    print_json(&response)
+    print_formatted(&response, ctx.output_format())
 }
 
 /// Handle predict address command
-async fn handle_predict(args: PredictArgs) -> Result<()> {
+async fn handle_predict(args: PredictArgs, ctx: &ExecuteContext) -> Result<()> {
     print_info(&format!(
         "Predicting address for {} collection...",
         args.name
@@ -498,7 +499,7 @@ async fn handle_predict(args: PredictArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Build input
@@ -521,7 +522,7 @@ async fn handle_predict(args: PredictArgs) -> Result<()> {
                 "salt": result.salt,
                 "creator": result.creator
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -540,13 +541,13 @@ async fn handle_predict(args: PredictArgs) -> Result<()> {
                 "error": format!("Failed to predict address: {}", e),
                 "code": code
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
 
 /// Handle batch mint command
-async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
+async fn handle_batch_mint(args: BatchMintArgs, ctx: &ExecuteContext) -> Result<()> {
     print_info(&format!(
         "Batch minting tokens to contract {}...",
         args.contract
@@ -570,7 +571,7 @@ async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
             "error": format!("Tokens file not found: {}", args.tokens_file),
             "code": "FILE_NOT_FOUND"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     let tokens_content = std::fs::read_to_string(tokens_path)?;
@@ -587,7 +588,7 @@ async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
             "error": "No tokens provided in file",
             "code": "EMPTY_TOKENS"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Create manager
@@ -603,7 +604,7 @@ async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
             "error": "Not authenticated. Please run 'xion auth login' first.",
             "code": "NOT_AUTHENTICATED"
         });
-        return print_json(&result);
+        return print_formatted(&result, ctx.output_format());
     }
 
     // Build input
@@ -625,7 +626,7 @@ async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
                 "failed": result.failed,
                 "results": result.results
             });
-            print_json(&response)
+            print_formatted(&response, ctx.output_format())
         }
         Err(e) => {
             let error_msg = e.to_string();
@@ -642,7 +643,7 @@ async fn handle_batch_mint(args: BatchMintArgs) -> Result<()> {
                 "error": format!("Failed to batch mint: {}", e),
                 "code": code
             });
-            print_json(&result)
+            print_formatted(&result, ctx.output_format())
         }
     }
 }
