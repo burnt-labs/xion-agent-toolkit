@@ -317,6 +317,27 @@ For building AI agents with this toolkit:
 
 The CLI supports shell completion for bash, zsh, fish, and PowerShell.
 
+### Quick Install (Recommended)
+
+Install completions with a single command:
+
+```bash
+# Auto-detect shell and install
+xion-toolkit completions --install
+
+# Or specify the shell explicitly
+xion-toolkit completions bash --install
+xion-toolkit completions zsh --install
+xion-toolkit completions fish --install
+xion-toolkit completions powershell --install
+```
+
+After installation, restart your shell or source the profile file.
+
+### Manual Installation
+
+If you prefer manual installation:
+
 ### Bash
 
 ```bash
@@ -372,11 +393,15 @@ xion-toolkit completions powershell > xion-toolkit.ps1
 Run `xion-toolkit completions --help` to see all supported shells:
 
 ```
-xion-toolkit completions <shell>
+xion-toolkit completions [SHELL]
 
 Arguments:
-  <SHELL>  Shell type to generate completions for
+  [SHELL]  Shell type to generate completions for
+           If not specified, auto-detects from $SHELL
            [possible values: bash, elvish, fish, powershell, zsh]
+
+Options:
+  -i, --install    Install completions to shell profile
 ```
 
 ---

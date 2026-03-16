@@ -45,6 +45,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Configuration
 toml = "0.8"
+dirs = "5.0"
 
 # Crypto for PKCE and credential encryption
 sha2 = "0.10"

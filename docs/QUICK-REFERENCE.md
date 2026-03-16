@@ -240,6 +240,16 @@ xion-toolkit config show
 ## Shell Completion
 
 ```bash
+# Quick install (auto-detect shell from $SHELL)
+xion-toolkit completions --install
+
+# Or specify shell explicitly
+xion-toolkit completions bash --install
+xion-toolkit completions zsh --install
+xion-toolkit completions fish --install
+xion-toolkit completions powershell --install
+
+# Manual installation (redirect to file)
 # Bash
 xion-toolkit completions bash > ~/.local/share/bash-completion/completions/xion-toolkit
 source ~/.local/share/bash-completion/completions/xion-toolkit

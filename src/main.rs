@@ -31,7 +31,9 @@ async fn main() {
         Commands::Batch(batch_cmd) => cli::handle_batch_command(batch_cmd, &ctx).await,
         Commands::Asset(asset_cmd) => cli::handle_asset_command(asset_cmd, &ctx).await,
         Commands::Tx(tx_cmd) => cli::handle_tx_command(tx_cmd, &ctx).await,
-        Commands::Completions { shell } => cli::handle_completions_command(shell),
+        Commands::Completions { shell, install } => {
+            cli::handle_completions_command(shell, install, &ctx)
+        }
     };
 
     match result {

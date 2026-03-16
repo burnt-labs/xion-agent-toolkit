@@ -2053,14 +2053,81 @@ Generate shell completion scripts for bash, zsh, fish, PowerShell, and other she
 
 **Usage:**
 ```bash
-xion-toolkit completions <SHELL>
+xion-toolkit completions [SHELL] [OPTIONS]
 ```
 
 **Arguments:**
-- `SHELL` - Shell type to generate completions for (required)
+- `SHELL` - Shell type to generate completions for (optional)
   - Supported shells: `bash`, `zsh`, `fish`, `powershell`, `elvish`
+  - If not specified, auto-detects from `$SHELL` environment variable
+
+**Options:**
+- `-i, --install` - Install completions to shell profile instead of printing to stdout
 
 **Examples:**
+
+Auto-detect shell and print to stdout:
+```bash
+xion-toolkit completions
+```
+
+Install with auto-detection (recommended):
+```bash
+# Auto-detect from $SHELL and install
+xion-toolkit completions --install
+```
+
+Install for specific shell:
+```bash
+# Install bash completions
+xion-toolkit completions bash --install
+
+# Install zsh completions
+xion-toolkit completions zsh --install
+
+# Install fish completions (fish auto-loads, no profile modification needed)
+xion-toolkit completions fish --install
+
+# Install PowerShell completions
+xion-toolkit completions powershell --install
+```
+
+**Output (successful installation):**
+```json
+{
+  "success": true,
+  "shell": "bash",
+  "completion_file": "/home/user/.local/share/xion-toolkit/completions.bash",
+  "profile_file": "/home/user/.bashrc",
+  "message": "Completions installed. Restart your shell or run: source .bashrc"
+}
+```
+
+**Output (already installed):**
+```json
+{
+  "success": true,
+  "shell": "bash",
+  "completion_file": "/home/user/.local/share/xion-toolkit/completions.bash",
+  "profile_file": "/home/user/.bashrc",
+  "already_installed": true,
+  "message": "Completions already installed. To reinstall, remove the 'BEGIN xion-toolkit completions' block from your profile first."
+}
+```
+
+**Fish output (no profile modification):**
+```json
+{
+  "success": true,
+  "shell": "fish",
+  "completion_file": "/home/user/.config/fish/completions/xion-toolkit.fish",
+  "message": "Completions installed to /home/user/.config/fish/completions/xion-toolkit.fish (fish auto-loads this directory)"
+}
+```
+
+**Manual Installation (without --install):**
+
+If you prefer manual installation, generate and redirect the output:
 
 Generate bash completions:
 ```bash
@@ -2086,20 +2153,32 @@ xion-toolkit completions powershell > xion-toolkit.ps1
 . ./xion-toolkit.ps1
 ```
 
-**Output:**
-The command outputs the shell completion script to stdout. Redirect to the appropriate location for your shell:
+**Installation Paths:**
 
-| Shell | Typical Location |
-|-------|------------------|
-| bash | `~/.local/share/bash-completion/completions/xion-toolkit` |
-| zsh | `~/.zfunc/_xion-toolkit` |
-| fish | `~/.config/fish/completions/xion-toolkit.fish` |
-| PowerShell | Source directly or add to profile |
+| Shell | Completion File | Profile |
+|-------|-----------------|---------|
+| bash | `~/.local/share/xion-toolkit/completions.bash` | `~/.bashrc` |
+| zsh | `~/.local/share/xion-toolkit/completions.zsh` | `~/.zshrc` |
+| fish | `~/.config/fish/completions/xion-toolkit.fish` | N/A (auto-loads) |
+| powershell | `~/.local/share/xion-toolkit/completions.ps1` | `$PROFILE` |
+
+**Profile Block Format:**
+
+The `--install` flag adds a marked block to your shell profile:
+
+```bash
+# BEGIN xion-toolkit completions
+[ -f ~/.local/share/xion-toolkit/completions.bash ] && source ~/.local/share/xion-toolkit/completions.bash
+# END xion-toolkit completions
+```
+
+This allows the CLI to detect existing installations and prevents duplicate entries.
 
 **Notes:**
-- Output goes to stdout so you can redirect to any location
-- After installation, restart your shell or source the file
+- Output goes to stdout when `--install` is not specified
+- After installation, restart your shell or source the profile file
 - Completions include all subcommands, options, and arguments
+- Use `--install` for automatic setup, or redirect output for custom locations
 
 ---
 
