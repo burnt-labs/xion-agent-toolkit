@@ -248,22 +248,9 @@ xion-toolkit completions bash --install
 xion-toolkit completions zsh --install
 xion-toolkit completions fish --install
 xion-toolkit completions powershell --install
-
-# Manual installation (redirect to file)
-# Bash
-xion-toolkit completions bash > ~/.local/share/bash-completion/completions/xion-toolkit
-source ~/.local/share/bash-completion/completions/xion-toolkit
-
-# Zsh
-xion-toolkit completions zsh > ~/.zfunc/_xion-toolkit
-# Add to .zshrc: fpath+=~/.zfunc; autoload -U compinit; compinit
-
-# Fish
-xion-toolkit completions fish > ~/.config/fish/completions/xion-toolkit.fish
-
-# PowerShell
-xion-toolkit completions powershell > xion-toolkit.ps1
 ```
+
+Restart your shell after installation.
 
 ---
 

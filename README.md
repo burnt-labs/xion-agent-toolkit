@@ -315,94 +315,19 @@ For building AI agents with this toolkit:
 
 ## Shell Completion
 
-The CLI supports shell completion for bash, zsh, fish, and PowerShell.
-
-### Quick Install (Recommended)
-
-Install completions with a single command:
+Enable shell completion for easier CLI usage:
 
 ```bash
-# Auto-detect shell and install
+# Auto-detect and install
 xion-toolkit completions --install
 
-# Or specify the shell explicitly
+# Or specify shell
 xion-toolkit completions bash --install
 xion-toolkit completions zsh --install
 xion-toolkit completions fish --install
-xion-toolkit completions powershell --install
 ```
 
-After installation, restart your shell or source the profile file.
-
-### Manual Installation
-
-If you prefer manual installation:
-
-### Bash
-
-```bash
-# Generate and install completions
-xion-toolkit completions bash > ~/.local/share/bash-completion/completions/xion-toolkit
-
-# Then source it (or restart your shell)
-source ~/.local/share/bash-completion/completions/xion-toolkit
-```
-
-For older bash versions, you may need to source the file directly in your `.bashrc`:
-
-```bash
-echo 'source ~/.local/share/bash-completion/completions/xion-toolkit' >> ~/.bashrc
-```
-
-### Zsh
-
-```bash
-# Generate completions to a directory in your fpath
-mkdir -p ~/.zfunc
-xion-toolkit completions zsh > ~/.zfunc/_xion-toolkit
-
-# Add to your .zshrc (if not already present)
-echo 'fpath+=~/.zfunc' >> ~/.zshrc
-echo 'autoload -U compinit && compinit' >> ~/.zshrc
-
-# Then restart your shell or run:
-autoload -U compinit && compinit
-```
-
-### Fish
-
-```bash
-# Generate and install completions
-xion-toolkit completions fish > ~/.config/fish/completions/xion-toolkit.fish
-
-# Completions will be available in new fish sessions
-```
-
-### PowerShell
-
-```powershell
-# Generate completions
-xion-toolkit completions powershell > xion-toolkit.ps1
-
-# Source the file in your PowerShell profile
-. ./xion-toolkit.ps1
-```
-
-### Available Shells
-
-Run `xion-toolkit completions --help` to see all supported shells:
-
-```
-xion-toolkit completions [SHELL]
-
-Arguments:
-  [SHELL]  Shell type to generate completions for
-           If not specified, auto-detects from $SHELL
-           [possible values: bash, elvish, fish, powershell, zsh]
-
-Options:
-  -i, --install    Install completions to shell profile
-```
+Restart your shell after installation.
 
 ---
 
