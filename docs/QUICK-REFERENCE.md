@@ -237,6 +237,23 @@ xion-toolkit config show
 
 ---
 
+## Shell Completion
+
+```bash
+# Quick install (auto-detect shell from $SHELL)
+xion-toolkit completions --install
+
+# Or specify shell explicitly
+xion-toolkit completions bash --install
+xion-toolkit completions zsh --install
+xion-toolkit completions fish --install
+xion-toolkit completions powershell --install
+```
+
+Restart your shell after installation.
+
+---
+
 ## Output Format
 
 All commands return JSON:

@@ -216,6 +216,7 @@ treasury batch grant-config --config <file>   # Configure multiple
 |---------|-------------|
 | `config show` | Show current config |
 | `config set-network <network>` | Switch network |
+| `completions <shell>` | Generate shell completion scripts |
 | `status` | Show status |
 
 ---
@@ -309,6 +310,24 @@ Follow this guide https://raw.githubusercontent.com/burnt-labs/xion-agent-toolki
 For building AI agents with this toolkit:
 - See [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for integration instructions
 - Use [QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md) for condensed CLI reference
+
+---
+
+## Shell Completion
+
+Enable shell completion for easier CLI usage:
+
+```bash
+# Auto-detect and install
+xion-toolkit completions --install
+
+# Or specify shell
+xion-toolkit completions bash --install
+xion-toolkit completions zsh --install
+xion-toolkit completions fish --install
+```
+
+Restart your shell after installation.
 
 ---
 
