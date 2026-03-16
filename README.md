@@ -216,6 +216,7 @@ treasury batch grant-config --config <file>   # Configure multiple
 |---------|-------------|
 | `config show` | Show current config |
 | `config set-network <network>` | Switch network |
+| `completions <shell>` | Generate shell completion scripts |
 | `status` | Show status |
 
 ---
@@ -309,6 +310,74 @@ Follow this guide https://raw.githubusercontent.com/burnt-labs/xion-agent-toolki
 For building AI agents with this toolkit:
 - See [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for integration instructions
 - Use [QUICK-REFERENCE.md](./docs/QUICK-REFERENCE.md) for condensed CLI reference
+
+---
+
+## Shell Completion
+
+The CLI supports shell completion for bash, zsh, fish, and PowerShell.
+
+### Bash
+
+```bash
+# Generate and install completions
+xion-toolkit completions bash > ~/.local/share/bash-completion/completions/xion-toolkit
+
+# Then source it (or restart your shell)
+source ~/.local/share/bash-completion/completions/xion-toolkit
+```
+
+For older bash versions, you may need to source the file directly in your `.bashrc`:
+
+```bash
+echo 'source ~/.local/share/bash-completion/completions/xion-toolkit' >> ~/.bashrc
+```
+
+### Zsh
+
+```bash
+# Generate completions to a directory in your fpath
+mkdir -p ~/.zfunc
+xion-toolkit completions zsh > ~/.zfunc/_xion-toolkit
+
+# Add to your .zshrc (if not already present)
+echo 'fpath+=~/.zfunc' >> ~/.zshrc
+echo 'autoload -U compinit && compinit' >> ~/.zshrc
+
+# Then restart your shell or run:
+autoload -U compinit && compinit
+```
+
+### Fish
+
+```bash
+# Generate and install completions
+xion-toolkit completions fish > ~/.config/fish/completions/xion-toolkit.fish
+
+# Completions will be available in new fish sessions
+```
+
+### PowerShell
+
+```powershell
+# Generate completions
+xion-toolkit completions powershell > xion-toolkit.ps1
+
+# Source the file in your PowerShell profile
+. ./xion-toolkit.ps1
+```
+
+### Available Shells
+
+Run `xion-toolkit completions --help` to see all supported shells:
+
+```
+xion-toolkit completions <shell>
+
+Arguments:
+  <SHELL>  Shell type to generate completions for
+           [possible values: bash, elvish, fish, powershell, zsh]
+```
 
 ---
 

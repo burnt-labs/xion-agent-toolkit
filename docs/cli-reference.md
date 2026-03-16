@@ -26,6 +26,8 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`asset batch-mint`](#asset-batch-mint)
   - [`asset query`](#asset-query)
 - [Configuration Commands](#configuration-commands)
+- [Shell Completion Commands](#shell-completion-commands)
+  - [`completions`](#completions)
 - [Output Format](#output-format)
 - [Exit Codes](#exit-codes)
 
@@ -2040,6 +2042,64 @@ Output:
 - Uses client-side batching of existing commands
 - Supports `--dry-run` to preview actions
 - Progress messages written to stderr
+
+---
+
+## Shell Completion Commands
+
+### `completions`
+
+Generate shell completion scripts for bash, zsh, fish, PowerShell, and other shells.
+
+**Usage:**
+```bash
+xion-toolkit completions <SHELL>
+```
+
+**Arguments:**
+- `SHELL` - Shell type to generate completions for (required)
+  - Supported shells: `bash`, `zsh`, `fish`, `powershell`, `elvish`
+
+**Examples:**
+
+Generate bash completions:
+```bash
+xion-toolkit completions bash > ~/.local/share/bash-completion/completions/xion-toolkit
+source ~/.local/share/bash-completion/completions/xion-toolkit
+```
+
+Generate zsh completions:
+```bash
+mkdir -p ~/.zfunc
+xion-toolkit completions zsh > ~/.zfunc/_xion-toolkit
+# Add to .zshrc: fpath+=~/.zfunc; autoload -U compinit; compinit
+```
+
+Generate fish completions:
+```bash
+xion-toolkit completions fish > ~/.config/fish/completions/xion-toolkit.fish
+```
+
+Generate PowerShell completions:
+```powershell
+xion-toolkit completions powershell > xion-toolkit.ps1
+. ./xion-toolkit.ps1
+```
+
+**Output:**
+The command outputs the shell completion script to stdout. Redirect to the appropriate location for your shell:
+
+| Shell | Typical Location |
+|-------|------------------|
+| bash | `~/.local/share/bash-completion/completions/xion-toolkit` |
+| zsh | `~/.zfunc/_xion-toolkit` |
+| fish | `~/.config/fish/completions/xion-toolkit.fish` |
+| PowerShell | Source directly or add to profile |
+
+**Notes:**
+- Output goes to stdout so you can redirect to any location
+- After installation, restart your shell or source the file
+- Completions include all subcommands, options, and arguments
 
 ---
 

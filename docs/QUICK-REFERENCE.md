@@ -237,6 +237,26 @@ xion-toolkit config show
 
 ---
 
+## Shell Completion
+
+```bash
+# Bash
+xion-toolkit completions bash > ~/.local/share/bash-completion/completions/xion-toolkit
+source ~/.local/share/bash-completion/completions/xion-toolkit
+
+# Zsh
+xion-toolkit completions zsh > ~/.zfunc/_xion-toolkit
+# Add to .zshrc: fpath+=~/.zfunc; autoload -U compinit; compinit
+
+# Fish
+xion-toolkit completions fish > ~/.config/fish/completions/xion-toolkit.fish
+
+# PowerShell
+xion-toolkit completions powershell > xion-toolkit.ps1
+```
+
+---
+
 ## Output Format
 
 All commands return JSON:

@@ -122,6 +122,13 @@ pub enum Commands {
     #[command(subcommand)]
     Tx(tx::TxCommands),
 
+    /// Generate shell completion scripts
+    Completions {
+        /// Shell type to generate completions for
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
+
     /// Show current status (network, auth, etc.)
     Status,
 }
@@ -175,4 +182,16 @@ pub fn handle_status_command(ctx: &ExecuteContext) -> Result<()> {
     let status = config_manager.get_status()?;
 
     print_formatted(&status, ctx.output_format())
+}
+
+/// Generate shell completion scripts
+pub fn handle_completions_command(shell: clap_complete::Shell) -> Result<()> {
+    use clap::CommandFactory;
+
+    let mut cmd = Cli::command();
+    let bin_name = "xion-toolkit";
+
+    clap_complete::generate(shell, &mut cmd, bin_name, &mut std::io::stdout());
+
+    Ok(())
 }
