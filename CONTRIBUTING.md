@@ -31,6 +31,9 @@ cargo build
 # Run tests
 cargo test
 
+# (Optional) Enable shell completion for easier CLI usage
+cargo run -- completions --install
+
 # Configure OAuth (required for integration testing)
 cp .env.example .env
 # Edit .env with your OAuth Client IDs (XION_TESTNET_OAUTH_CLIENT_ID, XION_MAINNET_OAUTH_CLIENT_ID)
