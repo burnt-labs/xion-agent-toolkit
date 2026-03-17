@@ -130,6 +130,8 @@ pub mod exit_code {
     pub const NOT_AUTHORIZED: i32 = 87;
     /// Treasury already exists
     pub const TREASURY_ALREADY_EXISTS: i32 = 88;
+    /// Missing authorization input for grant config
+    pub const MISSING_AUTHORIZATION_INPUT: i32 = 89;
 
     // ========================================================================
     // Asset Errors (100-119)
@@ -183,6 +185,7 @@ impl XionErrorCode {
             XionErrorCode::ETREASURY007 => FEE_CONFIG_NOT_FOUND,
             XionErrorCode::ETREASURY008 => NOT_AUTHORIZED,
             XionErrorCode::ETREASURY009 => TREASURY_ALREADY_EXISTS,
+            XionErrorCode::ETREASURY010 => MISSING_AUTHORIZATION_INPUT,
 
             // Asset errors
             XionErrorCode::EASSET001 => INVALID_METADATA,
@@ -271,6 +274,7 @@ pub fn exit_code_name(code: i32) -> &'static str {
         FEE_CONFIG_NOT_FOUND => "FEE_CONFIG_NOT_FOUND",
         NOT_AUTHORIZED => "NOT_AUTHORIZED",
         TREASURY_ALREADY_EXISTS => "TREASURY_ALREADY_EXISTS",
+        MISSING_AUTHORIZATION_INPUT => "MISSING_AUTHORIZATION_INPUT",
 
         // Asset
         INVALID_METADATA => "INVALID_METADATA",

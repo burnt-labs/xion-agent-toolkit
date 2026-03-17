@@ -24,6 +24,38 @@
       "description": "Network to use"
     }
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ADDRESS",
+      "description": "Invalid treasury address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameter: type-url",
+      "remediation": "Provide --type-url parameter"
+    },
+    {
+      "code": "GRANT_NOT_FOUND",
+      "description": "No grant found with the specified type-url",
+      "remediation": "Verify the type-url is correct"
+    },
+    {
+      "code": "REMOVE_GRANT_FAILED",
+      "description": "Failed to remove grant configuration",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Remove send authorization",

@@ -115,6 +115,33 @@
     "If fee-allowance-type is 'periodic', fee-period-seconds and fee-period-spend-limit are required",
     "IMPORTANT: Schema validation cannot enforce mutual requirement - AI agents must ensure at least one of --name or --config is provided"
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameters (name or config required)",
+      "remediation": "Provide either --name or --config parameter"
+    },
+    {
+      "code": "INVALID_CONFIG",
+      "description": "Config file is not valid JSON or missing required fields",
+      "remediation": "Check config file format and ensure all required fields are present"
+    },
+    {
+      "code": "INSTANTIATE_FAILED",
+      "description": "Failed to instantiate Treasury contract",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Create basic treasury",

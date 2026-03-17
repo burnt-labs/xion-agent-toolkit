@@ -29,6 +29,38 @@
     "1 XION = 1,000,000 uxion",
     "Minimum recommended balance: 1,000,000 uxion (1 XION)"
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ADDRESS",
+      "description": "Invalid treasury address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INVALID_AMOUNT",
+      "description": "Invalid amount format",
+      "remediation": "Use format like '1000000uxion'"
+    },
+    {
+      "code": "INSUFFICIENT_BALANCE",
+      "description": "Insufficient balance to fund treasury",
+      "remediation": "Ensure your account has enough tokens"
+    },
+    {
+      "code": "FUND_FAILED",
+      "description": "Failed to fund treasury",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Fund treasury with 1 XION",

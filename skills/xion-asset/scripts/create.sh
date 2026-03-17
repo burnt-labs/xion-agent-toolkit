@@ -24,7 +24,7 @@ done
 
 # Validate required args
 if [[ -z "$TYPE" ]] || [[ -z "$NAME" ]] || [[ -z "$SYMBOL" ]]; then
-    echo '{"success": false, "error": "Missing required args: --type, --name, --symbol", "error_code": "MISSING_ARGS"}' >&2
+    echo '{"success": false, "error": "Missing required args: --type, --name, --symbol", "error_code": "MISSING_ARGS"}'
     exit 1
 fi
 
@@ -39,4 +39,13 @@ if [[ -n "$SALT" ]]; then
     CMD="$CMD --salt \"$SALT\""
 fi
 
-eval $CMD
+# Execute command and capture output
+OUTPUT=$(eval $CMD 2>&1)
+EXIT_CODE=$?
+
+# Output result and propagate exit code
+if [[ $EXIT_CODE -ne 0 ]]; then
+    echo "$OUTPUT"
+    exit $EXIT_CODE
+fi
+echo "$OUTPUT"

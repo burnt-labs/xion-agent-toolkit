@@ -47,6 +47,38 @@
   "prerequisites": [
     "Must be authenticated (use xion-oauth2 skill first)"
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameters (name and symbol required)",
+      "remediation": "Provide both --name and --symbol parameters"
+    },
+    {
+      "code": "INVALID_MINTER_ADDRESS",
+      "description": "Invalid minter address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INSTANTIATE_FAILED",
+      "description": "Failed to instantiate NFT contract",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "DUPLICATE_SALT",
+      "description": "A contract with this salt already exists",
+      "remediation": "Use a different salt value"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Create standard NFT collection",

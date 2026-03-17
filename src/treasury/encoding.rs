@@ -7,7 +7,23 @@
 
 use base64::Engine;
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 use thiserror::Error;
+
+// ============================================================================
+// Cached Regex
+// ============================================================================
+
+/// Cached regex for parsing coin strings.
+/// Compiled once and reused across all calls.
+static COIN_REGEX: OnceLock<regex::Regex> = OnceLock::new();
+
+/// Get the cached coin regex, initializing it on first use.
+fn get_coin_regex() -> &'static regex::Regex {
+    COIN_REGEX.get_or_init(|| {
+        regex::Regex::new(r"^(\d+)([-a-zA-Z0-9/]+)$").expect("Invalid coin regex pattern")
+    })
+}
 
 // ============================================================================
 // Supporting Types
@@ -81,9 +97,8 @@ pub fn parse_coin_string(input: &str) -> Result<Vec<Coin>, EncodingError> {
         return Err(EncodingError::InvalidCoinFormat("empty input".to_string()));
     }
 
-    // Compile regex once outside the loop
-    let re = regex::Regex::new(r"^(\d+)([-a-zA-Z0-9/]+)$")
-        .map_err(|e| EncodingError::ProtobufError(e.to_string()))?;
+    // Use cached regex (compiled once)
+    let re = get_coin_regex();
 
     let mut coins = Vec::new();
 
@@ -415,6 +430,11 @@ pub fn encode_send_authorization(
 ///
 /// # Returns
 /// Base64-encoded protobuf StakeAuthorization message
+///
+/// # Errors
+/// Returns `EncodingError::InvalidInput` if:
+/// - `authorization_type` is not 1, 2, or 3
+/// - Both `allow_list` and `deny_list` are provided (mutually exclusive)
 pub fn encode_stake_authorization(
     max_tokens: Coin,
     allow_list: Option<Vec<String>>,
@@ -424,6 +444,13 @@ pub fn encode_stake_authorization(
     if !(1..=3).contains(&authorization_type) {
         return Err(EncodingError::InvalidInput(
             "authorization_type must be 1 (DELEGATE), 2 (UNDELEGATE), or 3 (REDELEGATE)".into(),
+        ));
+    }
+
+    // Validate mutual exclusivity of allow_list and deny_list
+    if allow_list.is_some() && deny_list.is_some() {
+        return Err(EncodingError::InvalidInput(
+            "allow_list and deny_list are mutually exclusive".to_string(),
         ));
     }
 
@@ -1034,6 +1061,22 @@ mod tests {
         };
         assert!(encode_stake_authorization(coin.clone(), None, None, 0).is_err());
         assert!(encode_stake_authorization(coin, None, None, 4).is_err());
+    }
+
+    #[test]
+    fn test_encode_stake_authorization_mutual_exclusivity() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "10000000".into(),
+        };
+        let allow_list = vec!["xionvaloper1abc...".to_string()];
+        let deny_list = vec!["xionvaloper1def...".to_string()];
+
+        // Both allow_list and deny_list should be rejected
+        let result = encode_stake_authorization(coin, Some(allow_list), Some(deny_list), 1);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err.to_string().contains("mutually exclusive"));
     }
 
     #[test]

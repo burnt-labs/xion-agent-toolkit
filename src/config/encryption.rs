@@ -6,10 +6,10 @@
 //! # Key Derivation Strategy
 //!
 //! The encryption key is derived from (in order of priority):
-//! 1. `XION_TOOLKIT_KEY` environment variable (for CI/CD only)
+//! 1. `XION_CI_ENCRYPTION_KEY` environment variable (for CI/CD only)
 //! 2. Machine ID via `machine-uid` crate (for local development, default)
 //!
-//! **Note**: Local development does NOT need `XION_TOOLKIT_KEY`.
+//! **Note**: Local development does NOT need `XION_CI_ENCRYPTION_KEY`.
 //! The machine ID derivation is the default and recommended for local use.
 //!
 //! # Security Model
@@ -20,11 +20,11 @@
 //!
 //! # CI/CD Usage
 //!
-//! For automated testing in CI/CD environments, set `XION_TOOLKIT_KEY` to a fixed
+//! For automated testing in CI/CD environments, set `XION_CI_ENCRYPTION_KEY` to a fixed
 //! 32-byte hex string. This is only needed in CI/CD where machine ID may be unstable.
 //!
 //! ```bash
-//! export XION_TOOLKIT_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+//! export XION_CI_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 //! cargo test
 //! ```
 
@@ -83,7 +83,7 @@ pub fn get_encryption_key() -> Result<[u8; KEY_LEN]> {
 fn derive_key_from_machine_id() -> Result<[u8; KEY_LEN]> {
     let machine_id = machine_uid::get().map_err(|e| {
         anyhow::anyhow!(
-            "Failed to get machine ID: {}. Set XION_TOOLKIT_KEY environment variable for CI/CD",
+            "Failed to get machine ID: {}. Set XION_CI_ENCRYPTION_KEY environment variable for CI/CD",
             e
         )
     })?;
@@ -156,7 +156,7 @@ pub fn decrypt(ciphertext_b64: &str) -> Result<Vec<u8>> {
 
 /// Generate a random key for testing purposes.
 ///
-/// Returns a 32-byte hex-encoded string suitable for XION_TOOLKIT_KEY.
+/// Returns a 32-byte hex-encoded string suitable for XION_CI_ENCRYPTION_KEY.
 #[allow(dead_code)]
 pub fn generate_test_key() -> String {
     let mut key = [0u8; KEY_LEN];

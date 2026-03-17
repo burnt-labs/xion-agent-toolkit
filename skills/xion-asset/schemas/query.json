@@ -46,6 +46,48 @@
       "description": "Get contract info"
     }
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameters (contract and msg required)",
+      "remediation": "Provide both --contract and --msg parameters"
+    },
+    {
+      "code": "INVALID_CONTRACT_ADDRESS",
+      "description": "Invalid contract address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INVALID_QUERY_MSG",
+      "description": "Invalid query message format",
+      "remediation": "Provide valid JSON query message"
+    },
+    {
+      "code": "CONTRACT_NOT_FOUND",
+      "description": "Contract not found at the specified address",
+      "remediation": "Verify the address is correct"
+    },
+    {
+      "code": "TOKEN_NOT_FOUND",
+      "description": "Token not found",
+      "remediation": "Verify the token ID exists"
+    },
+    {
+      "code": "QUERY_FAILED",
+      "description": "Failed to query contract",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Get NFT info",

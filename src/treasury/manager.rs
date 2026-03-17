@@ -590,6 +590,14 @@ impl TreasuryManager {
             .create_treasury(&access_token, code_id, create_request, &salt)
             .await?;
 
+        // CRITICAL: Invalidate cache after treasury creation
+        // This ensures the new treasury appears in subsequent list_treasuries calls
+        if let Some(cache) = &self.cache {
+            let mut cache_write = cache.write().await;
+            cache_write.clear();
+            debug!("Cleared treasury cache after creation");
+        }
+
         // Step 9: Return treasury info
         Ok(TreasuryInfo {
             address: result.treasury_address,
@@ -1415,14 +1423,31 @@ impl TreasuryManager {
             eprintln!("[INFO] Planning fee config update...");
 
             let action = if dry_run {
-                // Dry-run: just record the planned action
-                super::types::ImportAction {
-                    action_type: "update_fee_config".to_string(),
-                    index: None,
-                    success: true,
-                    tx_hash: None,
-                    error: None,
-                    config: Some(serde_json::to_value(fee_config)?),
+                // Dry-run: validate encoding to catch issues early
+                let validation_result = self.validate_fee_config_encoding(fee_config);
+
+                match validation_result {
+                    Ok(()) => super::types::ImportAction {
+                        action_type: "update_fee_config".to_string(),
+                        index: None,
+                        success: true,
+                        tx_hash: None,
+                        error: None,
+                        config: Some(serde_json::to_value(fee_config)?),
+                    },
+                    Err(e) => {
+                        let error_msg = format!("Fee config encoding validation failed: {}", e);
+                        eprintln!("[ERROR] {}", error_msg);
+                        errors.push(error_msg.clone());
+                        super::types::ImportAction {
+                            action_type: "update_fee_config".to_string(),
+                            index: None,
+                            success: false,
+                            tx_hash: None,
+                            error: Some(error_msg),
+                            config: Some(serde_json::to_value(fee_config)?),
+                        }
+                    }
                 }
             } else {
                 // Execute: convert FeeConfigInfo to FeeConfigInput and update
@@ -1466,14 +1491,31 @@ impl TreasuryManager {
             );
 
             let action = if dry_run {
-                // Dry-run: just record the planned action
-                super::types::ImportAction {
-                    action_type: "update_grant_config".to_string(),
-                    index: Some(i),
-                    success: true,
-                    tx_hash: None,
-                    error: None,
-                    config: Some(serde_json::to_value(grant_config)?),
+                // Dry-run: validate encoding to catch issues early
+                let validation_result = self.validate_grant_config_encoding(grant_config);
+
+                match validation_result {
+                    Ok(()) => super::types::ImportAction {
+                        action_type: "update_grant_config".to_string(),
+                        index: Some(i),
+                        success: true,
+                        tx_hash: None,
+                        error: None,
+                        config: Some(serde_json::to_value(grant_config)?),
+                    },
+                    Err(e) => {
+                        let error_msg = format!("Grant config encoding validation failed: {}", e);
+                        eprintln!("[ERROR] {}", error_msg);
+                        errors.push(error_msg.clone());
+                        super::types::ImportAction {
+                            action_type: "update_grant_config".to_string(),
+                            index: Some(i),
+                            success: false,
+                            tx_hash: None,
+                            error: Some(error_msg),
+                            config: Some(serde_json::to_value(grant_config)?),
+                        }
+                    }
                 }
             } else {
                 // Execute: convert GrantConfigInfo to GrantConfigInput and update
@@ -1580,17 +1622,20 @@ impl TreasuryManager {
     /// Import grant config to treasury
     ///
     /// Converts GrantConfigInfo to GrantConfigInput and calls add_grant_config.
-    /// Uses preserved authorization input if available, otherwise defaults to Generic.
+    /// Requires preserved authorization input to be present.
     async fn import_grant_config(
         &self,
         treasury_address: &str,
         grant_config: &super::types::GrantConfigInfo,
     ) -> XionResult<String> {
-        // Use preserved authorization input if available, otherwise default to Generic
-        let authorization = grant_config
-            .authorization_input
-            .clone()
-            .unwrap_or(super::types::AuthorizationInput::Generic);
+        // Require authorization_input to be present - no silent defaults
+        let authorization = grant_config.authorization_input.clone().ok_or_else(|| {
+            TreasuryError::MissingAuthorizationInput(format!(
+                "Grant config for type_url '{}' missing authorization_input. \
+                     Export with --preserve-authorization flag to include full authorization data.",
+                grant_config.type_url
+            ))
+        })?;
 
         let grant_input = super::types::GrantConfigInput {
             type_url: grant_config.type_url.clone(),
@@ -1602,6 +1647,65 @@ impl TreasuryManager {
         // Call add_grant_config
         let result = self.add_grant_config(treasury_address, grant_input).await?;
         Ok(result.tx_hash)
+    }
+
+    // ========================================================================
+    // Encoding Validation Helpers (for dry_run)
+    // ========================================================================
+
+    /// Validate fee config encoding without executing
+    ///
+    /// This is used in dry_run mode to catch encoding issues early.
+    fn validate_fee_config_encoding(
+        &self,
+        fee_config: &super::types::FeeConfigInfo,
+    ) -> XionResult<()> {
+        // Build FeeConfigInput from FeeConfigInfo
+        let fee_input = if let (Some(period), Some(period_spend_limit)) =
+            (&fee_config.period, &fee_config.period_spend_limit)
+        {
+            // Periodic allowance
+            let period_seconds = parse_duration_string(period)?;
+            super::types::FeeConfigInput::Periodic {
+                basic_spend_limit: fee_config.spend_limit.clone(),
+                period_seconds,
+                period_spend_limit: period_spend_limit.clone(),
+                description: fee_config.description.clone(),
+            }
+        } else {
+            // Basic allowance
+            super::types::FeeConfigInput::Basic {
+                spend_limit: fee_config
+                    .spend_limit
+                    .clone()
+                    .unwrap_or_else(|| "0uxion".to_string()),
+                description: fee_config.description.clone(),
+            }
+        };
+
+        // Validate encoding
+        super::encoding::encode_fee_config_input(&fee_input)?;
+        Ok(())
+    }
+
+    /// Validate grant config encoding without executing
+    ///
+    /// This is used in dry_run mode to catch encoding issues early.
+    fn validate_grant_config_encoding(
+        &self,
+        grant_config: &super::types::GrantConfigInfo,
+    ) -> XionResult<()> {
+        // Require authorization_input to be present
+        let authorization = grant_config.authorization_input.clone().ok_or_else(|| {
+            TreasuryError::MissingAuthorizationInput(format!(
+                "Grant config for type_url '{}' missing authorization_input",
+                grant_config.type_url
+            ))
+        })?;
+
+        // Validate encoding
+        super::encoding::encode_authorization_input(&authorization, &grant_config.type_url)?;
+        Ok(())
     }
 
     // ========================================================================

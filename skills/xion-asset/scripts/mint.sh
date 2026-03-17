@@ -30,7 +30,7 @@ done
 
 # Validate required args
 if [[ -z "$CONTRACT" ]] || [[ -z "$TOKEN_ID" ]] || [[ -z "$OWNER" ]]; then
-    echo '{"success": false, "error": "Missing required args: --contract, --token-id, --owner", "error_code": "MISSING_ARGS"}' >&2
+    echo '{"success": false, "error": "Missing required args: --contract, --token-id, --owner", "error_code": "MISSING_ARGS"}'
     exit 1
 fi
 
@@ -49,4 +49,13 @@ if [[ -n "$EXPIRES_AT" ]]; then
     CMD="$CMD --expires-at \"$EXPIRES_AT\""
 fi
 
-eval $CMD
+# Execute command and capture output
+OUTPUT=$(eval $CMD 2>&1)
+EXIT_CODE=$?
+
+# Output result and propagate exit code
+if [[ $EXIT_CODE -ne 0 ]]; then
+    echo "$OUTPUT"
+    exit $EXIT_CODE
+fi
+echo "$OUTPUT"
