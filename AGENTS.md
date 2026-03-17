@@ -253,15 +253,18 @@ Refer to the `schemas/` directory for detailed parameter definitions.
 
 ### Step 3: Collect Missing Parameters
 Collect ALL missing required parameters in a SINGLE interaction.
+```
 
 ### Step 4: Confirm Before Execution
+
+Present the parameters in a tree format and ask for confirmation:
+
 ```
 Will execute: grant-config add
 ├─ Address: xion1abc...
 ├─ Type: send
 └─ Spend Limit: 1000000uxion
 Confirm? [y/n]
-```
 ```
 
 #### Known Limitations

@@ -5,8 +5,9 @@
     {
       "name": "type",
       "type": "enum",
-      "required": true,
+      "required": false,
       "enum": ["cw721-base", "cw721-metadata-onchain", "cw721-expiration", "cw721-non-transferable", "cw2981-royalties"],
+      "default": "cw721-base",
       "description": "NFT contract type"
     },
     {
