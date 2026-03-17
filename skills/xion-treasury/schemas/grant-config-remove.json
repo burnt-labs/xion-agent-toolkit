@@ -1,0 +1,36 @@
+{
+  "command": "grant-config remove",
+  "description": "Remove an authz grant from a Treasury",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "type-url",
+      "type": "string",
+      "required": true,
+      "description": "Type URL of the grant to remove (e.g., /cosmos.bank.v1beta1.MsgSend)"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Remove send authorization",
+      "params": {
+        "address": "xion1abc...",
+        "type-url": "/cosmos.bank.v1beta1.MsgSend"
+      }
+    }
+  ]
+}

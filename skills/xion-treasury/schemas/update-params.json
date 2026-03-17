@@ -1,0 +1,61 @@
+{
+  "command": "update-params",
+  "description": "Update Treasury parameters",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "redirect-url",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "OAuth redirect URL"
+    },
+    {
+      "name": "icon-url",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Treasury icon URL"
+    },
+    {
+      "name": "metadata",
+      "type": "json",
+      "required": false,
+      "description": "Metadata as JSON string"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "validation_rules": [
+    "At least one parameter to update is required (--redirect-url, --icon-url, or --metadata)"
+  ],
+  "examples": [
+    {
+      "description": "Update redirect URL",
+      "params": {
+        "address": "xion1abc...",
+        "redirect-url": "https://example.com/callback"
+      }
+    },
+    {
+      "description": "Update multiple parameters",
+      "params": {
+        "address": "xion1abc...",
+        "redirect-url": "https://app.com/callback",
+        "icon-url": "https://app.com/icon.png"
+      }
+    }
+  ]
+}

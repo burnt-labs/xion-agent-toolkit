@@ -1,0 +1,128 @@
+{
+  "command": "mint",
+  "description": "Mint an NFT token",
+  "parameters": [
+    {
+      "name": "contract",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "NFT contract address"
+    },
+    {
+      "name": "token-id",
+      "type": "string",
+      "required": true,
+      "description": "Unique token ID"
+    },
+    {
+      "name": "owner",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Token owner address"
+    },
+    {
+      "name": "token-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Token metadata URI (e.g., ipfs://...)"
+    },
+    {
+      "name": "asset-type",
+      "type": "enum",
+      "required": false,
+      "default": "cw721-base",
+      "enum": ["cw721-base", "cw721-metadata-onchain", "cw721-expiration", "cw721-non-transferable", "cw2981-royalties"],
+      "description": "Asset type for minting"
+    },
+    {
+      "name": "royalty-address",
+      "type": "string",
+      "required": false,
+      "format": "xion-address",
+      "description": "Royalty recipient address (for cw2981-royalties)",
+      "depends_on": {
+        "parameter": "asset-type",
+        "values": ["cw2981-royalties"]
+      }
+    },
+    {
+      "name": "royalty-percentage",
+      "type": "number",
+      "required": false,
+      "min": 0,
+      "max": 1,
+      "description": "Royalty percentage as decimal (e.g., 0.05 for 5%)",
+      "depends_on": {
+        "parameter": "asset-type",
+        "values": ["cw2981-royalties"]
+      }
+    },
+    {
+      "name": "expires-at",
+      "type": "string",
+      "required": false,
+      "format": "iso8601-datetime",
+      "description": "Expiration timestamp (for cw721-expiration)",
+      "depends_on": {
+        "parameter": "asset-type",
+        "values": ["cw721-expiration"]
+      }
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "validation_rules": [
+    "For cw2981-royalties: both royalty-address and royalty-percentage are required",
+    "Royalty percentage must be between 0 and 1 (e.g., 0.05 for 5%)",
+    "For cw721-expiration: expires-at is required"
+  ],
+  "examples": [
+    {
+      "description": "Standard mint",
+      "params": {
+        "contract": "xion1abc...",
+        "token-id": "1",
+        "owner": "xion1owner..."
+      }
+    },
+    {
+      "description": "Mint with metadata",
+      "params": {
+        "contract": "xion1abc...",
+        "token-id": "1",
+        "owner": "xion1owner...",
+        "token-uri": "ipfs://QmHash..."
+      }
+    },
+    {
+      "description": "Mint with royalties",
+      "params": {
+        "contract": "xion1abc...",
+        "token-id": "1",
+        "owner": "xion1owner...",
+        "asset-type": "cw2981-royalties",
+        "royalty-address": "xion1royalty...",
+        "royalty-percentage": 0.05
+      }
+    },
+    {
+      "description": "Mint with expiration",
+      "params": {
+        "contract": "xion1abc...",
+        "token-id": "1",
+        "owner": "xion1owner...",
+        "asset-type": "cw721-expiration",
+        "expires-at": "2025-12-31T23:59:59Z"
+      }
+    }
+  ]
+}

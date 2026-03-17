@@ -1,0 +1,41 @@
+{
+  "command": "withdraw",
+  "description": "Withdraw tokens from a Treasury",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "amount",
+      "type": "string",
+      "required": true,
+      "format": "coin",
+      "description": "Amount to withdraw with denomination (e.g., 1000000uxion)"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "notes": [
+    "Funds are withdrawn to the admin account",
+    "1 XION = 1,000,000 uxion"
+  ],
+  "examples": [
+    {
+      "description": "Withdraw 0.5 XION from treasury",
+      "params": {
+        "address": "xion1abc...",
+        "amount": "500000uxion"
+      }
+    }
+  ]
+}

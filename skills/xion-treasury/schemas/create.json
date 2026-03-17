@@ -1,0 +1,135 @@
+{
+  "command": "create",
+  "description": "Create a new Treasury contract",
+  "parameters": [
+    {
+      "name": "name",
+      "type": "string",
+      "required": false,
+      "description": "Treasury name",
+      "conflicts_with": ["config"]
+    },
+    {
+      "name": "redirect-url",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "OAuth redirect URL"
+    },
+    {
+      "name": "icon-url",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Treasury icon URL"
+    },
+    {
+      "name": "config",
+      "type": "file",
+      "required": false,
+      "description": "JSON config file with all settings",
+      "conflicts_with": ["name"]
+    },
+    {
+      "name": "fee-allowance-type",
+      "type": "enum",
+      "required": false,
+      "enum": ["basic", "periodic", "allowed-msg"],
+      "description": "Fee allowance type"
+    },
+    {
+      "name": "fee-spend-limit",
+      "type": "string",
+      "required": false,
+      "format": "coin",
+      "description": "Fee spend limit (e.g., 1000000uxion)",
+      "depends_on": {
+        "parameter": "fee-allowance-type"
+      }
+    },
+    {
+      "name": "fee-description",
+      "type": "string",
+      "required": false,
+      "description": "Fee grant description"
+    },
+    {
+      "name": "fee-period-seconds",
+      "type": "integer",
+      "required": false,
+      "description": "Period duration for periodic allowance (in seconds)",
+      "depends_on": {
+        "parameter": "fee-allowance-type",
+        "values": ["periodic"]
+      }
+    },
+    {
+      "name": "fee-period-spend-limit",
+      "type": "string",
+      "required": false,
+      "format": "coin",
+      "description": "Period spend limit for periodic allowance",
+      "depends_on": {
+        "parameter": "fee-allowance-type",
+        "values": ["periodic"]
+      }
+    },
+    {
+      "name": "grant-type-url",
+      "type": "string",
+      "required": false,
+      "description": "Message type URL for authz grant (e.g., /cosmos.bank.v1beta1.MsgSend)"
+    },
+    {
+      "name": "grant-auth-type",
+      "type": "enum",
+      "required": false,
+      "enum": ["generic", "send", "stake", "ibc-transfer", "contract-execution"],
+      "description": "Authorization type for grant"
+    },
+    {
+      "name": "grant-spend-limit",
+      "type": "string",
+      "required": false,
+      "format": "coin",
+      "description": "Spend limit for send authorization"
+    },
+    {
+      "name": "grant-description",
+      "type": "string",
+      "required": false,
+      "description": "Grant description"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "validation_rules": [
+    "Either --name or --config is required (at least one must be provided)",
+    "If using --config, the file must contain valid JSON with treasury configuration",
+    "If fee-allowance-type is 'periodic', fee-period-seconds and fee-period-spend-limit are required",
+    "IMPORTANT: Schema validation cannot enforce mutual requirement - AI agents must ensure at least one of --name or --config is provided"
+  ],
+  "examples": [
+    {
+      "description": "Create basic treasury",
+      "params": {
+        "name": "My Treasury"
+      }
+    },
+    {
+      "description": "Create treasury with fee allowance",
+      "params": {
+        "name": "My Treasury",
+        "redirect-url": "https://example.com/callback",
+        "fee-allowance-type": "basic",
+        "fee-spend-limit": "1000000uxion"
+      }
+    }
+  ]
+}

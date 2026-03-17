@@ -1,0 +1,51 @@
+{
+  "command": "refresh",
+  "description": "Manually refresh access token",
+  "parameters": [
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to refresh token for"
+    }
+  ],
+  "notes": [
+    "Access tokens auto-refresh when expired",
+    "Refresh tokens are valid for 30 days",
+    "Use login again if refresh token expires"
+  ],
+  "output_includes": [
+    "success: boolean",
+    "message: string",
+    "expires_at: string",
+    "expires_in_seconds: number"
+  ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "Not logged in"
+    },
+    {
+      "code": "REFRESH_TOKEN_EXPIRED",
+      "description": "Refresh token expired, need to re-login"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Network error during refresh"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Refresh testnet token",
+      "params": {}
+    },
+    {
+      "description": "Refresh mainnet token",
+      "params": {
+        "network": "mainnet"
+      }
+    }
+  ]
+}

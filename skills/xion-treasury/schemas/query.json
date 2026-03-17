@@ -1,0 +1,58 @@
+{
+  "command": "query",
+  "description": "Query Treasury details",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "include-grants",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Include Authz grant information"
+    },
+    {
+      "name": "include-fee",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Include Fee grant information"
+    },
+    {
+      "name": "no-cache",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Bypass cache and fetch fresh data"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Query treasury basic info",
+      "params": {
+        "address": "xion1abc..."
+      }
+    },
+    {
+      "description": "Query treasury with grants and fee info",
+      "params": {
+        "address": "xion1abc...",
+        "include-grants": true,
+        "include-fee": true
+      }
+    }
+  ]
+}

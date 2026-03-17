@@ -88,6 +88,198 @@ Development progress and roadmap live in `plans/`; use `plans/status.json` as th
 - Write status / progress logs to stderr.
 - On failure, return structured JSON such as `{"success": false, "error": "...", "code": "..."}`.
 
+### Skills Parameter Validation Framework
+
+When creating or modifying skills, each CLI command **must** have a corresponding parameter schema. This enables AI Agents to validate and collect parameters before command execution.
+
+#### Schema File Structure
+
+Each skill stores schemas in `skills/<skill-name>/schemas/<command>.json`:
+
+```text
+skills/xion-treasury/schemas/
+├── grant-config-add.json
+├── grant-config-remove.json
+├── fee-config-set.json
+├── create.json
+└── ...
+```
+
+#### Schema Format
+
+```json
+{
+  "command": "grant-config add",
+  "description": "Add an authz grant to a Treasury",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "preset",
+      "type": "enum",
+      "required": false,
+      "enum": ["send", "execute", "delegate"],
+      "description": "Shortcut for common grant types",
+      "conflicts_with": ["type-url", "auth-type"]
+    },
+    {
+      "name": "spend-limit",
+      "type": "string",
+      "required": false,
+      "format": "coin",
+      "description": "Spend limit (e.g., 1000000uxion)",
+      "depends_on": {
+        "parameter": "auth-type",
+        "values": ["send"]
+      }
+    }
+  ],
+  "presets": {
+    "send": {
+      "type-url": "/cosmos.bank.v1beta1.MsgSend",
+      "auth-type": "send",
+      "requires": ["spend-limit"]
+    }
+  },
+  "examples": [
+    {
+      "description": "Add send authorization",
+      "params": {
+        "address": "xion1abc...",
+        "preset": "send",
+        "spend-limit": "1000000uxion"
+      }
+    }
+  ]
+}
+```
+
+#### Parameter Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | string | ✅ | Parameter name (kebab-case) |
+| `type` | enum | ✅ | `string`, `integer`, `number`, `boolean`, `enum`, `file` |
+| `required` | boolean | ✅ | Whether parameter is required |
+| `description` | string | ✅ | Human-readable description |
+| `format` | string | ❌ | Format hint: `xion-address`, `coin`, `url`, `iso8601-datetime` |
+| `enum` | array | ❌ | Allowed values (for type=enum) |
+| `default` | any | ❌ | Default value |
+| `depends_on` | object | ❌ | Conditional requirement |
+| `conflicts_with` | array | ❌ | Mutually exclusive parameters |
+| `notes` | array | ❌ | Helpful notes for AI agents (e.g., unit conversions, important caveats) |
+| `validation_rules` | array | ❌ | Array of strings documenting complex validation logic that cannot be expressed in schema |
+
+#### Dependency Rules
+
+**`depends_on`** - Parameter required when another parameter has specific values:
+
+```json
+{
+  "name": "spend-limit",
+  "depends_on": {
+    "parameter": "auth-type",
+    "values": ["send"]
+  }
+}
+```
+
+For "any value triggers dependency", omit `values`:
+
+```json
+{
+  "name": "fee-spend-limit",
+  "depends_on": {
+    "parameter": "fee-allowance-type"
+  }
+}
+```
+
+**`conflicts_with`** - Parameters that cannot be used together:
+
+```json
+{
+  "name": "preset",
+  "conflicts_with": ["type-url", "auth-type"]
+}
+```
+
+#### Validation Script
+
+Use `skills/scripts/validate-params.sh` for pre-flight validation:
+
+```bash
+./skills/scripts/validate-params.sh <skill> <command> '<json-params>'
+
+# Example
+./skills/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1test"}'
+
+# Output (missing params)
+{"valid": false, "missing": ["description"], "errors": [...]}
+
+# Output (valid)
+{"valid": true, "missing": [], "errors": []}
+```
+
+Exit codes: `0` = valid, `1` = invalid, `2` = usage error.
+
+#### Adding a New Command
+
+1. Create schema file: `skills/<skill>/schemas/<command>.json`
+2. Define all parameters with required dependencies
+3. Add presets for common use cases
+4. Include examples
+5. Update SKILL.md with parameter table reference
+
+#### Parameter Collection Workflow
+
+Document in SKILL.md for AI Agents:
+
+```markdown
+## Parameter Collection Workflow
+
+Before executing any command, ensure all required parameters are collected.
+
+### Step 1: Identify Operation
+Determine which operation the user wants to perform.
+
+### Step 2: Check Parameter Schema
+Refer to the `schemas/` directory for detailed parameter definitions.
+
+### Step 3: Collect Missing Parameters
+Collect ALL missing required parameters in a SINGLE interaction.
+```
+
+### Step 4: Confirm Before Execution
+
+Present the parameters in a tree format and ask for confirmation:
+
+```
+Will execute: grant-config add
+├─ Address: xion1abc...
+├─ Type: send
+└─ Spend Limit: 1000000uxion
+Confirm? [y/n]
+```
+
+#### Known Limitations
+
+The validation framework validates **structure** (required params, dependencies, conflicts) but has limitations on **content** validation:
+
+- **Enum validation**: Validates that provided values match enum constraints defined in schema
+- **Format validation**: Informational only (`xion-address`, `coin`, `url`, `iso8601-datetime` formats are hints)
+- **Type validation**: String vs number distinction is minimal; relies on schema definitions
+- **Numeric ranges**: `min`/`max` constraints are informational hints
+- **File existence**: Not validated (files are checked at CLI execution time)
+- **Mutual requirement**: Cannot enforce "at least one of X or Y required" patterns (documented in `validation_rules`)
+
+For full validation, rely on the CLI's own validation after parameter collection.
+
 ## Configuration Management
 
 ### Configuration File Location

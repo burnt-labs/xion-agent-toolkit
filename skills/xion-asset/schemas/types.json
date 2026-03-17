@@ -1,0 +1,52 @@
+{
+  "command": "types",
+  "description": "List available NFT asset types",
+  "parameters": [
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "output_includes": [
+    "Asset type name",
+    "Code ID",
+    "Features/description"
+  ],
+  "asset_types": [
+    {
+      "name": "cw721-base",
+      "code_id": 522,
+      "description": "Standard NFT"
+    },
+    {
+      "name": "cw721-metadata-onchain",
+      "code_id": 525,
+      "description": "On-chain metadata"
+    },
+    {
+      "name": "cw721-expiration",
+      "code_id": 523,
+      "description": "Time-based expiry"
+    },
+    {
+      "name": "cw721-non-transferable",
+      "code_id": 526,
+      "description": "Soulbound NFT"
+    },
+    {
+      "name": "cw2981-royalties",
+      "code_id": 528,
+      "description": "Royalties at mint time"
+    }
+  ],
+  "examples": [
+    {
+      "description": "List asset types on testnet",
+      "params": {}
+    }
+  ]
+}

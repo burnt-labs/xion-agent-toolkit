@@ -1,0 +1,41 @@
+{
+  "command": "fund",
+  "description": "Fund a Treasury with tokens",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "amount",
+      "type": "string",
+      "required": true,
+      "format": "coin",
+      "description": "Amount to fund with denomination (e.g., 1000000uxion)"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "notes": [
+    "1 XION = 1,000,000 uxion",
+    "Minimum recommended balance: 1,000,000 uxion (1 XION)"
+  ],
+  "examples": [
+    {
+      "description": "Fund treasury with 1 XION",
+      "params": {
+        "address": "xion1abc...",
+        "amount": "1000000uxion"
+      }
+    }
+  ]
+}

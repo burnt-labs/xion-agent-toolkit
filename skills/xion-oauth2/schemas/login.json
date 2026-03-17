@@ -1,0 +1,74 @@
+{
+  "command": "login",
+  "description": "Initiate OAuth2 login flow via browser",
+  "parameters": [
+    {
+      "name": "port",
+      "type": "integer",
+      "required": false,
+      "default": 54321,
+      "description": "Callback server port"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to authenticate with"
+    }
+  ],
+  "prerequisites": [
+    "xion-toolkit CLI installed",
+    "Browser available for OAuth2 authorization"
+  ],
+  "flow": [
+    "1. Opens browser to Xion authorization page",
+    "2. User approves authorization",
+    "3. Callback receives authorization code",
+    "4. Tokens are stored securely"
+  ],
+  "output_includes": [
+    "success: boolean",
+    "network: string",
+    "authenticated: boolean",
+    "token_type: string",
+    "expires_in: number"
+  ],
+  "errors": [
+    {
+      "code": "CLI_NOT_FOUND",
+      "description": "xion-toolkit CLI not found in PATH"
+    },
+    {
+      "code": "TIMEOUT",
+      "description": "Login timed out"
+    },
+    {
+      "code": "PORT_IN_USE",
+      "description": "Port is already in use"
+    },
+    {
+      "code": "AUTH_FAILED",
+      "description": "Authentication failed"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Login with default settings",
+      "params": {}
+    },
+    {
+      "description": "Login with custom port",
+      "params": {
+        "port": 54322
+      }
+    },
+    {
+      "description": "Login to mainnet",
+      "params": {
+        "network": "mainnet"
+      }
+    }
+  ]
+}

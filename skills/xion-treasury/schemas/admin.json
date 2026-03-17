@@ -1,0 +1,95 @@
+{
+  "command": "admin",
+  "description": "Manage Treasury admin operations",
+  "subcommands": {
+    "propose": {
+      "description": "Propose a new admin for the treasury",
+      "parameters": [
+        {
+          "name": "address",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "Treasury contract address"
+        },
+        {
+          "name": "new-admin",
+          "type": "string",
+          "required": false,
+          "format": "xion-address",
+          "description": "New admin address",
+          "notes": ["Required for propose action - the address that will become the new admin"]
+        },
+        {
+          "name": "network",
+          "type": "enum",
+          "required": false,
+          "enum": ["local", "testnet", "mainnet"],
+          "default": "testnet",
+          "description": "Network to use"
+        }
+      ]
+    },
+    "accept": {
+      "description": "Accept admin role (called by pending admin)",
+      "parameters": [
+        {
+          "name": "address",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "Treasury contract address"
+        },
+        {
+          "name": "network",
+          "type": "enum",
+          "required": false,
+          "enum": ["local", "testnet", "mainnet"],
+          "default": "testnet",
+          "description": "Network to use"
+        }
+      ]
+    },
+    "cancel": {
+      "description": "Cancel proposed admin",
+      "parameters": [
+        {
+          "name": "address",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "Treasury contract address"
+        },
+        {
+          "name": "network",
+          "type": "enum",
+          "required": false,
+          "enum": ["local", "testnet", "mainnet"],
+          "default": "testnet",
+          "description": "Network to use"
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "description": "Propose new admin",
+      "params": {
+        "address": "xion1abc...",
+        "new-admin": "xion1newadmin..."
+      }
+    },
+    {
+      "description": "Accept admin role",
+      "params": {
+        "address": "xion1abc..."
+      }
+    },
+    {
+      "description": "Cancel proposed admin",
+      "params": {
+        "address": "xion1abc..."
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "command": "export",
+  "description": "Export Treasury configuration for backup",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "output",
+      "type": "file",
+      "required": false,
+      "description": "Output file path (defaults to stdout if not specified)"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "output_includes": [
+    "Grants configuration",
+    "Fee configuration",
+    "Treasury parameters"
+  ],
+  "examples": [
+    {
+      "description": "Export to file",
+      "params": {
+        "address": "xion1abc...",
+        "output": "treasury-backup.json"
+      }
+    },
+    {
+      "description": "Export to stdout",
+      "params": {
+        "address": "xion1abc..."
+      }
+    }
+  ]
+}

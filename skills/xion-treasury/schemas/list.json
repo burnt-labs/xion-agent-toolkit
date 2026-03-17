@@ -1,0 +1,36 @@
+{
+  "command": "list",
+  "description": "List all Treasury contracts for authenticated user",
+  "parameters": [
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    },
+    {
+      "name": "no-cache",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Bypass cache and fetch fresh data"
+    }
+  ],
+  "prerequisites": [
+    "Must be authenticated (use xion-oauth2 skill first)"
+  ],
+  "examples": [
+    {
+      "description": "List all treasuries on testnet",
+      "params": {}
+    },
+    {
+      "description": "List treasuries bypassing cache",
+      "params": {
+        "no-cache": true
+      }
+    }
+  ]
+}
