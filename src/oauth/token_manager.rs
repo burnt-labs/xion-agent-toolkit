@@ -5,6 +5,8 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Duration, Utc};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::{debug, info, instrument};
 
 use crate::api::oauth2_api::OAuth2ApiClient;
@@ -28,6 +30,8 @@ pub struct TokenManager {
     oauth2_api: OAuth2ApiClient,
     /// OAuth2 client ID for refresh requests
     client_id: String,
+    /// Lock to prevent concurrent token refresh operations
+    refresh_lock: Arc<Mutex<()>>,
 }
 
 impl TokenManager {
@@ -58,6 +62,7 @@ impl TokenManager {
             credentials_manager,
             oauth2_api,
             client_id,
+            refresh_lock: Arc::new(Mutex::new(())),
         }
     }
 
@@ -118,6 +123,19 @@ impl TokenManager {
                 "Token will expire within {} seconds, refreshing",
                 EXPIRY_BUFFER_SECS
             );
+
+            // Acquire lock to prevent concurrent refresh
+            let _guard = self.refresh_lock.lock().await;
+
+            // Double-check: another task may have refreshed while we waited
+            if !self.will_expire_soon(EXPIRY_BUFFER_SECS)? {
+                debug!("Token was refreshed by another task, using existing token");
+                let fresh_credentials = self
+                    .credentials_manager
+                    .load_credentials()
+                    .context("Failed to load fresh credentials")?;
+                return Ok(fresh_credentials.access_token);
+            }
 
             // Refresh token
             let new_credentials = self

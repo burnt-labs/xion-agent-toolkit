@@ -13,8 +13,8 @@ use tokio::sync::{oneshot, Mutex};
 /// Callback server errors
 #[derive(Debug, Error)]
 pub enum CallbackError {
-    #[error("State parameter mismatch: expected {expected}, got {actual}")]
-    StateMismatch { expected: String, actual: String },
+    #[error("State parameter mismatch - possible CSRF attack")]
+    StateMismatch,
 
     #[error("OAuth2 error: {error}")]
     #[allow(dead_code)]
@@ -209,15 +209,21 @@ async fn handle_callback(
     Query(params): Query<CallbackParams>,
     State(state): State<Arc<CallbackState>>,
 ) -> impl IntoResponse {
-    tracing::info!("Received callback with state: {}", params.state);
+    // Log only a prefix of the state for debugging (security: don't log full state)
+    let state_prefix: String = params.state.chars().take(8).collect();
+    tracing::info!("Received callback with state prefix: {}...", state_prefix);
 
     // Validate state parameter
     if params.state != state.expected_state {
-        let error = CallbackError::StateMismatch {
-            expected: state.expected_state.clone(),
-            actual: params.state,
-        };
-        tracing::error!("State mismatch: {}", error);
+        // Security: Log only prefixes, never full state values
+        let expected_prefix: String = state.expected_state.chars().take(8).collect();
+        tracing::warn!(
+            "State mismatch: expected {}..., got {}...",
+            expected_prefix,
+            state_prefix
+        );
+
+        let error = CallbackError::StateMismatch;
 
         // Send error through channel
         if let Some(tx) = state.result_tx.lock().await.take() {
@@ -296,10 +302,7 @@ mod tests {
 
     #[test]
     fn test_callback_error_display() {
-        let error = CallbackError::StateMismatch {
-            expected: "abc".to_string(),
-            actual: "def".to_string(),
-        };
+        let error = CallbackError::StateMismatch;
         assert!(error.to_string().contains("State parameter mismatch"));
 
         let error = CallbackError::Timeout(300);

@@ -160,6 +160,48 @@
       "auth-type": "generic"
     }
   },
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ADDRESS",
+      "description": "Invalid treasury address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameters (type-url/auth-type or preset required)",
+      "remediation": "Provide either preset or both type-url and auth-type"
+    },
+    {
+      "code": "MISSING_SPEND_LIMIT",
+      "description": "Spend limit required for send authorization",
+      "remediation": "Add --spend-limit parameter"
+    },
+    {
+      "code": "MISSING_CONTRACT",
+      "description": "Contract address required for contract-execution",
+      "remediation": "Add --contract parameter"
+    },
+    {
+      "code": "GRANT_EXISTS",
+      "description": "Grant already exists for this type",
+      "remediation": "Remove existing grant first or update it"
+    },
+    {
+      "code": "ADD_GRANT_FAILED",
+      "description": "Failed to add grant configuration",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Add send authorization with spend limit",

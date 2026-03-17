@@ -55,6 +55,58 @@
       }
     ]
   },
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameters (contract and tokens-file required)",
+      "remediation": "Provide both --contract and --tokens-file parameters"
+    },
+    {
+      "code": "INVALID_CONTRACT_ADDRESS",
+      "description": "Invalid contract address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "TOKENS_FILE_NOT_FOUND",
+      "description": "Tokens file not found",
+      "remediation": "Verify the file path is correct"
+    },
+    {
+      "code": "INVALID_TOKENS_FILE",
+      "description": "Tokens file is not valid JSON or missing required fields",
+      "remediation": "Check file format matches the schema"
+    },
+    {
+      "code": "DUPLICATE_TOKEN_ID",
+      "description": "One or more token IDs already exist",
+      "remediation": "Ensure all token IDs in the file are unique and don't exist in the collection"
+    },
+    {
+      "code": "PARTIAL_MINT_FAILURE",
+      "description": "Some tokens failed to mint",
+      "remediation": "Check output for failed token IDs and retry"
+    },
+    {
+      "code": "BATCH_MINT_FAILED",
+      "description": "Batch mint operation failed",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NOT_MINTER",
+      "description": "You are not authorized to mint on this contract",
+      "remediation": "Use the minter account or update contract minter"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Batch mint from file",

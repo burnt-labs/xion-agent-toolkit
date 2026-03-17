@@ -29,6 +29,43 @@
     "Funds are withdrawn to the admin account",
     "1 XION = 1,000,000 uxion"
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ADDRESS",
+      "description": "Invalid treasury address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INVALID_AMOUNT",
+      "description": "Invalid amount format",
+      "remediation": "Use format like '1000000uxion'"
+    },
+    {
+      "code": "INSUFFICIENT_TREASURY_BALANCE",
+      "description": "Treasury has insufficient balance",
+      "remediation": "Check treasury balance and reduce withdrawal amount"
+    },
+    {
+      "code": "NOT_ADMIN",
+      "description": "Only treasury admin can withdraw",
+      "remediation": "Use the admin account to withdraw"
+    },
+    {
+      "code": "WITHDRAW_FAILED",
+      "description": "Failed to withdraw from treasury",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Withdraw 0.5 XION from treasury",

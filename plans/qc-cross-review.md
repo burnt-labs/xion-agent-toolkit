@@ -316,22 +316,22 @@ let authorization = grant_config
 
 | Priority | Issue | Description | Owner | Est. Effort | Status |
 |----------|-------|-------------|-------|-------------|--------|
-| **P1-1** | CRIT-007 | Fix error message env var name | @fullstack-dev | 0.5h | Pending |
-| **P1-2** | CRIT-008 | Remove expected state from error disclosure | @fullstack-dev | 0.5h | Pending |
+| **P1-1** | CRIT-007 | Fix error message env var name | @fullstack-dev | 0.5h | ✅ Fixed |
+| **P1-2** | CRIT-008 | Remove expected state from error disclosure | @fullstack-dev-2 | 0.5h | ✅ Fixed |
 | **P1-3** | CRIT-009 | Fix batch-mint.sh exit code capture | @fullstack-dev-2 | 1h | ✅ Done |
 | **P1-4** | CRIT-011 | Validate encoding in import dry_run | @fullstack-dev | 2h | ✅ Fixed |
 | **P1-5** | CRIT-012 | Invalidate cache after treasury creation | @fullstack-dev | 1h | ✅ Fixed |
-| **P1-6** | WARN-009 | Add mutex around token refresh | @fullstack-dev | 2h | Pending |
+| **P1-6** | WARN-009 | Add mutex around token refresh | @fullstack-dev-2 | 2h | ✅ Fixed |
 
 ### P2 - Medium Priority (Next 2 Weeks)
 
 | Priority | Issue | Description | Owner | Est. Effort | Status |
 |----------|-------|-------------|-------|-------------|--------|
-| **P2-1** | WARN-001 | Stake auth mutual exclusivity validation | @fullstack-dev | 1h | Pending |
-| **P2-2** | WARN-002 | Regex caching with lazy_static | @fullstack-dev | 0.5h | Pending |
+| **P2-1** | WARN-001 | Stake auth mutual exclusivity validation | @fullstack-dev | 1h | ✅ Fixed |
+| **P2-2** | WARN-002 | Regex caching with lazy_static | @fullstack-dev | 0.5h | ✅ Fixed |
 | **P2-3** | WARN-020,022,023 | Skills JSON output consistency (stdout) | @fullstack-dev-2 | 2h | ✅ Done |
-| **P2-4** | CRIT-006 | Add error response schemas | @fullstack-dev | 3h | Pending |
-| **P2-5** | WARN-011 | Fix env var doc inconsistency | @fullstack-dev | 0.5h | Pending |
+| **P2-4** | CRIT-006 | Add error response schemas | @fullstack-dev-2 | 3h | ✅ Fixed |
+| **P2-5** | WARN-011 | Fix env var doc inconsistency | @fullstack-dev | 0.5h | ✅ Fixed |
 
 ### P3 - Low Priority (Backlog)
 
@@ -361,10 +361,10 @@ let authorization = grant_config
 ## Acceptance Criteria
 
 - [x] All 4 P0 Critical issues resolved with tests (4/4 done: P0-1 ✅, P0-3 ✅, P0-4 ✅)
-- [ ] All 6 P1 issues resolved (5/6 done: P1-3 ✅, P1-4 ✅, P1-5 ✅)
-- [ ] At least 3 P2 issues resolved (1/5 done: P2-3 ✅)
+- [x] All 6 P1 issues resolved (6/6 done: P1-1 ✅, P1-2 ✅, P1-3 ✅, P1-4 ✅, P1-5 ✅, P1-6 ✅)
+- [x] At least 3 P2 issues resolved (4/5 done: P2-1 ✅, P2-2 ✅, P2-3 ✅, P2-4 ✅)
 - [x] No new Critical issues introduced
-- [x] All existing tests still passing (`cargo test`) - 313 tests
+- [x] All existing tests still passing (`cargo test`) - 314 tests
 - [x] Pre-commit checklist passes (`cargo fmt --check && cargo clippy && cargo test`)
 
 ---
@@ -394,3 +394,7 @@ let authorization = grant_config
 | 2026-03-17 | @project-manager | Round 3 complete, 12 Critical + 30+ Warnings, final fix plan ready | ✅ |
 | 2026-03-17 | @fullstack-dev-2 | Fixed P0-4 (CRIT-005, CRIT-004), P1-3 (CRIT-009), P2-3 (WARN-020,022,023) | ✅ |
 | 2026-03-17 | @fullstack-dev | Fixed P0-1 (CRIT-001), P0-3 (CRIT-002), P1-4 (CRIT-011), P1-5 (CRIT-012) | ✅ |
+| 2026-03-17 | @fullstack-dev | Fixed P1-1 (CRIT-007), P2-1 (WARN-001), P2-2 (WARN-002) | ✅ |
+| 2026-03-17 | @fullstack-dev-2 | Fixed P1-2 (CRIT-008), P1-6 (WARN-009), P2-4 (CRIT-006) | ✅ |
+| 2026-03-17 | @fullstack-dev | Fixed P1-1 (CRIT-007), P2-1 (WARN-001), P2-2 (WARN-002) | ✅ |
+| 2026-03-17 | @fullstack-dev-2 | Fixed P1-2 (CRIT-008), P1-6 (WARN-009), P2-4 (CRIT-006) | ✅ |

@@ -85,6 +85,58 @@
     "Royalty percentage must be between 0 and 1 (e.g., 0.05 for 5%)",
     "For cw721-expiration: expires-at is required"
   ],
+  "errors": [
+    {
+      "code": "NOT_AUTHENTICATED",
+      "description": "User is not logged in",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "INVALID_ARGS",
+      "description": "Missing required parameters (contract, token-id, owner required)",
+      "remediation": "Provide all required parameters"
+    },
+    {
+      "code": "INVALID_CONTRACT_ADDRESS",
+      "description": "Invalid contract address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "INVALID_OWNER_ADDRESS",
+      "description": "Invalid owner address format",
+      "remediation": "Provide a valid Xion address starting with 'xion1'"
+    },
+    {
+      "code": "TOKEN_ID_EXISTS",
+      "description": "Token ID already exists in the collection",
+      "remediation": "Use a different token ID"
+    },
+    {
+      "code": "MISSING_ROYALTY_PARAMS",
+      "description": "Royalty parameters required for cw2981-royalties",
+      "remediation": "Provide both --royalty-address and --royalty-percentage"
+    },
+    {
+      "code": "MISSING_EXPIRATION",
+      "description": "Expiration required for cw721-expiration",
+      "remediation": "Provide --expires-at parameter"
+    },
+    {
+      "code": "MINT_FAILED",
+      "description": "Failed to mint NFT token",
+      "remediation": "Check logs for detailed error message"
+    },
+    {
+      "code": "NOT_MINTER",
+      "description": "You are not authorized to mint on this contract",
+      "remediation": "Use the minter account or update contract minter"
+    },
+    {
+      "code": "NETWORK_ERROR",
+      "description": "Failed to connect to network",
+      "remediation": "Check network connectivity and try again"
+    }
+  ],
   "examples": [
     {
       "description": "Standard mint",
