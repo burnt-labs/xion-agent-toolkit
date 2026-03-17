@@ -1,0 +1,35 @@
+{
+  "command": "status",
+  "description": "Check current authentication status",
+  "parameters": [
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to check"
+    }
+  ],
+  "output_includes": [
+    "success: boolean",
+    "authenticated: boolean",
+    "network: string",
+    "token_info: object (if authenticated)",
+    "  - expires_at: string",
+    "  - expires_in_seconds: number",
+    "  - needs_refresh: boolean"
+  ],
+  "examples": [
+    {
+      "description": "Check status on testnet",
+      "params": {}
+    },
+    {
+      "description": "Check status on mainnet",
+      "params": {
+        "network": "mainnet"
+      }
+    }
+  ]
+}

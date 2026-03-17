@@ -1,0 +1,122 @@
+{
+  "command": "admin",
+  "description": "Manage Treasury admin operations",
+  "subcommands": {
+    "propose": {
+      "description": "Propose a new admin for the treasury",
+      "parameters": [
+        {
+          "name": "address",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "Treasury contract address"
+        },
+        {
+          "name": "action",
+          "type": "enum",
+          "required": true,
+          "enum": ["propose", "accept", "cancel"],
+          "description": "Admin action to perform"
+        },
+        {
+          "name": "new-admin",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "New admin address",
+          "depends_on": {
+            "parameter": "action",
+            "values": ["propose"]
+          }
+        },
+        {
+          "name": "network",
+          "type": "enum",
+          "required": false,
+          "enum": ["local", "testnet", "mainnet"],
+          "default": "testnet",
+          "description": "Network to use"
+        }
+      ]
+    },
+    "accept": {
+      "description": "Accept admin role (called by pending admin)",
+      "parameters": [
+        {
+          "name": "address",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "Treasury contract address"
+        },
+        {
+          "name": "action",
+          "type": "enum",
+          "required": true,
+          "enum": ["propose", "accept", "cancel"],
+          "description": "Admin action to perform"
+        },
+        {
+          "name": "network",
+          "type": "enum",
+          "required": false,
+          "enum": ["local", "testnet", "mainnet"],
+          "default": "testnet",
+          "description": "Network to use"
+        }
+      ]
+    },
+    "cancel": {
+      "description": "Cancel proposed admin",
+      "parameters": [
+        {
+          "name": "address",
+          "type": "string",
+          "required": true,
+          "format": "xion-address",
+          "description": "Treasury contract address"
+        },
+        {
+          "name": "action",
+          "type": "enum",
+          "required": true,
+          "enum": ["propose", "accept", "cancel"],
+          "description": "Admin action to perform"
+        },
+        {
+          "name": "network",
+          "type": "enum",
+          "required": false,
+          "enum": ["local", "testnet", "mainnet"],
+          "default": "testnet",
+          "description": "Network to use"
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "description": "Propose new admin",
+      "params": {
+        "address": "xion1abc...",
+        "action": "propose",
+        "new-admin": "xion1newadmin..."
+      }
+    },
+    {
+      "description": "Accept admin role",
+      "params": {
+        "address": "xion1abc...",
+        "action": "accept"
+      }
+    },
+    {
+      "description": "Cancel proposed admin",
+      "params": {
+        "address": "xion1abc...",
+        "action": "cancel"
+      }
+    }
+  ]
+}

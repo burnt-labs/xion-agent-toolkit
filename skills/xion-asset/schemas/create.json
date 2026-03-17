@@ -1,0 +1,68 @@
+{
+  "command": "create",
+  "description": "Create a new NFT collection",
+  "parameters": [
+    {
+      "name": "type",
+      "type": "enum",
+      "required": true,
+      "enum": ["cw721-base", "cw721-metadata-onchain", "cw721-expiration", "cw721-non-transferable", "cw2981-royalties"],
+      "description": "NFT contract type"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "required": true,
+      "description": "Collection name"
+    },
+    {
+      "name": "symbol",
+      "type": "string",
+      "required": true,
+      "description": "Collection symbol (e.g., NFT)"
+    },
+    {
+      "name": "minter",
+      "type": "string",
+      "required": false,
+      "format": "xion-address",
+      "description": "Minter address (defaults to creator)"
+    },
+    {
+      "name": "salt",
+      "type": "string",
+      "required": false,
+      "description": "Unique salt for predictable address (use with predict command)"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "prerequisites": [
+    "Must be authenticated (use xion-oauth2 skill first)"
+  ],
+  "examples": [
+    {
+      "description": "Create standard NFT collection",
+      "params": {
+        "type": "cw721-base",
+        "name": "My Collection",
+        "symbol": "NFT"
+      }
+    },
+    {
+      "description": "Create collection with predictable address",
+      "params": {
+        "type": "cw721-base",
+        "name": "My Collection",
+        "symbol": "NFT",
+        "salt": "my-unique-salt-123"
+      }
+    }
+  ]
+}

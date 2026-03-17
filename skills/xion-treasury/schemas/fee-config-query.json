@@ -1,0 +1,29 @@
+{
+  "command": "fee-config query",
+  "description": "Query fee allowance configuration for a Treasury",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Query fee configuration",
+      "params": {
+        "address": "xion1abc..."
+      }
+    }
+  ]
+}

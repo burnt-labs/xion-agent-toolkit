@@ -258,3 +258,97 @@ xion-toolkit treasury list --no-cache
 
 - Skill Version: 1.2.0
 - Compatible CLI Version: >=0.1.0
+
+## Parameter Collection Workflow
+
+Before executing any command, ensure all required parameters are collected.
+
+### Step 1: Identify Operation
+Determine which operation the user wants to perform.
+
+### Step 2: Check Parameter Schema
+Refer to the `schemas/` directory for detailed parameter definitions.
+
+### Step 3: Collect Missing Parameters
+Collect ALL missing required parameters in a SINGLE interaction:
+
+> Example for grant-config add:
+> "I need the following to configure the grant:
+> - Treasury address
+> - Grant type (send, contract-execution, etc.)
+> - If send: spend limit (e.g., 1000000uxion)
+> - If contract-execution: target contract address"
+
+### Step 4: Confirm Before Execution
+```
+Will execute: grant-config add
+├─ Address: xion1abc...
+├─ Type: /cosmos.bank.v1beta1.MsgSend
+├─ Auth Type: send
+└─ Spend Limit: 1000000uxion
+Confirm? [y/n]
+```
+
+## Parameter Schemas
+
+See `schemas/` directory for detailed parameter definitions:
+
+| Schema File | Command | Description |
+|-------------|---------|-------------|
+| `grant-config-add.json` | `grant-config add` | Add authz grant |
+| `grant-config-remove.json` | `grant-config remove` | Remove authz grant |
+| `grant-config-list.json` | `grant-config list` | List authz grants |
+| `fee-config-set.json` | `fee-config set` | Set fee allowance |
+| `fee-config-query.json` | `fee-config query` | Query fee config |
+| `fee-config-remove.json` | `fee-config remove` | Remove fee config |
+| `fund.json` | `fund` | Fund treasury |
+| `withdraw.json` | `withdraw` | Withdraw from treasury |
+| `create.json` | `create` | Create treasury |
+| `query.json` | `query` | Query treasury |
+| `list.json` | `list` | List treasuries |
+| `admin.json` | `admin` | Admin operations |
+| `update-params.json` | `update-params` | Update parameters |
+| `export.json` | `export` | Export configuration |
+| `import.json` | `import` | Import configuration |
+
+### Quick Parameter Reference
+
+#### grant-config add
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `address` | Yes | Treasury address |
+| `type-url` | Yes* | Message type URL |
+| `auth-type` | Yes* | Authorization type |
+| `description` | Yes | Grant description |
+| `preset` | No | Shortcut for common types |
+| `spend-limit` | Conditional | Required for send auth |
+| `contract` | Conditional | Required for contract-execution |
+| `network` | No | Network (default: testnet) |
+
+*Required unless using `preset`
+
+#### fee-config set
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `address` | Yes | Treasury address |
+| `config` | Yes | JSON config file |
+| `network` | No | Network (default: testnet) |
+
+#### create
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `name` | Yes* | Treasury name |
+| `config` | Yes* | JSON config file |
+| `redirect-url` | No | OAuth redirect URL |
+| `fee-allowance-type` | No | Fee allowance type |
+| `network` | No | Network (default: testnet) |
+
+*Either `name` or `config` required
+
+## Validation
+
+Use the validation script to check parameters before execution:
+
+```bash
+./skills/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1abc...", "preset": "send"}'
+```

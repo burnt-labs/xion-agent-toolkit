@@ -1,0 +1,71 @@
+{
+  "command": "batch-mint",
+  "description": "Batch mint multiple NFT tokens from a JSON file",
+  "parameters": [
+    {
+      "name": "contract",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "NFT contract address"
+    },
+    {
+      "name": "tokens-file",
+      "type": "file",
+      "required": true,
+      "description": "JSON file with token array"
+    },
+    {
+      "name": "asset-type",
+      "type": "enum",
+      "required": false,
+      "default": "cw721-base",
+      "enum": ["cw721-base", "cw721-metadata-onchain", "cw721-expiration", "cw721-non-transferable", "cw2981-royalties"],
+      "description": "Asset type for minting"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "tokens_file_schema": {
+    "description": "JSON array of token objects",
+    "fields": [
+      {
+        "name": "token_id",
+        "type": "string",
+        "required": true,
+        "description": "Unique token ID"
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "required": true,
+        "description": "Token owner address"
+      },
+      {
+        "name": "token_uri",
+        "type": "string",
+        "required": false,
+        "description": "Token metadata URI"
+      }
+    ]
+  },
+  "examples": [
+    {
+      "description": "Batch mint from file",
+      "params": {
+        "contract": "xion1abc...",
+        "tokens-file": "tokens.json"
+      },
+      "tokens_file_content": [
+        {"token_id": "1", "owner": "xion1abc...", "token_uri": "ipfs://QmHash1"},
+        {"token_id": "2", "owner": "xion1def...", "token_uri": "ipfs://QmHash2"}
+      ]
+    }
+  ]
+}

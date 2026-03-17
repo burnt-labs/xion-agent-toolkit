@@ -1,0 +1,29 @@
+{
+  "command": "grant-config list",
+  "description": "List all authz grants for a Treasury",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "examples": [
+    {
+      "description": "List all grants for a treasury",
+      "params": {
+        "address": "xion1abc..."
+      }
+    }
+  ]
+}

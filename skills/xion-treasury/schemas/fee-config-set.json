@@ -1,0 +1,69 @@
+{
+  "command": "fee-config set",
+  "description": "Set fee allowance for a Treasury",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address"
+    },
+    {
+      "name": "config",
+      "type": "file",
+      "required": true,
+      "description": "JSON configuration file with fee allowance settings"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "config_schema": {
+    "basic": {
+      "spend_limit": "string (required) - e.g., '1000000uxion'",
+      "description": "string (optional) - fee allowance description"
+    },
+    "periodic": {
+      "basic_spend_limit": "string (required) - overall spend limit",
+      "period_seconds": "integer (required) - period duration in seconds",
+      "period_spend_limit": "string (required) - spend limit per period",
+      "description": "string (optional) - fee allowance description"
+    }
+  },
+  "examples": [
+    {
+      "description": "Set basic fee allowance",
+      "params": {
+        "address": "xion1abc...",
+        "config": "fee-config.json"
+      },
+      "config_content": {
+        "basic": {
+          "spend_limit": "1000000uxion",
+          "description": "Basic fee allowance"
+        }
+      }
+    },
+    {
+      "description": "Set periodic fee allowance (daily)",
+      "params": {
+        "address": "xion1abc...",
+        "config": "fee-config.json"
+      },
+      "config_content": {
+        "periodic": {
+          "basic_spend_limit": "10000000uxion",
+          "period_seconds": 86400,
+          "period_spend_limit": "1000000uxion",
+          "description": "Daily allowance"
+        }
+      }
+    }
+  ]
+}

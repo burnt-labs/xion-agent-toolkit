@@ -99,6 +99,20 @@
       "updated_at": "2026-03-16",
       "done_at": "2026-03-16",
       "notes": "QC issues fixed: proper error handling. All validation passed."
+    },
+    {
+      "id": "skill-param-validation",
+      "title": "Skill Parameter Validation Framework",
+      "file": "plans/skill-param-validation.md",
+      "status": "InReview",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
+      "tags": ["skill", "ux", "validation", "agent-experience"],
+      "created_at": "2026-03-17",
+      "updated_at": "2026-03-17",
+      "done_at": "",
+      "notes": "QC-2/QC-3 cross-review fixes applied: IS_CONDITIONAL variable bug, invalid preset detection, enum value validation, conditionally required parameters, create.json validation rules, AGENTS.md known limitations."
     }
   ],
   "_notes": {

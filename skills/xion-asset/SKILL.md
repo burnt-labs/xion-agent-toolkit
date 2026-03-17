@@ -190,3 +190,96 @@ All commands return JSON:
 
 - Skill Version: 1.0.0
 - Compatible CLI Version: >=0.1.0
+
+## Parameter Collection Workflow
+
+Before executing any command, ensure all required parameters are collected.
+
+### Step 1: Identify Operation
+Determine which operation the user wants to perform (types, create, mint, predict, batch-mint, query).
+
+### Step 2: Check Parameter Schema
+Refer to the `schemas/` directory for detailed parameter definitions.
+
+### Step 3: Collect Missing Parameters
+Collect ALL missing required parameters in a SINGLE interaction:
+
+> Example for mint:
+> "I need the following to mint an NFT:
+> - Contract address
+> - Token ID (unique identifier)
+> - Owner address (who will own the NFT)
+> - (Optional) Token URI for metadata"
+
+### Step 4: Confirm Before Execution
+```
+Will execute: mint
+├─ Contract: xion1abc...
+├─ Token ID: 1
+├─ Owner: xion1owner...
+└─ Token URI: ipfs://QmHash...
+Confirm? [y/n]
+```
+
+## Parameter Schemas
+
+See `schemas/` directory for detailed parameter definitions:
+
+| Schema File | Command | Description |
+|-------------|---------|-------------|
+| `types.json` | `types` | List NFT types |
+| `create.json` | `create` | Create collection |
+| `mint.json` | `mint` | Mint NFT token |
+| `predict.json` | `predict` | Predict address |
+| `batch-mint.json` | `batch-mint` | Batch mint from file |
+| `query.json` | `query` | Query contract |
+
+### Quick Parameter Reference
+
+#### create
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `type` | Yes | NFT type (cw721-base, cw2981-royalties, etc.) |
+| `name` | Yes | Collection name |
+| `symbol` | Yes | Collection symbol |
+| `minter` | No | Minter address |
+| `salt` | No | Unique salt for predictable address |
+
+#### mint
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `contract` | Yes | NFT contract address |
+| `token-id` | Yes | Unique token ID |
+| `owner` | Yes | Token owner address |
+| `token-uri` | No | Metadata URI |
+| `asset-type` | No | Asset type (default: cw721-base) |
+| `royalty-address` | Conditional | Required for cw2981-royalties |
+| `royalty-percentage` | Conditional | Required for cw2981-royalties |
+| `expires-at` | Conditional | Required for cw721-expiration |
+
+#### predict
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `type` | Yes | NFT type |
+| `name` | Yes | Collection name |
+| `symbol` | Yes | Collection symbol |
+| `salt` | Yes | Unique salt |
+| `minter` | No | Minter address |
+
+### Asset Types
+
+| Type | Code ID | Features |
+|------|---------|----------|
+| `cw721-base` | 522 | Standard NFT |
+| `cw721-metadata-onchain` | 525 | On-chain metadata |
+| `cw721-expiration` | 523 | Time-based expiry |
+| `cw721-non-transferable` | 526 | Soulbound NFT |
+| `cw2981-royalties` | 528 | Royalties at mint time |
+
+## Validation
+
+Use the validation script to check parameters before execution:
+
+```bash
+./skills/scripts/validate-params.sh xion-asset mint '{"contract": "xion1abc...", "token-id": "1", "owner": "xion1owner..."}'
+```

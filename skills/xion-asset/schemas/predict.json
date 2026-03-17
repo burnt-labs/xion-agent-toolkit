@@ -1,0 +1,61 @@
+{
+  "command": "predict",
+  "description": "Predict contract address before deployment",
+  "parameters": [
+    {
+      "name": "type",
+      "type": "enum",
+      "required": true,
+      "enum": ["cw721-base", "cw721-metadata-onchain", "cw721-expiration", "cw721-non-transferable", "cw2981-royalties"],
+      "description": "NFT contract type"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "required": true,
+      "description": "Collection name"
+    },
+    {
+      "name": "symbol",
+      "type": "string",
+      "required": true,
+      "description": "Collection symbol"
+    },
+    {
+      "name": "salt",
+      "type": "string",
+      "required": true,
+      "description": "Unique salt for address prediction"
+    },
+    {
+      "name": "minter",
+      "type": "string",
+      "required": false,
+      "format": "xion-address",
+      "description": "Minter address"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "notes": [
+    "The salt must be unique for each deployment",
+    "Use the same parameters with create command to deploy to predicted address"
+  ],
+  "examples": [
+    {
+      "description": "Predict contract address",
+      "params": {
+        "type": "cw721-base",
+        "name": "My Collection",
+        "symbol": "NFT",
+        "salt": "my-unique-salt-123"
+      }
+    }
+  ]
+}

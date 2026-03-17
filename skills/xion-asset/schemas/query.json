@@ -1,0 +1,65 @@
+{
+  "command": "query",
+  "description": "Query NFT contract",
+  "parameters": [
+    {
+      "name": "contract",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "NFT contract address"
+    },
+    {
+      "name": "msg",
+      "type": "json",
+      "required": true,
+      "description": "Query message as JSON string"
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "common_queries": [
+    {
+      "name": "nft_info",
+      "msg": {"nft_info": {"token_id": "1"}},
+      "description": "Get NFT info for a token"
+    },
+    {
+      "name": "all_tokens",
+      "msg": {"all_tokens": {}},
+      "description": "Get all token IDs"
+    },
+    {
+      "name": "owner_of",
+      "msg": {"owner_of": {"token_id": "1"}},
+      "description": "Get owner of a token"
+    },
+    {
+      "name": "contract_info",
+      "msg": {"contract_info": {}},
+      "description": "Get contract info"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Get NFT info",
+      "params": {
+        "contract": "xion1abc...",
+        "msg": "{\"nft_info\": {\"token_id\": \"1\"}}"
+      }
+    },
+    {
+      "description": "Get all tokens",
+      "params": {
+        "contract": "xion1abc...",
+        "msg": "{\"all_tokens\": {}}"
+      }
+    }
+  ]
+}

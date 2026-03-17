@@ -290,6 +290,73 @@ which xion-toolkit
 - Skill Version: 1.1.0
 - Compatible CLI Version: >=0.1.0
 
+## Parameter Collection Workflow
+
+Before executing any command, ensure all required parameters are collected.
+
+### Step 1: Identify Operation
+Determine which operation the user wants to perform (login, status, logout, refresh).
+
+### Step 2: Check Parameter Schema
+Refer to the `schemas/` directory for detailed parameter definitions.
+
+### Step 3: Collect Missing Parameters
+Most OAuth2 commands have minimal or no required parameters:
+
+> Example for login:
+> "I'll initiate the OAuth2 login flow. A browser will open for authorization. Ready? [y/n]"
+
+### Step 4: Confirm Before Execution
+```
+Will execute: login
+├─ Network: testnet
+├─ Port: 54321 (default)
+└─ Opens browser for authorization
+Confirm? [y/n]
+```
+
+## Parameter Schemas
+
+See `schemas/` directory for detailed parameter definitions:
+
+| Schema File | Command | Description |
+|-------------|---------|-------------|
+| `login.json` | `login` | OAuth2 login |
+| `status.json` | `status` | Check auth status |
+| `logout.json` | `logout` | Clear credentials |
+| `refresh.json` | `refresh` | Refresh token |
+
+### Quick Parameter Reference
+
+#### login
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `port` | No | Callback server port (default: 54321) |
+| `network` | No | Network (default: testnet) |
+
+#### status
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `network` | No | Network to check (default: testnet) |
+
+#### logout
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `network` | No | Network to logout from (default: testnet) |
+
+#### refresh
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `network` | No | Network to refresh (default: testnet) |
+
+## Validation
+
+Use the validation script to check parameters before execution:
+
+```bash
+./skills/scripts/validate-params.sh xion-oauth2 login '{}'
+```
+
 ## License
 
 MIT License - See main project LICENSE file
