@@ -334,20 +334,28 @@ See `schemas/` directory for detailed parameter definitions:
 | `port` | No | Callback server port (default: 54321) |
 | `network` | No | Network (default: testnet) |
 
+> **Note**: See `schemas/login.json` for complete parameter list including conditional parameters.
+
 #### status
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `network` | No | Network to check (default: testnet) |
+
+> **Note**: See `schemas/status.json` for complete parameter list including conditional parameters.
 
 #### logout
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `network` | No | Network to logout from (default: testnet) |
 
+> **Note**: See `schemas/logout.json` for complete parameter list including conditional parameters.
+
 #### refresh
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `network` | No | Network to refresh (default: testnet) |
+
+> **Note**: See `schemas/refresh.json` for complete parameter list including conditional parameters.
 
 ## Validation
 

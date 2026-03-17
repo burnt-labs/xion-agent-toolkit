@@ -245,6 +245,8 @@ See `schemas/` directory for detailed parameter definitions:
 | `minter` | No | Minter address |
 | `salt` | No | Unique salt for predictable address |
 
+> **Note**: See `schemas/create.json` for complete parameter list including conditional parameters.
+
 #### mint
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -257,6 +259,22 @@ See `schemas/` directory for detailed parameter definitions:
 | `royalty-percentage` | Conditional | Required for cw2981-royalties |
 | `expires-at` | Conditional | Required for cw721-expiration |
 
+> **Note**: See `schemas/mint.json` for complete parameter list including conditional parameters.
+
+> **Conditional Parameters**:
+> - Default `asset-type` is `cw721-base`
+> - `royalty-address`/`royalty-percentage`: Required for `cw2981-royalties`
+> - `expires-at`: Required for `cw721-expiration`
+
+#### batch-mint
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `contract` | Yes | NFT contract address |
+| `tokens-file` | Yes | JSON file with token data |
+| `network` | No | Network (default: testnet) |
+
+> **Note**: See `schemas/batch-mint.json` for complete parameter list including conditional parameters.
+
 #### predict
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -265,6 +283,8 @@ See `schemas/` directory for detailed parameter definitions:
 | `symbol` | Yes | Collection symbol |
 | `salt` | Yes | Unique salt |
 | `minter` | No | Minter address |
+
+> **Note**: See `schemas/predict.json` for complete parameter list including conditional parameters.
 
 ### Asset Types
 

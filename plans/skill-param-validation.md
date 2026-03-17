@@ -272,3 +272,57 @@ Update each SKILL.md to include:
 ./skills/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1test", "preset": "send", "spend-limit": "1000000uxion", "description": "test"}'
 # Output: {"valid": true, "missing": [], "errors": []}
 ```
+
+## Documentation Fixes (2026-03-17) - QC Warning Fixes
+
+Fixed non-blocking warnings in SKILL.md files:
+
+### W-003: Quick Reference Table Notes
+
+Added schema reference notes after all Quick Parameter Reference tables:
+
+| Skill | Tables Updated |
+|-------|----------------|
+| xion-treasury | grant-config add, fee-config set, create |
+| xion-asset | create, mint, predict, batch-mint (new) |
+| xion-oauth2 | login, status, logout, refresh |
+
+### W-004: Default Values Display
+
+Updated Description column to include "(default: X)" for parameters with defaults:
+
+| Skill | Parameters Updated |
+|-------|-------------------|
+| xion-treasury | `network` (default: testnet) in all tables |
+| xion-asset | `asset-type` (default: cw721-base) in mint table |
+| xion-oauth2 | `port` (default: 54321), `network` (default: testnet) |
+
+### W-008: Asset Mint Conditional Parameters
+
+Added conditional parameters documentation in xion-asset/SKILL.md:
+
+```markdown
+> **Conditional Parameters**:
+> - Default `asset-type` is `cw721-base`
+> - `royalty-address`/`royalty-percentage`: Required for `cw2981-royalties`
+> - `expires-at`: Required for `cw721-expiration`
+```
+
+### Batch-Mint Quick Reference Added
+
+Added new Quick Reference table for batch-mint command in xion-asset/SKILL.md:
+
+```markdown
+#### batch-mint
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `contract` | Yes | NFT contract address |
+| `tokens-file` | Yes | JSON file with token data |
+| `network` | No | Network (default: testnet) |
+```
+
+### Files Modified
+
+- `skills/xion-treasury/SKILL.md` - 3 tables updated with notes
+- `skills/xion-asset/SKILL.md` - 4 tables updated, conditional params note added
+- `skills/xion-oauth2/SKILL.md` - 4 tables updated with notes

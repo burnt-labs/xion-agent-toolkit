@@ -327,12 +327,16 @@ See `schemas/` directory for detailed parameter definitions:
 
 *Required unless using `preset`
 
+> **Note**: See `schemas/grant-config-add.json` for complete parameter list including conditional parameters.
+
 #### fee-config set
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `address` | Yes | Treasury address |
 | `config` | Yes | JSON config file |
 | `network` | No | Network (default: testnet) |
+
+> **Note**: See `schemas/fee-config-set.json` for complete parameter list including conditional parameters.
 
 #### create
 | Parameter | Required | Description |
@@ -344,6 +348,8 @@ See `schemas/` directory for detailed parameter definitions:
 | `network` | No | Network (default: testnet) |
 
 *Either `name` or `config` required
+
+> **Note**: See `schemas/create.json` for complete parameter list including conditional parameters.
 
 ## Validation
 
