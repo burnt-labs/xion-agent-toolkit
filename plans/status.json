@@ -104,15 +104,15 @@
       "id": "skill-param-validation",
       "title": "Skill Parameter Validation Framework",
       "file": "plans/skill-param-validation.md",
-      "status": "InReview",
+      "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
       "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
       "tags": ["skill", "ux", "validation", "agent-experience"],
       "created_at": "2026-03-17",
       "updated_at": "2026-03-17",
-      "done_at": "",
-      "notes": "QC Round 2 complete. Fixed: C-001/C-002 (notes+validation_rules props in AGENTS.md), W-001/W-002 (admin.json redundant action param, required/depends_on conflict). SKILL.md docs fixed: W-003 (schema notes), W-004 (default values), W-008 (conditional params), batch-mint table added."
+      "done_at": "2026-03-17",
+      "notes": "QA SIGN-OFF: All 5 validation tests passed, 25 schemas verified, all QC issues fixed. Ready for production use."
     }
   ],
   "_notes": {
