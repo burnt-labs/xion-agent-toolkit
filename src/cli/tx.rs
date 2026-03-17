@@ -9,9 +9,10 @@ use tracing::info;
 use crate::cli::ExecuteContext;
 use crate::config::ConfigManager;
 use crate::shared::error::{TxError, XionError};
+use crate::shared::exit_codes::exit_code;
 use crate::tx::TxClient;
 use crate::tx::TxStatus;
-use crate::utils::output::{print_error_response, print_formatted, print_info};
+use crate::utils::output::{print_formatted, print_info};
 
 #[derive(Subcommand)]
 pub enum TxCommands {
@@ -78,8 +79,7 @@ async fn handle_status(hash: String, ctx: &ExecuteContext) -> Result<()> {
             info!("Failed to query transaction: {}", e);
             let tx_error = TxError::QueryFailed(e.to_string());
             let xion_error: XionError = tx_error.into();
-            print_error_response(&xion_error)?;
-            std::process::exit(1);
+            Err(xion_error.into())
         }
     }
 }
@@ -134,12 +134,12 @@ async fn handle_wait(
                         }
                     }
                     print_formatted(&result, ctx.output_format())?;
-                    std::process::exit(1);
+                    std::process::exit(exit_code::TX_WAIT_FAILED);
                 }
                 TxStatus::Timeout => {
                     eprintln!("[INFO] Timeout waiting for transaction confirmation");
                     print_formatted(&result, ctx.output_format())?;
-                    std::process::exit(1);
+                    std::process::exit(exit_code::TX_TIMEOUT);
                 }
                 _ => print_formatted(&result, ctx.output_format()),
             }
@@ -148,8 +148,7 @@ async fn handle_wait(
             info!("Failed to wait for transaction: {}", e);
             let tx_error = TxError::WaitFailed(e.to_string());
             let xion_error: XionError = tx_error.into();
-            print_error_response(&xion_error)?;
-            std::process::exit(1);
+            Err(xion_error.into())
         }
     }
 }

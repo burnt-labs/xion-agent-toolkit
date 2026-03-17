@@ -63,6 +63,8 @@ pub enum XionErrorCode {
     ETREASURY008,
     /// Treasury already exists
     ETREASURY009,
+    /// Missing authorization input
+    ETREASURY010,
 
     // ========================================================================
     // Asset Builder Errors (EASSET001-EASSET099)
@@ -158,6 +160,7 @@ impl XionErrorCode {
             XionErrorCode::ETREASURY007 => "Fee config not found",
             XionErrorCode::ETREASURY008 => "Not authorized for treasury operation",
             XionErrorCode::ETREASURY009 => "Treasury already exists",
+            XionErrorCode::ETREASURY010 => "Missing authorization input for grant config",
 
             // Asset Builder
             XionErrorCode::EASSET001 => "Invalid metadata",
@@ -224,6 +227,9 @@ impl XionErrorCode {
             }
             XionErrorCode::ETREASURY008 => "Ensure you are the admin of this treasury",
             XionErrorCode::ETREASURY009 => "Use a different salt or address for the new treasury",
+            XionErrorCode::ETREASURY010 => {
+                "Ensure grant config has authorization_input when importing"
+            }
 
             // Asset Builder
             XionErrorCode::EASSET001 => "Check JSON structure against schema",
@@ -297,7 +303,8 @@ impl XionErrorCode {
             | XionErrorCode::ETREASURY006
             | XionErrorCode::ETREASURY007
             | XionErrorCode::ETREASURY008
-            | XionErrorCode::ETREASURY009 => "TREASURY",
+            | XionErrorCode::ETREASURY009
+            | XionErrorCode::ETREASURY010 => "TREASURY",
             XionErrorCode::EASSET001
             | XionErrorCode::EASSET002
             | XionErrorCode::EASSET003
@@ -606,6 +613,9 @@ pub enum TreasuryError {
 
     #[error("Treasury already exists: {0}")]
     AlreadyExists(String),
+
+    #[error("Missing authorization input for grant config: {0}")]
+    MissingAuthorizationInput(String),
 }
 
 impl TreasuryError {
@@ -620,6 +630,7 @@ impl TreasuryError {
             TreasuryError::FeeConfigNotFound(_) => XionErrorCode::ETREASURY007,
             TreasuryError::NotAuthorized(_) => XionErrorCode::ETREASURY008,
             TreasuryError::AlreadyExists(_) => XionErrorCode::ETREASURY009,
+            TreasuryError::MissingAuthorizationInput(_) => XionErrorCode::ETREASURY010,
         }
     }
 

@@ -20,14 +20,23 @@ done
 
 # Validate required args
 if [[ -z "$CONTRACT" ]] || [[ -z "$TOKENS_FILE" ]]; then
-    echo '{"success": false, "error": "Missing required args: --contract, --tokens-file", "error_code": "MISSING_ARGS"}' >&2
+    echo '{"success": false, "error": "Missing required args: --contract, --tokens-file", "error_code": "MISSING_ARGS"}'
     exit 1
 fi
 
 # Check file exists
 if [[ ! -f "$TOKENS_FILE" ]]; then
-    echo "{\"success\": false, \"error\": \"Tokens file not found: $TOKENS_FILE\", \"error_code\": \"FILE_NOT_FOUND\"}" >&2
+    echo "{\"success\": false, \"error\": \"Tokens file not found: $TOKENS_FILE\", \"error_code\": \"FILE_NOT_FOUND\"}"
     exit 1
 fi
 
-xion-toolkit asset batch-mint --contract "$CONTRACT" --tokens-file "$TOKENS_FILE" --asset-type "$ASSET_TYPE" --output json
+# Execute command and capture output
+OUTPUT=$(xion-toolkit asset batch-mint --contract "$CONTRACT" --tokens-file "$TOKENS_FILE" --asset-type "$ASSET_TYPE" --output json 2>&1)
+EXIT_CODE=$?
+
+# Output result and propagate exit code
+if [[ $EXIT_CODE -ne 0 ]]; then
+    echo "$OUTPUT"
+    exit $EXIT_CODE
+fi
+echo "$OUTPUT"

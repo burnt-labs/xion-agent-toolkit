@@ -949,6 +949,28 @@ impl TreasuryApiClient {
     ) -> XionResult<super::types::CreateTreasuryResult> {
         debug!("Creating treasury with code ID: {}", treasury_code_id);
 
+        // CRITICAL: Compute predicted instantiate2 address BEFORE broadcasting
+        // This allows us to verify the correct treasury is returned
+        let code_info = self.get_code_info(treasury_code_id).await?;
+        let checksum_bytes = hex::decode(&code_info.checksum).map_err(|e| {
+            TreasuryError::OperationFailed(format!("Failed to decode checksum: {}", e))
+        })?;
+
+        let predicted_address = crate::shared::instantiate2::compute_address(
+            &request.admin,
+            treasury_code_id,
+            salt,
+            &checksum_bytes,
+        )
+        .map_err(|e| {
+            TreasuryError::OperationFailed(format!("Failed to compute predicted address: {}", e))
+        })?;
+
+        debug!(
+            "Predicted treasury address (instantiate2): {}",
+            predicted_address
+        );
+
         // Build the instantiation message
         let instantiate_msg = build_treasury_instantiate_msg(&request)?;
 
@@ -971,9 +993,9 @@ impl TreasuryApiClient {
 
         debug!("Treasury creation transaction broadcast: {}", tx_hash);
 
-        // Wait for the treasury to be indexed and return the actual address
+        // Wait for the treasury to be indexed and verify it matches the predicted address
         let treasury_address = self
-            .wait_for_treasury_creation(access_token, &request.admin, &tx_hash)
+            .wait_for_treasury_creation(access_token, &predicted_address, &tx_hash)
             .await?;
 
         Ok(super::types::CreateTreasuryResult {
@@ -987,26 +1009,30 @@ impl TreasuryApiClient {
     /// Wait for treasury creation to be indexed
     ///
     /// Polls the DaoDao Indexer to find the newly created treasury.
-    /// Returns the first treasury found (assumed to be the newest one).
+    /// Validates that the returned treasury matches the expected instantiate2 address.
     ///
     /// # Arguments
     /// * `access_token` - Valid OAuth2 access token
-    /// * `_admin_address` - Unused (kept for API compatibility)
+    /// * `expected_address` - The predicted instantiate2 address to verify
     /// * `tx_hash` - Transaction hash for error reporting
     ///
     /// # Returns
-    /// The treasury address if found within timeout
+    /// The treasury address if found and verified within timeout
     ///
     /// # Errors
     /// Returns an error with the tx_hash if the treasury is not found within the timeout period
+    /// or if the found treasury doesn't match the expected address
     #[instrument(skip(self, access_token))]
     async fn wait_for_treasury_creation(
         &self,
         access_token: &str,
-        _admin_address: &str,
+        expected_address: &str,
         tx_hash: &str,
     ) -> XionResult<String> {
-        debug!("Waiting for treasury creation to be indexed");
+        debug!(
+            "Waiting for treasury creation to be indexed (expected: {})",
+            expected_address
+        );
 
         // Initial delay to allow indexing
         sleep(Duration::from_secs(DEFAULT_POLL_DELAY_SECS)).await;
@@ -1019,7 +1045,7 @@ impl TreasuryApiClient {
             if start_time.elapsed() >= timeout {
                 return Err(TreasuryError::OperationFailed(format!(
                     "Treasury creation timed out after {} seconds. Transaction was broadcast successfully (tx_hash: {}). \
-                     The treasury may still be created. Check the transaction status manually or wait a few moments and list your treasuries.",
+                      The treasury may still be created. Check the transaction status manually or wait a few moments and list your treasuries.",
                     DEFAULT_POLL_TIMEOUT_SECS,
                     tx_hash
                 ))
@@ -1029,18 +1055,20 @@ impl TreasuryApiClient {
             // List treasuries and look for the newly created one
             match self.list_treasuries(access_token).await {
                 Ok(treasuries) => {
-                    // The newest treasury should be at the top of the list (most recent first)
-                    // Since DaoDao Indexer doesn't return admin, we return the first treasury
-                    // that has code_id matching our treasury code (1260)
-                    if let Some(treasury) = treasuries.first() {
+                    // CRITICAL: Verify the treasury matches our expected instantiate2 address
+                    // This prevents race conditions where another treasury might be returned
+                    if let Some(treasury) =
+                        treasuries.iter().find(|t| t.address == expected_address)
+                    {
                         debug!(
-                            "Found treasury: {} (assuming it's the newly created one)",
+                            "Found and verified treasury: {} (matches predicted instantiate2 address)",
                             treasury.address
                         );
                         return Ok(treasury.address.clone());
                     }
                     debug!(
-                        "No treasuries found yet, retrying... ({}/{}s elapsed)",
+                        "Treasury {} not yet indexed, retrying... ({}/{}s elapsed)",
+                        expected_address,
                         start_time.elapsed().as_secs(),
                         DEFAULT_POLL_TIMEOUT_SECS
                     );
@@ -2456,7 +2484,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_wait_for_treasury_creation_success() {
-        // This test verifies the polling mechanism finds the treasury
+        // This test verifies the polling mechanism finds and verifies the treasury
         let mock_server = MockServer::start().await;
 
         let admin_address = "xion1admin123";
@@ -2465,7 +2493,7 @@ mod tests {
         // Create a token with admin address as userId
         let token = format!("{}:grant123:secret456", admin_address);
 
-        // Mock the DaoDao indexer endpoint - return treasury with matching admin
+        // Mock the DaoDao indexer endpoint - return treasury with matching address
         // Using the actual DaoDao Indexer format (direct array)
         Mock::given(method("GET"))
             .and(path_regex(
@@ -2487,9 +2515,9 @@ mod tests {
             "https://rpc.test.com:443".to_string(),
         );
 
-        // Call the wait_for_treasury_creation method
+        // Call the wait_for_treasury_creation method with expected address
         let result = client
-            .wait_for_treasury_creation(&token, admin_address, "tx123")
+            .wait_for_treasury_creation(&token, treasury_address, "tx123")
             .await;
 
         assert!(result.is_ok());
@@ -2498,31 +2526,31 @@ mod tests {
 
     #[tokio::test]
     async fn test_wait_for_treasury_creation_multiple_treasuries() {
-        // Test that it returns the first treasury (newest one from indexer)
-        // DaoDao Indexer returns treasuries sorted by block height (newest first)
+        // Test that it finds and verifies the correct treasury by matching expected address
+        // This ensures we don't return the wrong treasury in a race condition
         let mock_server = MockServer::start().await;
 
         let admin_address = "xion1admin999";
-        let treasury_address = "xion1treasury999";
+        let expected_treasury_address = "xion1treasury999";
 
         // Create a token with admin address as userId
         let token = format!("{}:grant123:secret456", admin_address);
 
-        // Mock returning multiple treasuries - newest one first
-        // Using the actual DaoDao Indexer format (direct array)
+        // Mock returning multiple treasuries - with expected one NOT first
+        // This tests that we find the correct treasury by address, not just first
         Mock::given(method("GET"))
             .and(path_regex(
                 r"/contract/xion1admin999/xion/account/treasuries",
             ))
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([
                 {
-                    "contractAddress": treasury_address,
-                    "balances": {"uxion": "0"},
+                    "contractAddress": "xion1older1",
+                    "balances": {"uxion": "1000"},
                     "codeId": 1260
                 },
                 {
-                    "contractAddress": "xion1older1",
-                    "balances": {"uxion": "1000"},
+                    "contractAddress": expected_treasury_address,
+                    "balances": {"uxion": "0"},
                     "codeId": 1260
                 },
                 {
@@ -2540,13 +2568,14 @@ mod tests {
             "https://rpc.test.com:443".to_string(),
         );
 
+        // Call with the expected address - should find it even though it's not first
         let result = client
-            .wait_for_treasury_creation(&token, admin_address, "tx456")
+            .wait_for_treasury_creation(&token, expected_treasury_address, "tx456")
             .await;
 
         assert!(result.is_ok());
-        // Returns the first treasury (newest one)
-        assert_eq!(result.unwrap(), treasury_address);
+        // Returns the treasury matching expected address
+        assert_eq!(result.unwrap(), expected_treasury_address);
     }
 
     #[test]
