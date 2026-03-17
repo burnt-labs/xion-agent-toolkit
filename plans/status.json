@@ -112,7 +112,7 @@
       "created_at": "2026-03-17",
       "updated_at": "2026-03-17",
       "done_at": "",
-      "notes": "QC-2/QC-3 cross-review fixes applied: IS_CONDITIONAL variable bug, invalid preset detection, enum value validation, conditionally required parameters, create.json validation rules, AGENTS.md known limitations."
+      "notes": "QC Round 2 complete. Fixed: C-001/C-002 (notes+validation_rules props in AGENTS.md), W-001/W-002 (admin.json redundant action param, required/depends_on conflict). Remaining warnings are non-blocking documentation improvements."
     }
   ],
   "_notes": {
