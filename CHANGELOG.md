@@ -5,6 +5,62 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.7.0...0.8.0) (2026-03-17)
+
+
+### Features
+
+* **cli:** add --install flag for shell completion auto-installation ([c569813](https://github.com/burnt-labs/xion-agent-toolkit/commit/c56981339754871f3e30b7e76abb89a6d369469a))
+* **cli:** add CI/CD integration output formats ([559c48f](https://github.com/burnt-labs/xion-agent-toolkit/commit/559c48f7bd7d3f2e36ff84cd78d86faad40c56bd))
+* **cli:** add shell completion support ([98cef04](https://github.com/burnt-labs/xion-agent-toolkit/commit/98cef046bd820c8814cd46a3ac1841fb5c62e726))
+* **cli:** add shell completion support with --install flag ([9edbb94](https://github.com/burnt-labs/xion-agent-toolkit/commit/9edbb948ab9cbdab9d44cb4e7513184b6c21b83a))
+* **error:** complete error recovery enhancement ([3d3b739](https://github.com/burnt-labs/xion-agent-toolkit/commit/3d3b739a4ac8d3bd737da249b2ad22685c83ea1d))
+* Phase 2 & Phase 3 - CI/CD Output, Predicted Address, Batch Treasury Ops ([bcc2fc9](https://github.com/burnt-labs/xion-agent-toolkit/commit/bcc2fc921ea23c6e4038031c4a8cd3736d4b8f74))
+* **phase2:** implement error recovery and transaction monitoring ([12c0173](https://github.com/burnt-labs/xion-agent-toolkit/commit/12c0173228dc5c0f69ed9b71e34f9bcd5c944716))
+* **phase3:** add Predicted Address Computation and Batch Treasury Operations ([101cafa](https://github.com/burnt-labs/xion-agent-toolkit/commit/101cafaa3589cc865a6c7321ca01bae74a54cbb8))
+* **skills:** add parameter validation framework for AI agents ([d2b08c6](https://github.com/burnt-labs/xion-agent-toolkit/commit/d2b08c6798e5ef937636afaacae0e3d173afb8ab))
+* **skills:** add parameter validation framework for AI agents ([5a796d9](https://github.com/burnt-labs/xion-agent-toolkit/commit/5a796d9ed36d55f419b5d1ef7bccf8fba4cfe252))
+* **tests:** Add mock data and skill test scripts for Skills Test Framework ([b10c525](https://github.com/burnt-labs/xion-agent-toolkit/commit/b10c5259d0950d81cd73a88f1f1de0739f7e45df))
+* **tests:** add Skills Test Framework ([a289992](https://github.com/burnt-labs/xion-agent-toolkit/commit/a289992e49ba0e2cc6875c6ed2a53150df848d6e))
+
+
+### Bug Fixes
+
+* **ci:** use absolute path for xion-toolkit symlink ([d92b79b](https://github.com/burnt-labs/xion-agent-toolkit/commit/d92b79bddb0858fea996fe2d04414845f398a353))
+* **lint:** resolve shellcheck warnings in run_all.sh ([ca200c5](https://github.com/burnt-labs/xion-agent-toolkit/commit/ca200c52045ff5d83fa5274cc5ec7fb9c3266169))
+* **qc:** complete P1 and P2 issue fixes ([d166c61](https://github.com/burnt-labs/xion-agent-toolkit/commit/d166c61021947ea2c417b0e2a7480318e4814728))
+* **qc:** resolve all issues from QC cross-review (P0-P3) ([30f06b6](https://github.com/burnt-labs/xion-agent-toolkit/commit/30f06b615587a794878a60064536b76f4b028fd4))
+* **qc:** resolve all P3 low-priority issues from cross-review ([0c3fb15](https://github.com/burnt-labs/xion-agent-toolkit/commit/0c3fb15270baef59d31de4906742d4019bf040a4))
+* **qc:** resolve critical issues from cross-review ([66d3615](https://github.com/burnt-labs/xion-agent-toolkit/commit/66d36154296ded80661821f85c7abb6f04640d69))
+* **skills:** resolve non-blocking QC warnings ([f0586c8](https://github.com/burnt-labs/xion-agent-toolkit/commit/f0586c8c66c0cc8a29231414e1024aea061f1a4c))
+* **skills:** resolve QC critical issues ([866e8e3](https://github.com/burnt-labs/xion-agent-toolkit/commit/866e8e390dc6fc059ed064de5a75a863c0eda666))
+* **tx:** address QC review critical issues ([5e9370b](https://github.com/burnt-labs/xion-agent-toolkit/commit/5e9370b1aefb8df1dc19b57134aee843d883bfa7))
+
+
+### Refactoring
+
+* **ci:** merge workflows into unified ci.yml ([c543e9c](https://github.com/burnt-labs/xion-agent-toolkit/commit/c543e9c672c7d36b50e3d63b5f20d6c3c37232d3))
+* **ci:** separate E2E tests, reorganize workflows ([e76a61e](https://github.com/burnt-labs/xion-agent-toolkit/commit/e76a61e965f85157cb412c46d466a0cc00031cce))
+* **ci:** test-skills.yml build xion-toolkit locally ([957f810](https://github.com/burnt-labs/xion-agent-toolkit/commit/957f810a513f2f5e60cdac4c362bc83251ff3bbd))
+* **ci:** test-skills.yml download binary from CI with fallback ([f995cb7](https://github.com/burnt-labs/xion-agent-toolkit/commit/f995cb7d584ba0831c0bf3a9e285adc681c20e1d))
+
+
+### Documentation
+
+* **contributing:** add shell completion setup tip ([e77c5fc](https://github.com/burnt-labs/xion-agent-toolkit/commit/e77c5fcbdb95bb073b87968378cc765bf7dba998))
+* **CONTRIBUTING:** enhance contribution guidelines and documentation structure ([4ac23a5](https://github.com/burnt-labs/xion-agent-toolkit/commit/4ac23a5cb28df78433576ef19832518879d9d0cd))
+* **phase2:** complete Phase 2 P1 documentation ([94ede50](https://github.com/burnt-labs/xion-agent-toolkit/commit/94ede5051c9d061774bd1e203c05dbecb8562ef5))
+* **plans:** add Phase 2 P1 development plans ([a89ad87](https://github.com/burnt-labs/xion-agent-toolkit/commit/a89ad879e48340ae213066837bb9e95f3542dfaf))
+* **plans:** complete Phase 2 with Skills Test Framework ([06ea47f](https://github.com/burnt-labs/xion-agent-toolkit/commit/06ea47febab677a591502f8669acf8e52fbe2b50))
+* **plans:** update Phase 2 status - P1 features complete ([5395eac](https://github.com/burnt-labs/xion-agent-toolkit/commit/5395eac492e84abfa29efcb6f879d2aa3cf74371))
+* **plans:** update status - tx monitoring in review ([5ace516](https://github.com/burnt-labs/xion-agent-toolkit/commit/5ace5161ec65404913245ebf50886f651878106d))
+* **plan:** Update skill-param-validation checklist - QA SIGN-OFF ([a1d9de1](https://github.com/burnt-labs/xion-agent-toolkit/commit/a1d9de11df39ba3639f36b985caa27c9b015eefb))
+* **readme:** restructure for human users ([61c1ad7](https://github.com/burnt-labs/xion-agent-toolkit/commit/61c1ad7a941064d13f267021f2006ed91ee097a1))
+* simplify shell completion section in README and QUICK-REFERENCE ([eb00706](https://github.com/burnt-labs/xion-agent-toolkit/commit/eb007061a7ae9bc6ae15a84267af6312faa4d15c))
+* **skill:** Fix SKILL.md Quick Reference warnings ([0a00526](https://github.com/burnt-labs/xion-agent-toolkit/commit/0a0052607aac3dd8641dcac4b9978056aa862517))
+* update documentation for Phase 2 and Phase 3 features ([82f5826](https://github.com/burnt-labs/xion-agent-toolkit/commit/82f5826cb96a6112f3d15fc81d457ea9af2257f5))
+* update plan status with QC round 2 results ([097f76d](https://github.com/burnt-labs/xion-agent-toolkit/commit/097f76d1dba31dc3ee2a2edddc67dd62d1894168))
+
 ## [0.7.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.6.0...0.7.0) (2026-03-14)
 
 
