@@ -172,6 +172,8 @@ skills/xion-treasury/schemas/
 | `default` | any | ❌ | Default value |
 | `depends_on` | object | ❌ | Conditional requirement |
 | `conflicts_with` | array | ❌ | Mutually exclusive parameters |
+| `notes` | array | ❌ | Helpful notes for AI agents (e.g., unit conversions, important caveats) |
+| `validation_rules` | array | ❌ | Array of strings documenting complex validation logic that cannot be expressed in schema |
 
 #### Dependency Rules
 

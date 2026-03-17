@@ -13,22 +13,12 @@
           "description": "Treasury contract address"
         },
         {
-          "name": "action",
-          "type": "enum",
-          "required": true,
-          "enum": ["propose", "accept", "cancel"],
-          "description": "Admin action to perform"
-        },
-        {
           "name": "new-admin",
           "type": "string",
-          "required": true,
+          "required": false,
           "format": "xion-address",
           "description": "New admin address",
-          "depends_on": {
-            "parameter": "action",
-            "values": ["propose"]
-          }
+          "notes": ["Required for propose action - the address that will become the new admin"]
         },
         {
           "name": "network",
@@ -51,13 +41,6 @@
           "description": "Treasury contract address"
         },
         {
-          "name": "action",
-          "type": "enum",
-          "required": true,
-          "enum": ["propose", "accept", "cancel"],
-          "description": "Admin action to perform"
-        },
-        {
           "name": "network",
           "type": "enum",
           "required": false,
@@ -78,13 +61,6 @@
           "description": "Treasury contract address"
         },
         {
-          "name": "action",
-          "type": "enum",
-          "required": true,
-          "enum": ["propose", "accept", "cancel"],
-          "description": "Admin action to perform"
-        },
-        {
           "name": "network",
           "type": "enum",
           "required": false,
@@ -100,22 +76,19 @@
       "description": "Propose new admin",
       "params": {
         "address": "xion1abc...",
-        "action": "propose",
         "new-admin": "xion1newadmin..."
       }
     },
     {
       "description": "Accept admin role",
       "params": {
-        "address": "xion1abc...",
-        "action": "accept"
+        "address": "xion1abc..."
       }
     },
     {
       "description": "Cancel proposed admin",
       "params": {
-        "address": "xion1abc...",
-        "action": "cancel"
+        "address": "xion1abc..."
       }
     }
   ]
