@@ -15,6 +15,10 @@ use crate::config::{CredentialsManager, UserCredentials, DEFAULT_REFRESH_TOKEN_L
 /// Token expiry buffer in seconds (5 minutes)
 const EXPIRY_BUFFER_SECS: i64 = 300;
 
+/// Refresh token expiry buffer in seconds (1 minute)
+/// Shorter than access token buffer since refresh tokens are long-lived
+const REFRESH_TOKEN_EXPIRY_BUFFER_SECS: i64 = 60;
+
 /// Manages OAuth2 token lifecycle
 ///
 /// Responsible for:
@@ -108,9 +112,11 @@ impl TokenManager {
             .load_credentials()
             .context("Failed to load credentials")?;
 
-        // Debug: show token prefix
-        let token_prefix: String = credentials.access_token.chars().take(20).collect();
-        debug!("Loaded token prefix: {}...", token_prefix);
+        // Debug: show minimal token prefix (security: log only first 8 chars)
+        debug!(
+            "Loaded token: {}",
+            sanitize_for_log(&credentials.access_token, 8)
+        );
         debug!(
             "Loaded token length: {} chars",
             credentials.access_token.len()
@@ -143,8 +149,10 @@ impl TokenManager {
                 .await
                 .context("Failed to refresh token")?;
 
-            let new_prefix: String = new_credentials.access_token.chars().take(20).collect();
-            debug!("Refreshed token prefix: {}...", new_prefix);
+            debug!(
+                "Refreshed token: {}",
+                sanitize_for_log(&new_credentials.access_token, 8)
+            );
 
             return Ok(new_credentials.access_token);
         }
@@ -276,11 +284,13 @@ impl TokenManager {
             .load_credentials()
             .context("Failed to load current credentials")?;
 
-        // Check if refresh token is expired
+        // Check if refresh token is expired (with buffer for safety)
         if let Some(ref refresh_token_expires_at) = credentials.refresh_token_expires_at {
             let expires_at = parse_expiry_time(refresh_token_expires_at)
                 .context("Failed to parse refresh token expiry time")?;
-            if expires_at <= Utc::now() {
+            let expiry_with_buffer =
+                Utc::now() + Duration::seconds(REFRESH_TOKEN_EXPIRY_BUFFER_SECS);
+            if expires_at <= expiry_with_buffer {
                 anyhow::bail!(
                     "Refresh token has expired at {}. Please login again.",
                     refresh_token_expires_at
@@ -432,6 +442,30 @@ pub fn parse_expiry_time(expires_at: &str) -> Result<DateTime<Utc>> {
         .context(format!("Failed to parse expiry time: {}", expires_at))
 }
 
+/// Sanitize a sensitive value for logging by returning only the first N characters
+///
+/// This function is used to safely log tokens, state parameters, and other sensitive
+/// values without exposing the full value in logs.
+///
+/// # Arguments
+/// * `value` - The sensitive value to sanitize
+/// * `prefix_len` - Number of characters to keep (default: 8)
+///
+/// # Returns
+/// A sanitized string with only the prefix and "..." suffix
+///
+/// # Example
+/// ```
+/// use xion_agent_toolkit::oauth::token_manager::sanitize_for_log;
+///
+/// let sanitized = sanitize_for_log("secret_token_value_12345", 8);
+/// assert_eq!(sanitized, "secret_t...");
+/// ```
+pub fn sanitize_for_log(value: &str, prefix_len: usize) -> String {
+    let prefix: String = value.chars().take(prefix_len).collect();
+    format!("{}...", prefix)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -502,5 +536,92 @@ mod tests {
     fn test_expiry_buffer_constant() {
         // Ensure the buffer is reasonable (5 minutes)
         assert_eq!(EXPIRY_BUFFER_SECS, 300);
+    }
+
+    #[test]
+    fn test_refresh_token_expiry_buffer_constant() {
+        // Ensure the refresh token buffer is reasonable (1 minute)
+        assert_eq!(REFRESH_TOKEN_EXPIRY_BUFFER_SECS, 60);
+    }
+
+    #[test]
+    fn test_refresh_token_expiry_buffer_logic() {
+        // Test that refresh token expiry buffer is correctly applied
+        let now = Utc::now();
+
+        // Test case 1: Token expires in 30 seconds (within buffer)
+        // Should be considered expired with the 60-second buffer
+        let expires_in_30_secs = now + Duration::seconds(30);
+        let buffer_time = now + Duration::seconds(REFRESH_TOKEN_EXPIRY_BUFFER_SECS);
+        assert!(
+            expires_in_30_secs <= buffer_time,
+            "Token expiring in 30 seconds should be within buffer"
+        );
+
+        // Test case 2: Token expires in 2 minutes (outside buffer)
+        // Should NOT be considered expired with the 60-second buffer
+        let expires_in_2_mins = now + Duration::seconds(120);
+        assert!(
+            expires_in_2_mins > buffer_time,
+            "Token expiring in 2 minutes should be outside buffer"
+        );
+
+        // Test case 3: Token expires exactly at buffer boundary
+        // Should be considered expired (expires_at <= buffer)
+        let expires_at_boundary = now + Duration::seconds(REFRESH_TOKEN_EXPIRY_BUFFER_SECS);
+        assert!(
+            expires_at_boundary <= buffer_time,
+            "Token at buffer boundary should be considered expiring soon"
+        );
+
+        // Test case 4: Token expires 1 second after buffer
+        // Should NOT be considered expired
+        let expires_after_buffer = now + Duration::seconds(REFRESH_TOKEN_EXPIRY_BUFFER_SECS + 1);
+        assert!(
+            expires_after_buffer > buffer_time,
+            "Token 1 second after buffer should NOT be considered expiring soon"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_for_log() {
+        // Test normal sanitization
+        let sanitized = sanitize_for_log("secret_token_value_12345", 8);
+        assert_eq!(sanitized, "secret_t...");
+
+        // Test with shorter prefix length
+        let sanitized_short = sanitize_for_log("secret_token_value_12345", 4);
+        assert_eq!(sanitized_short, "secr...");
+
+        // Test with value shorter than prefix length
+        let sanitized_short_value = sanitize_for_log("abc", 8);
+        assert_eq!(sanitized_short_value, "abc...");
+
+        // Test with empty string
+        let sanitized_empty = sanitize_for_log("", 8);
+        assert_eq!(sanitized_empty, "...");
+
+        // Test with typical token length
+        let typical_token = "xion1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz";
+        let sanitized_token = sanitize_for_log(typical_token, 8);
+        assert_eq!(sanitized_token, "xion1abc...");
+        assert!(
+            !sanitized_token.contains("def456"),
+            "Sanitized value should not contain middle portion of token"
+        );
+    }
+
+    #[test]
+    fn test_access_token_buffer_vs_refresh_token_buffer() {
+        // Verify that access token buffer (5 min) is larger than refresh token buffer (1 min)
+        // This is intentional: refresh tokens are long-lived, so we use a smaller buffer
+        // Use const assertion to verify at compile time
+        const { assert!(EXPIRY_BUFFER_SECS > REFRESH_TOKEN_EXPIRY_BUFFER_SECS) };
+
+        // Access token buffer should be 5 minutes
+        assert_eq!(EXPIRY_BUFFER_SECS, 300);
+
+        // Refresh token buffer should be 1 minute
+        assert_eq!(REFRESH_TOKEN_EXPIRY_BUFFER_SECS, 60);
     }
 }

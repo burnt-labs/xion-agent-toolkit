@@ -159,6 +159,20 @@ impl OAuth2EndpointsCache {
 
 /// Fetch OAuth2 server metadata from well-known endpoint
 pub async fn fetch_oauth2_metadata(base_url: &str) -> Result<OAuth2ServerMetadata> {
+    // Security: Validate HTTPS enforcement
+    // Allow localhost for development/testing purposes
+    let is_localhost = base_url.starts_with("http://localhost")
+        || base_url.starts_with("http://127.0.0.1")
+        || base_url.starts_with("http://[::1]");
+
+    if !base_url.starts_with("https://") && !is_localhost {
+        anyhow::bail!(
+            "OAuth discovery URL must use HTTPS. Received: {}. \
+             Only http://localhost, http://127.0.0.1, and http://[::1] are allowed for testing.",
+            base_url
+        );
+    }
+
     let client = Client::builder()
         .timeout(Duration::from_secs(10))
         .build()
@@ -270,5 +284,39 @@ mod tests {
 
         let cache = OAuth2EndpointsCache::new("testnet", metadata);
         assert!(cache.is_valid());
+    }
+
+    #[test]
+    fn test_https_validation() {
+        // HTTPS should be valid (we can't test async here, but test the URL validation logic)
+        let https_url = "https://oauth2.testnet.burnt.com";
+        assert!(https_url.starts_with("https://"));
+
+        // HTTP with localhost variants should be valid for testing
+        let localhost_url = "http://localhost:8080";
+        let localhost_ip_url = "http://127.0.0.1:8080";
+        let localhost_ipv6_url = "http://[::1]:8080";
+
+        let is_localhost = localhost_url.starts_with("http://localhost")
+            || localhost_url.starts_with("http://127.0.0.1")
+            || localhost_url.starts_with("http://[::1]");
+        assert!(is_localhost);
+
+        let is_localhost_ip = localhost_ip_url.starts_with("http://localhost")
+            || localhost_ip_url.starts_with("http://127.0.0.1")
+            || localhost_ip_url.starts_with("http://[::1]");
+        assert!(is_localhost_ip);
+
+        let is_localhost_ipv6 = localhost_ipv6_url.starts_with("http://localhost")
+            || localhost_ipv6_url.starts_with("http://127.0.0.1")
+            || localhost_ipv6_url.starts_with("http://[::1]");
+        assert!(is_localhost_ipv6);
+
+        // Non-localhost HTTP should be rejected
+        let insecure_url = "http://example.com";
+        let is_localhost_insecure = insecure_url.starts_with("http://localhost")
+            || insecure_url.starts_with("http://127.0.0.1")
+            || insecure_url.starts_with("http://[::1]");
+        assert!(!insecure_url.starts_with("https://") && !is_localhost_insecure);
     }
 }

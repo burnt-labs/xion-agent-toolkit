@@ -110,7 +110,7 @@ impl CallbackServer {
     /// 2. Waits for a callback to /callback endpoint
     /// 3. Validates the state parameter
     /// 4. Returns the authorization code or error
-    /// 5. Shuts down the server
+    /// 5. Shuts down the server gracefully
     ///
     /// # Arguments
     /// * `expected_state` - The state parameter to validate against
@@ -132,6 +132,9 @@ impl CallbackServer {
         // Create oneshot channel for communication
         let (tx, rx) = oneshot::channel();
 
+        // Create shutdown signal channel for graceful shutdown
+        let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
+
         // Create shared state
         let state = Arc::new(CallbackState {
             expected_state: expected_state.to_string(),
@@ -151,25 +154,40 @@ impl CallbackServer {
 
         tracing::info!("Callback server listening on {}", addr);
 
+        // Create graceful shutdown signal
+        let shutdown_signal = async {
+            // Wait for shutdown signal (either timeout or manual trigger)
+            let _ = shutdown_rx.await;
+        };
+
+        // Run server with graceful shutdown support
+        let server = axum::serve(listener, app).with_graceful_shutdown(shutdown_signal);
+
         // Run server with timeout
         tokio::select! {
-            // Server task
-            result = axum::serve(listener, app) => {
+            // Server task (will exit when shutdown signal is received)
+            result = server => {
                 match result {
                     Ok(()) => {
-                        // Server closed normally
-                        Err(CallbackError::ServerError(
-                            "Server closed without receiving callback".to_string()
-                        ))
+                        // Server closed normally (via shutdown signal or callback handler)
+                        tracing::info!("Server shut down gracefully");
                     }
                     Err(e) => {
-                        Err(CallbackError::ServerError(e.to_string()))
+                        tracing::error!("Server error: {}", e);
+                        return Err(CallbackError::ServerError(e.to_string()));
                     }
                 }
+                // After server exits, check if we received a result
+                // The rx might have been used already if callback was received
+                Err(CallbackError::ServerError(
+                    "Server closed without receiving callback".to_string()
+                ))
             }
 
             // Wait for callback result
             result = rx => {
+                // Trigger graceful shutdown
+                let _ = shutdown_tx.send(());
                 match result {
                     Ok(Ok(code)) => {
                         tracing::info!("Received authorization code successfully");
@@ -190,6 +208,12 @@ impl CallbackServer {
             // Timeout
             _ = tokio::time::sleep(Duration::from_secs(timeout_secs)) => {
                 tracing::warn!("Callback server timeout after {} seconds", timeout_secs);
+                // Trigger graceful shutdown
+                let _ = shutdown_tx.send(());
+                // Wait for server to actually stop (with a small grace period)
+                // This ensures the port is released before returning
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                tracing::info!("Callback server shutdown complete after timeout");
                 Err(CallbackError::Timeout(timeout_secs))
             }
         }
@@ -210,17 +234,18 @@ async fn handle_callback(
     State(state): State<Arc<CallbackState>>,
 ) -> impl IntoResponse {
     // Log only a prefix of the state for debugging (security: don't log full state)
-    let state_prefix: String = params.state.chars().take(8).collect();
-    tracing::info!("Received callback with state prefix: {}...", state_prefix);
+    tracing::info!(
+        "Received callback with state: {}",
+        sanitize_state_for_log(&params.state, 8)
+    );
 
     // Validate state parameter
     if params.state != state.expected_state {
         // Security: Log only prefixes, never full state values
-        let expected_prefix: String = state.expected_state.chars().take(8).collect();
         tracing::warn!(
-            "State mismatch: expected {}..., got {}...",
-            expected_prefix,
-            state_prefix
+            "State mismatch: expected {}, got {}",
+            sanitize_state_for_log(&state.expected_state, 8),
+            sanitize_state_for_log(&params.state, 8)
         );
 
         let error = CallbackError::StateMismatch;
@@ -268,6 +293,30 @@ async fn handle_callback(
     )
 }
 
+/// Sanitize a state parameter for logging by returning only the first N characters
+///
+/// This function is used to safely log state parameters without exposing the full
+/// value in logs, which could aid CSRF attacks if logs are compromised.
+///
+/// # Arguments
+/// * `state` - The state parameter to sanitize
+/// * `prefix_len` - Number of characters to keep (default: 8)
+///
+/// # Returns
+/// A sanitized string with only the prefix and "..." suffix
+///
+/// # Example
+/// ```
+/// use xion_agent_toolkit::oauth::callback_server::sanitize_state_for_log;
+///
+/// let sanitized = sanitize_state_for_log("abcdefghijklmnopqrstuvwxyz1234567890", 8);
+/// assert_eq!(sanitized, "abcdefgh...");
+/// ```
+pub fn sanitize_state_for_log(state: &str, prefix_len: usize) -> String {
+    let prefix: String = state.chars().take(prefix_len).collect();
+    format!("{}...", prefix)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -313,5 +362,66 @@ mod tests {
             error_description: Some("User denied access".to_string()),
         };
         assert!(error.to_string().contains("access_denied"));
+    }
+
+    #[test]
+    fn test_sanitize_state_for_log() {
+        // Test normal sanitization
+        let state = "abcdefghijklmnopqrstuvwxyz1234567890";
+        let sanitized = sanitize_state_for_log(state, 8);
+        assert_eq!(sanitized, "abcdefgh...");
+
+        // Verify the full state is NOT present in sanitized output
+        assert!(!sanitized.contains("ijklmnop"));
+
+        // Test with shorter prefix length
+        let sanitized_short = sanitize_state_for_log(state, 4);
+        assert_eq!(sanitized_short, "abcd...");
+
+        // Test with value shorter than prefix length
+        let short_state = "xyz";
+        let sanitized_short_value = sanitize_state_for_log(short_state, 8);
+        assert_eq!(sanitized_short_value, "xyz...");
+
+        // Test with empty string
+        let sanitized_empty = sanitize_state_for_log("", 8);
+        assert_eq!(sanitized_empty, "...");
+
+        // Test with typical state parameter (64 hex chars)
+        let typical_state = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+        let sanitized_state = sanitize_state_for_log(typical_state, 8);
+        assert_eq!(sanitized_state, "a1b2c3d4...");
+        assert!(
+            !sanitized_state.contains("e5f6"),
+            "Sanitized state should not contain middle portion"
+        );
+    }
+
+    #[test]
+    fn test_state_sanitization_security() {
+        // Verify that sanitization prevents full state exposure
+        let sensitive_state = "supersecretstatevalue123456789abcdefghijklmnop";
+        let sanitized = sanitize_state_for_log(sensitive_state, 8);
+
+        // The sanitized output should NOT contain the sensitive parts
+        assert!(!sanitized.contains("secret"));
+        assert!(!sanitized.contains("value"));
+        assert!(!sanitized.contains("123456789"));
+
+        // Only the first 8 chars should be present
+        assert!(sanitized.starts_with("supersec"));
+    }
+
+    #[test]
+    fn test_callback_error_no_state_disclosure() {
+        // Verify that CallbackError::StateMismatch does not expose state values
+        let error = CallbackError::StateMismatch;
+        let error_string = error.to_string();
+
+        // The error message should not contain any state value
+        // It should only say "State parameter mismatch - possible CSRF attack"
+        assert!(error_string.contains("State parameter mismatch"));
+        assert!(!error_string.contains("secret"));
+        assert!(!error_string.contains("value"));
     }
 }

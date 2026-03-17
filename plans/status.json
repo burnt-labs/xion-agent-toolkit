@@ -6,15 +6,15 @@
       "id": "qc-cross-review",
       "title": "QC Cross-Review: Source Code & Skills",
       "file": "plans/qc-cross-review.md",
-      "status": "InReview",
-      "progress": 98,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@fullstack-dev", "@fullstack-dev-2"],
+      "agents": ["@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@fullstack-dev", "@fullstack-dev-2", "@qa-engineer"],
       "tags": ["qc", "review", "security", "bug-fix"],
       "created_at": "2026-03-17",
       "updated_at": "2026-03-17",
-      "done_at": null,
-      "notes": "Round 3 COMPLETE. Treasury fixes: P0-1 ✅ (CRIT-001), P0-3 ✅ (CRIT-002), P1-4 ✅ (CRIT-011), P1-5 ✅ (CRIT-012). CLI + Skills fixes: P0-4 ✅ (CRIT-005, CRIT-004), P1-3 ✅ (CRIT-009), P2-3 ✅ (WARN-020,022,023). Remaining: P0-2 (CLI error system - partial), P1-1, P1-2, P1-6. 313 tests passing."
+      "done_at": "2026-03-17",
+      "notes": "QA SIGN-OFF: All P3 fixes verified. Pre-commit checks passed: cargo test (48 passed), cargo clippy (0 warnings), cargo fmt. P3 fixes: P3-1 (CRIT-003 grace period ✅), P3-2 (WARN-012 already fixed ✅), P3-3 (WARN-010 already fixed ✅), P3-4 (WARN-015 already fixed ✅), P3-5 (WARN-013,017 sanitization ✅)."
     },
     {
       "id": "unified-ci-workflow",

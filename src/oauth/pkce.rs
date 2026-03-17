@@ -73,6 +73,9 @@ impl PKCEChallenge {
 /// Creates a 43-character cryptographically random string
 /// using the unreserved characters: [A-Z] [a-z] [0-9] - . _ ~
 ///
+/// Uses rejection sampling to ensure uniform distribution of characters,
+/// avoiding the modulo bias that would otherwise occur.
+///
 /// # Returns
 /// A 43-character random string suitable for PKCE verifier
 pub fn generate_pkce_verifier() -> Result<String, PKCEError> {
@@ -85,19 +88,40 @@ pub fn generate_pkce_verifier() -> Result<String, PKCEError> {
         b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
 
     let mut rng = rand::thread_rng();
-    let mut bytes = [0u8; 64]; // More bytes than needed to ensure uniform distribution
-    rng.fill_bytes(&mut bytes);
+    let mut verifier = String::with_capacity(VERIFIER_LENGTH);
 
-    let verifier: String = bytes
-        .iter()
-        .take(VERIFIER_LENGTH)
-        .map(|&b| {
-            let index = (b as usize) % UNRESERVED_CHARS.len();
-            UNRESERVED_CHARS[index] as char
-        })
-        .collect();
+    for _ in 0..VERIFIER_LENGTH {
+        verifier.push(select_uniform_char(&mut rng, UNRESERVED_CHARS) as char);
+    }
 
     Ok(verifier)
+}
+
+/// Select a uniformly random character from the given character set.
+///
+/// Uses rejection sampling to avoid modulo bias. When using modulo,
+/// characters would not be uniformly distributed if the character set size
+/// doesn't evenly divide 256.
+///
+/// For example, with 66 characters: 256 % 66 = 58, so characters 0-57 would
+/// appear 4 times in the mapping (0, 66, 132, 198) while characters 58-65
+/// would only appear 3 times, creating a ~33% bias.
+///
+/// Rejection sampling discards values that would cause bias and retries,
+/// ensuring each character has equal probability of being selected.
+fn select_uniform_char(rng: &mut impl RngCore, chars: &[u8]) -> u8 {
+    // Calculate the threshold: largest multiple of chars.len() <= 256
+    // Values >= threshold would cause bias if used with modulo
+    let threshold = (u8::MAX as usize + 1) - (u8::MAX as usize + 1) % chars.len();
+
+    loop {
+        let b = rng.next_u32() as u8;
+        // Accept only values below threshold to ensure uniform distribution
+        if (b as usize) < threshold {
+            return chars[(b as usize) % chars.len()];
+        }
+        // Reject values that would cause bias and retry
+    }
 }
 
 /// Generate a PKCE code challenge from a verifier
