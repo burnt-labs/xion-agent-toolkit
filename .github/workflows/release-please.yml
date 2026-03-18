@@ -41,9 +41,9 @@ jobs:
       - name: Get version from manifest
         id: version
         run: |
-          VERSION=$(cat .release-please-manifest.json | jq -r '."."')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          VERSION="$(jq -r '"."' < .release-please-manifest.json)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
 
   # When draft:true, release-please creates draft release but NO tag
   # We manually create the tag here, then trigger release.yml to upload artifacts
@@ -52,7 +52,7 @@ jobs:
   # 2. Author is github-actions[bot] (ensures it's from release-please, not manual)
   trigger-dist:
     needs: release-please
-    if: ${{ startsWith(github.event.head_commit.message, 'chore(main): release') && github.event.head_commit.author.username == 'github-actions[bot]' }}
+    if: "${{ startsWith(github.event.head_commit.message, 'chore(main): release') && github.event.head_commit.author.username == 'github-actions[bot]' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,10 +63,10 @@ jobs:
         id: check-tag
         run: |
           TAG="${{ needs.release-please.outputs.version }}"
-          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create tag
