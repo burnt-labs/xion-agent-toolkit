@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
+* **ci:** fix release-please workflow errors ([#36](https://github.com/burnt-labs/xion-agent-toolkit/issues/36)) ([9efc27f](https://github.com/burnt-labs/xion-agent-toolkit/commit/9efc27f3247371bc7921523bb99eb41e1697f8de))
+* **ci:** quote if expression to fix YAML parsing ([ea09b4d](https://github.com/burnt-labs/xion-agent-toolkit/commit/ea09b4d230bd201fd23d12748c2a611542cc940b))
+* **ci:** quote if expression to fix YAML parsing ([5752b40](https://github.com/burnt-labs/xion-agent-toolkit/commit/5752b40ad68d0532970f81eb78da0b81910f62bd))
+* release workflow and CI improvements ([1e9aad1](https://github.com/burnt-labs/xion-agent-toolkit/commit/1e9aad15d8401229edd9f34872073458c3811315))
+* **release:** downgrade version to 0.8.1 in manifest and configuration files ([#38](https://github.com/burnt-labs/xion-agent-toolkit/issues/38)) ([851107b](https://github.com/burnt-labs/xion-agent-toolkit/commit/851107b41dc3526b8aaebcb32d596cb076caad85))
+* **release:** manually create git tag when draft:true ([#34](https://github.com/burnt-labs/xion-agent-toolkit/issues/34)) ([5ffc915](https://github.com/burnt-labs/xion-agent-toolkit/commit/5ffc9158a2108bac5adddd3d53b083f1fb5e7194))
+* **release:** set draft=true to support immutable releases ([8556889](https://github.com/burnt-labs/xion-agent-toolkit/commit/855688923cd9b38decf6a2efb2b049068d23a357))
+
+
+### Chores
+
+* **ci:** skip CI for release-please automated commits ([a8c5ddf](https://github.com/burnt-labs/xion-agent-toolkit/commit/a8c5ddfd0beac3005724c082aa4eb46c7d6fa110))
+* **main:** release 0.8.2 ([#31](https://github.com/burnt-labs/xion-agent-toolkit/issues/31)) ([e7cbf59](https://github.com/burnt-labs/xion-agent-toolkit/commit/e7cbf59a63a45e7d5d0f5d512da81a16bbac6fcd))
+
+## [0.8.2](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.1...0.8.2) (2026-03-18)
+
+
+### Bug Fixes
+
 * **ci:** quote if expression to fix YAML parsing ([ea09b4d](https://github.com/burnt-labs/xion-agent-toolkit/commit/ea09b4d230bd201fd23d12748c2a611542cc940b))
 * **ci:** quote if expression to fix YAML parsing ([5752b40](https://github.com/burnt-labs/xion-agent-toolkit/commit/5752b40ad68d0532970f81eb78da0b81910f62bd))
 * release workflow and CI improvements ([1e9aad1](https://github.com/burnt-labs/xion-agent-toolkit/commit/1e9aad15d8401229edd9f34872073458c3811315))
