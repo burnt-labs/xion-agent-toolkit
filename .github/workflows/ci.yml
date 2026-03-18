@@ -14,9 +14,14 @@ env:
 
 jobs:
   # ===========================================================================
-  # Base Jobs (parallel)
+  # Skip CI for release-please automated commits
+  # When a release-please PR is merged, it creates a commit with message
+  # "chore(main): release X.Y.Z". This commit only updates version/changelog,
+  # and the subsequent release.yml will handle the actual build.
   # ===========================================================================
   test:
+    # Skip push events where the commit message starts with "chore(main): release"
+    if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}
     name: Test
     runs-on: ubuntu-latest
     steps:
@@ -47,6 +52,7 @@ jobs:
         run: cargo test --all-features
 
   lint:
+    if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -64,6 +70,7 @@ jobs:
         run: cargo clippy --all-features -- -D warnings
 
   security-audit:
+    if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
@@ -137,6 +144,7 @@ jobs:
           CI: "true"
 
   skills-lint:
+    if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}
     name: Skills Lint
     runs-on: ubuntu-latest
     steps:
