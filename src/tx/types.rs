@@ -159,7 +159,7 @@ impl TxWaitResult {
     }
 }
 
-/// RPC response structure for transaction query
+/// RPC response structure for transaction query (Tendermint RPC format - deprecated)
 #[derive(Debug, Clone, Deserialize)]
 pub struct RpcTxResponse {
     /// Transaction result information
@@ -171,7 +171,7 @@ pub struct RpcTxResponse {
     pub height: Option<String>,
 }
 
-/// RPC transaction result structure
+/// RPC transaction result structure (Tendermint RPC format - deprecated)
 #[derive(Debug, Clone, Deserialize)]
 pub struct RpcTxResult {
     /// Transaction execution code (0 = success)
@@ -188,6 +188,45 @@ pub struct RpcTxResult {
     pub error: Option<String>,
     /// Events emitted during transaction execution
     pub events: Option<Vec<serde_json::Value>>,
+}
+
+/// Cosmos SDK REST API response for transaction query
+/// Endpoint: /cosmos/tx/v1beta1/txs/{hash}
+#[derive(Debug, Clone, Deserialize)]
+pub struct CosmosTxResponse {
+    /// Transaction response data
+    pub tx_response: CosmosTxResponseData,
+}
+
+/// Transaction response data from Cosmos SDK REST API
+#[derive(Debug, Clone, Deserialize)]
+pub struct CosmosTxResponseData {
+    /// Block height where transaction was included
+    pub height: String,
+    /// Transaction hash
+    pub txhash: String,
+    /// Transaction execution code (0 = success)
+    pub code: u32,
+    /// Codespace for error
+    #[serde(default)]
+    pub codespace: String,
+    /// Gas requested
+    #[serde(rename = "gas_wanted")]
+    pub gas_wanted: Option<String>,
+    /// Gas used
+    #[serde(rename = "gas_used")]
+    pub gas_used: Option<String>,
+    /// Timestamp when transaction was included (ISO 8601)
+    pub timestamp: Option<String>,
+    /// Raw log (error message if failed)
+    #[serde(rename = "raw_log", default)]
+    pub raw_log: String,
+    /// Additional info
+    #[serde(default)]
+    pub info: String,
+    /// Events emitted during transaction execution
+    #[serde(default)]
+    pub events: Vec<serde_json::Value>,
 }
 
 /// RPC error response
@@ -350,5 +389,59 @@ mod tests {
         let tx_result = response.tx_result.unwrap();
         assert_eq!(tx_result.code, 5);
         assert_eq!(tx_result.error, Some("insufficient funds".to_string()));
+    }
+
+    #[test]
+    fn test_cosmos_tx_response_deserialization() {
+        let json = r#"{
+            "tx_response": {
+                "height": "13761384",
+                "txhash": "F726C1540C8EB9479A59039329AC92417B961FC0BE750314D162F2AE578BC143",
+                "code": 0,
+                "codespace": "",
+                "gas_wanted": "228641",
+                "gas_used": "191178",
+                "timestamp": "2026-03-18T14:47:00Z",
+                "raw_log": "",
+                "info": "",
+                "events": []
+            }
+        }"#;
+
+        let response: CosmosTxResponse = serde_json::from_str(json).unwrap();
+        assert_eq!(response.tx_response.height, "13761384");
+        assert_eq!(
+            response.tx_response.txhash,
+            "F726C1540C8EB9479A59039329AC92417B961FC0BE750314D162F2AE578BC143"
+        );
+        assert_eq!(response.tx_response.code, 0);
+        assert_eq!(response.tx_response.gas_used, Some("191178".to_string()));
+        assert_eq!(
+            response.tx_response.timestamp,
+            Some("2026-03-18T14:47:00Z".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cosmos_tx_response_failed() {
+        let json = r#"{
+            "tx_response": {
+                "height": "12345678",
+                "txhash": "ABC123DEF456",
+                "code": 5,
+                "codespace": "bank",
+                "gas_wanted": "200000",
+                "gas_used": "50000",
+                "timestamp": "2026-03-18T15:00:00Z",
+                "raw_log": "insufficient funds",
+                "info": "",
+                "events": []
+            }
+        }"#;
+
+        let response: CosmosTxResponse = serde_json::from_str(json).unwrap();
+        assert_eq!(response.tx_response.code, 5);
+        assert_eq!(response.tx_response.codespace, "bank");
+        assert_eq!(response.tx_response.raw_log, "insufficient funds");
     }
 }
