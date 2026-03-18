@@ -49,8 +49,7 @@ jobs:
   # We manually create the tag here, then trigger release.yml to upload artifacts
   trigger-dist:
     needs: release-please
-    # Always run on push to main - we'll check if tag exists
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
