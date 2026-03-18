@@ -1,6 +1,12 @@
 # Release Please workflow
-# Automates version bumps, CHANGELOG updates, and release creation
+# Automates version bumps, CHANGELOG updates, and draft release creation
 # https://github.com/googleapis/release-please-action
+#
+# Flow:
+# 1. release-please creates/updates version PR
+# 2. When PR merged, release-please creates draft release (no tag due to draft:true)
+# 3. trigger-dist manually creates the git tag
+# 4. release.yml uploads artifacts to the draft release
 
 name: Release Please
 
@@ -21,6 +27,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.version.outputs.version }}
     
     steps:
       - name: Release Please
@@ -31,15 +38,49 @@ jobs:
           manifest-file: .release-please-manifest.json
           target-branch: main
 
-  # Dispatch cargo-dist after release-please creates the release
+      - name: Get version from manifest
+        id: version
+        run: |
+          VERSION=$(cat .release-please-manifest.json | jq -r '."."')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+
+  # When draft:true, release-please creates draft release but NO tag
+  # We manually create the tag here, then trigger release.yml to upload artifacts
   trigger-dist:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    # Always run on push to main - we'll check if tag exists
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger cargo-dist release workflow
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag exists
+        id: check-tag
         run: |
-          echo "Release ${{ needs.release-please.outputs.tag_name }} created"
-          gh workflow run "release.yml" --repo "${{ github.repository }}" --ref main -f tag="${{ needs.release-please.outputs.tag_name }}"
+          TAG="${{ needs.release-please.outputs.version }}"
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tag
+        if: ${{ steps.check-tag.outputs.exists == 'false' }}
+        run: |
+          TAG="${{ needs.release-please.outputs.version }}"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Trigger cargo-dist release workflow
+        if: ${{ steps.check-tag.outputs.exists == 'false' }}
+        run: |
+          TAG="${{ needs.release-please.outputs.version }}"
+          echo "Triggering release for tag $TAG"
+          gh workflow run "release.yml" --repo "${{ github.repository }}" --ref main -f tag="$TAG"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
