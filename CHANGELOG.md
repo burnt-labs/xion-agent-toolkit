@@ -5,6 +5,21 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.1...0.8.2) (2026-03-18)
+
+
+### Bug Fixes
+
+* **ci:** quote if expression to fix YAML parsing ([ea09b4d](https://github.com/burnt-labs/xion-agent-toolkit/commit/ea09b4d230bd201fd23d12748c2a611542cc940b))
+* **ci:** quote if expression to fix YAML parsing ([5752b40](https://github.com/burnt-labs/xion-agent-toolkit/commit/5752b40ad68d0532970f81eb78da0b81910f62bd))
+* release workflow and CI improvements ([1e9aad1](https://github.com/burnt-labs/xion-agent-toolkit/commit/1e9aad15d8401229edd9f34872073458c3811315))
+* **release:** set draft=true to support immutable releases ([8556889](https://github.com/burnt-labs/xion-agent-toolkit/commit/855688923cd9b38decf6a2efb2b049068d23a357))
+
+
+### Chores
+
+* **ci:** skip CI for release-please automated commits ([a8c5ddf](https://github.com/burnt-labs/xion-agent-toolkit/commit/a8c5ddfd0beac3005724c082aa4eb46c7d6fa110))
+
 ## [0.8.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.0...0.8.1) (2026-03-18)
 
 
