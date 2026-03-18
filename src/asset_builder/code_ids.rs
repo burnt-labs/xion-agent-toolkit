@@ -140,6 +140,7 @@ mod tests {
             network_name: "testnet".to_string(),
             oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
             rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+            rest_url: "https://api.xion-testnet-2.burnt.com".to_string(),
             chain_id: "xion-testnet-2".to_string(),
             oauth_client_id: "test-client-id".to_string(),
             treasury_code_id: 1260,

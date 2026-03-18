@@ -52,7 +52,7 @@ impl BatchExecutor {
         let api_client = crate::treasury::TreasuryApiClient::new(
             network_config.oauth_api_url.clone(),
             network_config.indexer_url.clone(),
-            network_config.rpc_url.clone(),
+            network_config.rest_url.clone(),
         );
 
         Self {

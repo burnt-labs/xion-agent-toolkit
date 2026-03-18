@@ -148,7 +148,7 @@ async fn handle_claim(receiver: Option<&str>, ctx: &ExecuteContext) -> Result<()
     let api_client = TreasuryApiClient::new(
         network_config.oauth_api_url.clone(),
         network_config.indexer_url.clone(),
-        network_config.rpc_url.clone(),
+        network_config.rest_url.clone(),
     );
 
     // Build execute message
@@ -273,7 +273,7 @@ async fn handle_status(address: Option<&str>, ctx: &ExecuteContext) -> Result<()
     let api_client = TreasuryApiClient::new(
         network_config.oauth_api_url.clone(),
         network_config.indexer_url.clone(),
-        network_config.rpc_url.clone(),
+        network_config.rest_url.clone(),
     );
 
     // Query last faucet timestamp
@@ -359,7 +359,7 @@ async fn handle_info(ctx: &ExecuteContext) -> Result<()> {
     let api_client = TreasuryApiClient::new(
         network_config.oauth_api_url.clone(),
         network_config.indexer_url.clone(),
-        network_config.rpc_url.clone(),
+        network_config.rest_url.clone(),
     );
 
     let query_msg = serde_json::json!({

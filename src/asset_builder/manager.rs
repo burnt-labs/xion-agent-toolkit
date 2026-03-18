@@ -53,7 +53,7 @@ impl AssetBuilderManager {
         let api_client = TreasuryApiClient::new(
             config.oauth_api_url.clone(),
             config.indexer_url.clone(),
-            config.rpc_url.clone(),
+            config.rest_url.clone(),
         );
 
         Self {
