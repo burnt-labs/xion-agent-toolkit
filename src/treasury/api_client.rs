@@ -1171,29 +1171,39 @@ impl TreasuryApiClient {
             .into());
         }
 
-        // Step 5: Parse response - double-encoded format
-        // REST returns { "data": "base64_encoded_result" }
+        // Step 5: Parse response - two possible formats:
+        // 1. Double-encoded: { "data": "base64_encoded_result" }
+        // 2. Direct JSON: { "data": { ... actual result ... } }
         #[derive(Debug, Deserialize)]
-        struct QueryResponse {
-            data: String,
+        #[serde(untagged)]
+        enum QueryResponse {
+            Base64 { data: String },
+            Direct { data: serde_json::Value },
         }
 
         let query_response: QueryResponse = response.json().await.map_err(|e| {
             NetworkError::InvalidResponse(format!("Failed to parse query response: {}", e))
         })?;
 
-        // Step 6: Base64 decode the data field
-        let decoded = base64_decode(&query_response.data).map_err(|e| {
-            TreasuryError::OperationFailed(format!("Failed to decode base64 query result: {}", e))
-        })?;
-
-        // Step 7: Parse decoded string as JSON
-        let result: serde_json::Value = serde_json::from_str(&decoded).map_err(|e| {
-            TreasuryError::OperationFailed(format!(
-                "Failed to parse decoded query result as JSON: {}",
-                e
-            ))
-        })?;
+        // Step 6: Decode or extract the result
+        let result: serde_json::Value = match query_response {
+            QueryResponse::Base64 { data } => {
+                // Base64 decode the data field, then parse as JSON
+                let decoded = base64_decode(&data).map_err(|e| {
+                    TreasuryError::OperationFailed(format!(
+                        "Failed to decode base64 query result: {}",
+                        e
+                    ))
+                })?;
+                serde_json::from_str(&decoded).map_err(|e| {
+                    TreasuryError::OperationFailed(format!(
+                        "Failed to parse decoded query result as JSON: {}",
+                        e
+                    ))
+                })?
+            }
+            QueryResponse::Direct { data } => data,
+        };
 
         debug!("Query result: {:?}", result);
         Ok(result)
