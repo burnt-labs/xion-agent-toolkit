@@ -27,7 +27,10 @@ use serde::{{Deserialize, Serialize}};
 pub struct NetworkConfig {{
     pub network_name: String,
     pub oauth_api_url: String,
+    /// RPC endpoint URL - currently unused, reserved for future WebSocket/subscription features.
+    /// All REST-style queries use `rest_url` instead.
     pub rpc_url: String,
+    /// REST API endpoint URL - used for all chain queries (/cosmwasm/*, /cosmos/*, /tx).
     pub rest_url: String,
     pub chain_id: String,
     pub oauth_client_id: String,
