@@ -157,6 +157,45 @@ xion-toolkit contract query \
 
 ---
 
+## Faucet Operations
+
+```bash
+# Claim tokens for yourself (testnet only)
+xion-toolkit faucet claim
+
+# Claim tokens for another address
+xion-toolkit faucet claim --receiver xion1abc...
+
+# Check your claim status
+xion-toolkit faucet status
+
+# Check status for another address
+xion-toolkit faucet status --address xion1abc...
+
+# Query faucet configuration
+xion-toolkit faucet info
+```
+
+### Faucet Details
+
+| Item | Value |
+|------|-------|
+| Amount per claim | 1 XION (1,000,000 uxion) |
+| Cooldown | 24 hours |
+| Balance gate | Must have < 1 XION |
+| Network | Testnet only |
+
+### Faucet Error Codes
+
+| Code | Meaning | Fix |
+|------|---------|-----|
+| EFAUCET001 | Claim failed | Check cooldown/balance |
+| EFAUCET002 | Query failed | Check network |
+| EFAUCET003 | Not authenticated | `auth login` or use `--address` |
+| EFAUCET004 | Wrong network | Use `--network testnet` |
+
+---
+
 ## Asset (NFT) Operations
 
 ```bash

@@ -1,0 +1,93 @@
+{
+  "command": "faucet status",
+  "description": "Check faucet claim status and cooldown for an address",
+  "parameters": [
+    {
+      "name": "address",
+      "type": "string",
+      "required": false,
+      "format": "xion-address",
+      "description": "Address to check. If not provided, defaults to current authenticated user's address."
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "prerequisites": [
+    "If --address not provided, must be authenticated (use xion-oauth2 skill)",
+    "Faucet is only available on testnet"
+  ],
+  "notes": [
+    "Returns last claim timestamp and remaining cooldown",
+    "can_claim is true if cooldown has expired (remaining_cooldown_secs == 0)",
+    "remaining_cooldown_human provides human-readable time (e.g., '12h 30m 0s')",
+    "last_claim_timestamp is 0 if the address has never claimed",
+    "AI AGENT NOTE: Use this command BEFORE claiming to verify the user can claim (cooldown expired and balance gate satisfied)",
+    "AI AGENT NOTE: If remaining_cooldown_secs > 0, inform user of wait time before they can claim again",
+    "AI AGENT NOTE: This query does NOT require authentication when --address is provided"
+  ],
+  "errors": [
+    {
+      "code": "EFAUCET002",
+      "description": "Failed to query faucet status",
+      "remediation": "Check network connectivity and verify the faucet contract is available"
+    },
+    {
+      "code": "EFAUCET003",
+      "description": "Not authenticated and no --address provided",
+      "remediation": "Provide --address flag or authenticate with 'xion-toolkit auth login'"
+    },
+    {
+      "code": "EFAUCET004",
+      "description": "Faucet not available on this network",
+      "remediation": "Use '--network testnet' or 'xion-toolkit config set-network testnet'"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Check status for authenticated user",
+      "params": {}
+    },
+    {
+      "description": "Check status for a specific address",
+      "params": {
+        "address": "xion1abc123..."
+      }
+    },
+    {
+      "description": "Check status on testnet explicitly",
+      "params": {
+        "address": "xion1abc123...",
+        "network": "testnet"
+      }
+    }
+  ],
+  "output": {
+    "can_claim_now": {
+      "address": "xion1abc...",
+      "last_claim_timestamp": 1709400000,
+      "can_claim": true,
+      "remaining_cooldown_secs": 0,
+      "remaining_cooldown_human": null
+    },
+    "on_cooldown": {
+      "address": "xion1abc...",
+      "last_claim_timestamp": 1709500000,
+      "can_claim": false,
+      "remaining_cooldown_secs": 43200,
+      "remaining_cooldown_human": "12h 0m 0s"
+    },
+    "never_claimed": {
+      "address": "xion1abc...",
+      "last_claim_timestamp": 0,
+      "can_claim": true,
+      "remaining_cooldown_secs": 0,
+      "remaining_cooldown_human": null
+    }
+  }
+}

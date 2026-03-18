@@ -1,0 +1,132 @@
+[
+  {
+    "query": "I need some testnet tokens",
+    "should_trigger": true,
+    "reason": "Direct request for testnet tokens - core faucet use case"
+  },
+  {
+    "query": "How do I get XION for testing?",
+    "should_trigger": true,
+    "reason": "Asking how to obtain test XION tokens"
+  },
+  {
+    "query": "Can I claim from the faucet?",
+    "should_trigger": true,
+    "reason": "Direct faucet claim inquiry"
+  },
+  {
+    "query": "When can I claim my next tokens?",
+    "should_trigger": true,
+    "reason": "Asking about claim cooldown timing"
+  },
+  {
+    "query": "How often can I get test tokens?",
+    "should_trigger": true,
+    "reason": "Query about faucet cooldown period"
+  },
+  {
+    "query": "Give me some XION please",
+    "should_trigger": true,
+    "reason": "Casual request for XION tokens"
+  },
+  {
+    "query": "My faucet is on cooldown, how long do I need to wait?",
+    "should_trigger": true,
+    "reason": "Asking about faucet cooldown status"
+  },
+  {
+    "query": "I need to fund my account for testing",
+    "should_trigger": true,
+    "reason": "Request to obtain testnet funds"
+  },
+  {
+    "query": "What's my faucet status?",
+    "should_trigger": true,
+    "reason": "Direct query for faucet status"
+  },
+  {
+    "query": "Can you request tokens from the faucet for me?",
+    "should_trigger": true,
+    "reason": "Direct request for faucet token claim"
+  },
+  {
+    "query": "I just created a new wallet, how do I get test tokens?",
+    "should_trigger": true,
+    "reason": "New user asking how to get initial testnet tokens"
+  },
+  {
+    "query": "Need some XION to deploy my contract",
+    "should_trigger": true,
+    "reason": "Development funding request"
+  },
+  {
+    "query": "Check my XION balance",
+    "should_trigger": false,
+    "reason": "Balance query, not faucet-related"
+  },
+  {
+    "query": "How much XION do I have?",
+    "should_trigger": false,
+    "reason": "Balance check, not faucet claim"
+  },
+  {
+    "query": "Send XION to my friend",
+    "should_trigger": false,
+    "reason": "Transfer request, not faucet"
+  },
+  {
+    "query": "I need mainnet XION",
+    "should_trigger": false,
+    "reason": "Mainnet tokens, faucet is testnet-only"
+  },
+  {
+    "query": "Create a treasury for me",
+    "should_trigger": false,
+    "reason": "Treasury creation, not faucet"
+  },
+  {
+    "query": "What's the current gas price?",
+    "should_trigger": false,
+    "reason": "Gas price query, unrelated to faucet"
+  },
+  {
+    "query": "How do I stake my XION?",
+    "should_trigger": false,
+    "reason": "Staking inquiry, not faucet"
+  },
+  {
+    "query": "我想要一些测试代币",
+    "should_trigger": true,
+    "reason": "Chinese request for test tokens"
+  },
+  {
+    "query": "水龙头能领多少？",
+    "should_trigger": true,
+    "reason": "Chinese query about faucet claim amount"
+  },
+  {
+    "query": "领取测试币",
+    "should_trigger": true,
+    "reason": "Chinese request to claim test tokens"
+  },
+  {
+    "query": "我领过了，什么时候能再领？",
+    "should_trigger": true,
+    "reason": "Chinese query about cooldown timing"
+  },
+  {
+    "query": "水龙头状态查询",
+    "should_trigger": true,
+    "reason": "Chinese request for faucet status"
+  },
+  {
+    "query": "Need tokens for testing",
+    "should_trigger": true,
+    "reason": "Casual English request for test tokens"
+  },
+  {
+    "query": "How do I get funds for my testnet account?",
+    "should_trigger": true,
+    "reason": "Indirect request for faucet funding"
+  }
+]

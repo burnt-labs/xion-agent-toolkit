@@ -135,6 +135,18 @@ pub enum XionErrorCode {
     ETX002,
     /// Transaction timeout
     ETX003,
+
+    // ========================================================================
+    // Faucet Errors (EFAUCET001-EFAUCET099)
+    // ========================================================================
+    /// Faucet claim failed
+    EFAUCET001,
+    /// Faucet query failed
+    EFAUCET002,
+    /// Not authenticated for faucet
+    EFAUCET003,
+    /// Faucet not available
+    EFAUCET004,
 }
 
 impl XionErrorCode {
@@ -196,6 +208,12 @@ impl XionErrorCode {
             XionErrorCode::ETX001 => "Transaction query failed",
             XionErrorCode::ETX002 => "Transaction wait failed",
             XionErrorCode::ETX003 => "Transaction timeout",
+
+            // Faucet
+            XionErrorCode::EFAUCET001 => "Faucet claim failed",
+            XionErrorCode::EFAUCET002 => "Faucet query failed",
+            XionErrorCode::EFAUCET003 => "Not authenticated for faucet operation",
+            XionErrorCode::EFAUCET004 => "Faucet not available on this network",
         }
     }
 
@@ -267,6 +285,14 @@ impl XionErrorCode {
             XionErrorCode::ETX001 => "Check network connection and transaction hash",
             XionErrorCode::ETX002 => "Check network connection and wait parameters",
             XionErrorCode::ETX003 => "Transaction took too long to confirm, check chain status",
+
+            // Faucet
+            XionErrorCode::EFAUCET001 => "Wait for cooldown or check error details",
+            XionErrorCode::EFAUCET002 => {
+                "Check network connection and faucet contract availability"
+            }
+            XionErrorCode::EFAUCET003 => "Run 'xion-toolkit auth login' first",
+            XionErrorCode::EFAUCET004 => "Use --network testnet to claim testnet tokens",
         }
     }
 
@@ -282,6 +308,9 @@ impl XionErrorCode {
             | XionErrorCode::ENETWORK007
             // Token expired can be retried after refresh
             | XionErrorCode::EAUTH002
+            // Faucet errors may be retryable (cooldown, temporary issues)
+            | XionErrorCode::EFAUCET001
+            | XionErrorCode::EFAUCET002
         )
     }
 
@@ -328,6 +357,10 @@ impl XionErrorCode {
             | XionErrorCode::ENETWORK007
             | XionErrorCode::ENETWORK008 => "NETWORK",
             XionErrorCode::ETX001 | XionErrorCode::ETX002 | XionErrorCode::ETX003 => "TX",
+            XionErrorCode::EFAUCET001
+            | XionErrorCode::EFAUCET002
+            | XionErrorCode::EFAUCET003
+            | XionErrorCode::EFAUCET004 => "FAUCET",
         }
     }
 }

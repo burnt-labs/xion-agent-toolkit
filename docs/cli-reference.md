@@ -18,6 +18,10 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`treasury import`](#treasury-import)
 - [Contract Commands](#contract-commands)
   - [`contract query`](#contract-query)
+- [Faucet Commands](#faucet-commands)
+  - [`faucet claim`](#faucet-claim)
+  - [`faucet status`](#faucet-status)
+  - [`faucet info`](#faucet-info)
 - [Asset Commands](#asset-commands)
   - [`asset types`](#asset-types)
   - [`asset create`](#asset-create)
@@ -2384,6 +2388,239 @@ Output (error - invalid query):
 - Read-only operation - no authentication required
 - Uses direct RPC call to `/cosmwasm/wasm/v1/contract/{address}/smart/{query}`
 - Query message is base64-encoded before sending
+
+---
+
+## Faucet Commands
+
+Claim testnet XION tokens from the deployed faucet contract.
+
+| Command | Description |
+|---------|-------------|
+| `xion-toolkit faucet claim` | Claim tokens for authenticated user |
+| `xion-toolkit faucet claim --receiver <address>` | Claim tokens for another address |
+| `xion-toolkit faucet status` | Check cooldown status |
+| `xion-toolkit faucet status --address <address>` | Check status for specific address |
+| `xion-toolkit faucet info` | Query faucet configuration |
+
+**Faucet Contract Info:**
+
+| Item | Value |
+|------|-------|
+| **Contract Address** | `xion1kv2mz7yjk5azuuq7ptd7hrl7trwphu5enereqv8t66rkre00dxxqac9ywl` |
+| **Amount per Claim** | 1,000,000 uxion (1 XION) |
+| **Cooldown Period** | 24 hours |
+| **Balance Gate** | Receiver must have < 1 XION |
+| **Network** | Testnet only |
+
+---
+
+### `faucet claim`
+
+Claim testnet tokens from the faucet contract.
+
+**Usage:**
+```bash
+xion-toolkit faucet claim [--receiver <ADDRESS>]
+```
+
+**Options:**
+- `--receiver <ADDRESS>` - Receiver address for delegated claims (optional). If provided, uses the Delegate message instead of Faucet.
+
+**Authentication:** Required
+
+**Examples:**
+
+Claim for yourself:
+```bash
+xion-toolkit faucet claim
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "tx_hash": "ABC123...",
+  "amount": 1000000
+}
+```
+
+Claim for another address (delegate):
+```bash
+xion-toolkit faucet claim --receiver xion1abc123...
+```
+
+Output (success - delegated):
+```json
+{
+  "success": true,
+  "tx_hash": "DEF456...",
+  "amount": 1000000,
+  "receiver": "xion1abc123..."
+}
+```
+
+Output (error - cooldown not met):
+```json
+{
+  "success": false,
+  "error": "Faucet claim failed: Cooldown not met",
+  "code": "EFAUCET001",
+  "hint": "Wait for the 24-hour cooldown period to expire before claiming again"
+}
+```
+
+Output (error - balance gate failed):
+```json
+{
+  "success": false,
+  "error": "Faucet claim failed: Balance gate failed",
+  "code": "EFAUCET001",
+  "hint": "Your balance exceeds the faucet threshold. Transfer some tokens out to claim"
+}
+```
+
+Output (error - not authenticated):
+```json
+{
+  "success": false,
+  "error": "Not authenticated. Please run 'xion-toolkit auth login' first.",
+  "code": "EFAUCET003",
+  "hint": "Run 'xion-toolkit auth login' to authenticate"
+}
+```
+
+Output (error - wrong network):
+```json
+{
+  "success": false,
+  "error": "Faucet is only available on testnet",
+  "code": "EFAUCET004",
+  "hint": "Use --network testnet to claim testnet tokens"
+}
+```
+
+**Claim Rules:**
+
+1. **Cooldown Period**: 24 hours between claims per address
+2. **Balance Gate**: Receiver must have less than 1 XION balance
+3. **Network**: Only available on testnet
+
+**Notes:**
+- Always check `faucet status` before claiming to verify cooldown and balance gate
+- Use `--receiver` to claim on behalf of another address
+- The authenticated user signs the transaction, but the receiver gets the tokens
+
+---
+
+### `faucet status`
+
+Check faucet claim status and remaining cooldown.
+
+**Usage:**
+```bash
+xion-toolkit faucet status [--address <ADDRESS>]
+```
+
+**Options:**
+- `--address <ADDRESS>` - Address to check (optional, defaults to current authenticated address)
+
+**Authentication:** Optional (required if no `--address` provided)
+
+**Examples:**
+
+Check your own status:
+```bash
+xion-toolkit faucet status
+```
+
+Output (can claim):
+```json
+{
+  "address": "xion1abc...",
+  "last_claim_timestamp": 0,
+  "can_claim": true,
+  "remaining_cooldown_secs": 0
+}
+```
+
+Output (cooldown active):
+```json
+{
+  "address": "xion1abc...",
+  "last_claim_timestamp": 1709500000,
+  "can_claim": false,
+  "remaining_cooldown_secs": 43200,
+  "remaining_cooldown_human": "12h 0m 0s"
+}
+```
+
+Check another address (no auth required):
+```bash
+xion-toolkit faucet status --address xion1abc123...
+```
+
+Output (error - no auth and no address):
+```json
+{
+  "success": false,
+  "error": "Not authenticated. Provide --address or run 'xion-toolkit auth login' first.",
+  "code": "EFAUCET003",
+  "hint": "Provide --address flag or authenticate with 'xion-toolkit auth login'"
+}
+```
+
+**Notes:**
+- Use before claiming to verify cooldown has expired
+- Also check your balance is below 1 XION threshold
+- `remaining_cooldown_human` provides human-readable time
+
+---
+
+### `faucet info`
+
+Query faucet configuration and contract info.
+
+**Usage:**
+```bash
+xion-toolkit faucet info
+```
+
+**Authentication:** Not required
+
+**Examples:**
+
+Query faucet info:
+```bash
+xion-toolkit faucet info
+```
+
+Output:
+```json
+{
+  "faucet_address": "xion1kv2mz7yjk5azuuq7ptd7hrl7trwphu5enereqv8t66rkre00dxxqac9ywl",
+  "amount": 1000000,
+  "cooldown_secs": 86400,
+  "denom": "uxion",
+  "network": "testnet"
+}
+```
+
+**Notes:**
+- No authentication required
+- Shows current faucet configuration
+- Useful for verifying faucet availability
+
+---
+
+### Faucet Error Codes
+
+| Code | Description | Hint |
+|------|-------------|------|
+| `EFAUCET001` | Faucet claim failed | Check error message for details (cooldown, balance gate, insufficient funds) |
+| `EFAUCET002` | Faucet query failed | Check network connection and verify faucet contract is available |
+| `EFAUCET003` | Not authenticated | Run `xion-toolkit auth login` or provide `--address` flag |
+| `EFAUCET004` | Faucet not available on this network | Use `--network testnet` or `xion-toolkit config set-network testnet` |
 
 ---
 

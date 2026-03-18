@@ -1,0 +1,98 @@
+{
+  "command": "faucet claim",
+  "description": "Claim testnet XION tokens from the faucet",
+  "parameters": [
+    {
+      "name": "receiver",
+      "type": "string",
+      "required": false,
+      "format": "xion-address",
+      "description": "Receiver address for delegated claims. If provided, uses Delegate message instead of Faucet message. If not provided, claims for authenticated user."
+    },
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use. Faucet is only available on testnet."
+    }
+  ],
+  "validation_rules": [
+    "Faucet is only available on testnet - claims on mainnet will fail with EFAUCET004",
+    "Authentication is required for claim operations - use xion-oauth2 skill first",
+    "Receiver must have less than 1 XION balance (balance gate) to receive tokens",
+    "24-hour cooldown must have expired since last claim - check with faucet status",
+    "Schema validation cannot verify: (1) actual cooldown expiration time, (2) receiver balance, (3) faucet funding status - these are checked by the CLI at runtime"
+  ],
+  "prerequisites": [
+    "Must be authenticated (use xion-oauth2 skill first)",
+    "Must be on testnet network",
+    "Receiver must have < 1 XION balance (balance gate)",
+    "24-hour cooldown must have expired since last claim"
+  ],
+  "notes": [
+    "Cooldown: 24 hours (86400 seconds) between claims per address",
+    "Amount: 1,000,000 uxion (1 XION) per claim",
+    "Receiver must have < 1 XION balance to receive (balance gate)",
+    "Faucet is only available on testnet (EFAUCET004 on mainnet)",
+    "Use --receiver to claim for another address (Delegate message)",
+    "Without --receiver, claims for authenticated user (Faucet message)",
+    "AI AGENT NOTE: Always check faucet status first to verify cooldown has expired and balance gate can be satisfied",
+    "AI AGENT NOTE: If receiver has >= 1 XION, the claim will fail - instruct user to transfer tokens out first"
+  ],
+  "errors": [
+    {
+      "code": "EFAUCET001",
+      "description": "Faucet claim failed (cooldown, balance gate, or insufficient funds)",
+      "remediation": "Check faucet status with 'xion-toolkit faucet status' and wait for cooldown or reduce balance"
+    },
+    {
+      "code": "EFAUCET002",
+      "description": "Faucet query failed",
+      "remediation": "Check network connection and faucet contract availability"
+    },
+    {
+      "code": "EFAUCET003",
+      "description": "Not authenticated",
+      "remediation": "Run 'xion-toolkit auth login' first"
+    },
+    {
+      "code": "EFAUCET004",
+      "description": "Faucet not available on this network",
+      "remediation": "Use '--network testnet' or 'xion-toolkit config set-network testnet'"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Claim tokens for authenticated user",
+      "params": {}
+    },
+    {
+      "description": "Claim tokens for another address (delegated)",
+      "params": {
+        "receiver": "xion1abc123..."
+      }
+    },
+    {
+      "description": "Claim on testnet explicitly",
+      "params": {
+        "network": "testnet"
+      }
+    }
+  ],
+  "output": {
+    "success": {
+      "success": true,
+      "tx_hash": "ABC123...",
+      "amount": 1000000,
+      "receiver": null
+    },
+    "delegated": {
+      "success": true,
+      "tx_hash": "DEF456...",
+      "amount": 1000000,
+      "receiver": "xion1abc..."
+    }
+  }
+}
