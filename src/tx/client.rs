@@ -7,7 +7,7 @@ use reqwest::Client;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::{debug, info, instrument};
 
-use super::types::{RpcTxResponse, TxInfo, TxStatus, TxWaitResult};
+use super::types::{CosmosTxResponse, TxInfo, TxStatus, TxWaitResult};
 
 /// Client for querying transaction status from REST API
 #[derive(Debug, Clone)]
@@ -72,7 +72,12 @@ impl TxClient {
     #[instrument(skip(self, hash))]
     pub async fn get_tx(&self, hash: &str) -> Result<Option<TxInfo>> {
         let normalized_hash = normalize_tx_hash(hash);
-        let url = format!("{}/tx?hash=0x{}", self.rest_url, normalized_hash);
+        // Use Cosmos SDK REST API endpoint (not Tendermint RPC)
+        // Format: /cosmos/tx/v1beta1/txs/{hash}
+        let url = format!(
+            "{}/cosmos/tx/v1beta1/txs/{}",
+            self.rest_url, normalized_hash
+        );
 
         debug!("Querying transaction status from REST API: {}", url);
 
@@ -120,11 +125,11 @@ impl TxClient {
 
         debug!("Transaction response body: {}", body);
 
-        // Parse the RPC response
-        let rpc_response: RpcTxResponse =
+        // Parse the Cosmos SDK REST API response
+        let cosmos_response: CosmosTxResponse =
             serde_json::from_str(&body).context("Failed to parse transaction response")?;
 
-        let tx_info = self.parse_tx_response(&normalized_hash, rpc_response)?;
+        let tx_info = self.parse_cosmos_tx_response(&normalized_hash, cosmos_response)?;
 
         info!(
             "Transaction {} status: {:?}",
@@ -134,50 +139,40 @@ impl TxClient {
         Ok(Some(tx_info))
     }
 
-    /// Parse RPC response into TxInfo
-    fn parse_tx_response(&self, hash: &str, response: RpcTxResponse) -> Result<TxInfo> {
-        // If tx_result is missing, transaction is pending
-        let tx_result = match response.tx_result {
-            Some(result) => result,
-            None => {
-                debug!("No tx_result in response, treating as pending");
-                return Ok(TxInfo::pending(hash));
-            }
-        };
+    /// Parse Cosmos SDK REST API response into TxInfo
+    fn parse_cosmos_tx_response(&self, hash: &str, response: CosmosTxResponse) -> Result<TxInfo> {
+        let tx_response = response.tx_response;
 
-        // Parse height
-        let height = response.height.as_ref().and_then(|h| h.parse::<u64>().ok());
+        // Parse height from string to u64
+        let height = tx_response.height.parse::<u64>().ok();
 
-        // Parse gas_used
-        let gas_used = tx_result
+        // Parse gas_used from string to u64
+        let gas_used = tx_response
             .gas_used
             .as_ref()
             .and_then(|g| g.parse::<u64>().ok());
 
         // Determine status based on code
-        let (status, error) = if tx_result.code == 0 {
+        let (status, error) = if tx_response.code == 0 {
             (TxStatus::Success, None)
         } else {
-            let error_msg = tx_result
-                .error
-                .clone()
-                .or_else(|| {
-                    // Try to extract error from log if present
-                    tx_result.log.as_ref().and_then(|log| {
-                        if log.contains("error") {
-                            Some(log.clone())
-                        } else {
-                            None
-                        }
-                    })
-                })
-                .unwrap_or_else(|| format!("Transaction failed with code {}", tx_result.code));
+            // Extract error message from raw_log or info
+            let error_msg = if !tx_response.raw_log.is_empty() {
+                tx_response.raw_log
+            } else if !tx_response.info.is_empty() {
+                tx_response.info
+            } else {
+                format!(
+                    "Transaction failed with code {} in codespace {}",
+                    tx_response.code, tx_response.codespace
+                )
+            };
 
             (TxStatus::Failed, Some(error_msg))
         };
 
-        // Create timestamp from current time (RPC doesn't always provide this)
-        let timestamp = Some(chrono::Utc::now().to_rfc3339());
+        // Use timestamp from response
+        let timestamp = tx_response.timestamp;
 
         Ok(TxInfo {
             tx_hash: hash.to_string(),
