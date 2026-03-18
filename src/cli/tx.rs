@@ -52,12 +52,12 @@ async fn handle_status(hash: String, ctx: &ExecuteContext) -> Result<()> {
     let network_config = config_manager.get_network_config()?;
 
     info!(
-        "Using RPC endpoint: {} for network: {}",
-        network_config.rpc_url,
+        "Using REST endpoint: {} for network: {}",
+        network_config.rest_url,
         config_manager.get_current_network()
     );
 
-    let tx_client = TxClient::new(network_config.rpc_url);
+    let tx_client = TxClient::new(network_config.rest_url);
 
     match tx_client.get_tx(&hash).await {
         Ok(Some(tx_info)) => {
@@ -99,12 +99,12 @@ async fn handle_wait(
     let network_config = config_manager.get_network_config()?;
 
     info!(
-        "Using RPC endpoint: {} for network: {}",
-        network_config.rpc_url,
+        "Using REST endpoint: {} for network: {}",
+        network_config.rest_url,
         config_manager.get_current_network()
     );
 
-    let tx_client = TxClient::new(network_config.rpc_url);
+    let tx_client = TxClient::new(network_config.rest_url);
 
     // Print progress indicator to stderr
     eprintln!("[INFO] Polling for transaction confirmation...");

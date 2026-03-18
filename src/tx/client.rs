@@ -9,11 +9,11 @@ use tracing::{debug, info, instrument};
 
 use super::types::{RpcTxResponse, TxInfo, TxStatus, TxWaitResult};
 
-/// Client for querying transaction status from RPC
+/// Client for querying transaction status from REST API
 #[derive(Debug, Clone)]
 pub struct TxClient {
-    /// RPC endpoint URL
-    rpc_url: String,
+    /// REST endpoint URL
+    rest_url: String,
     /// HTTP client for making requests
     http_client: Client,
 }
@@ -22,29 +22,29 @@ impl TxClient {
     /// Create a new transaction client
     ///
     /// # Arguments
-    /// * `rpc_url` - Base URL of the RPC endpoint (e.g., "https://rpc.xion-testnet-2.burnt.com:443")
+    /// * `rest_url` - Base URL of the REST endpoint (e.g., "https://api.xion-testnet-2.burnt.com")
     ///
     /// # Example
     /// ```no_run
     /// use xion_agent_toolkit::tx::TxClient;
     ///
-    /// let client = TxClient::new("https://rpc.xion-testnet-2.burnt.com:443".to_string());
+    /// let client = TxClient::new("https://api.xion-testnet-2.burnt.com".to_string());
     /// ```
-    pub fn new(rpc_url: String) -> Self {
+    pub fn new(rest_url: String) -> Self {
         let http_client = Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
             .expect("Failed to create HTTP client");
 
         Self {
-            rpc_url,
+            rest_url,
             http_client,
         }
     }
 
-    /// Get transaction status from RPC
+    /// Get transaction status from REST API
     ///
-    /// Queries the RPC endpoint for transaction information.
+    /// Queries the REST endpoint for transaction information.
     /// Returns `Ok(None)` if the transaction is not found (pending).
     ///
     /// # Arguments
@@ -53,7 +53,7 @@ impl TxClient {
     /// # Returns
     /// * `Ok(Some(TxInfo))` - Transaction found with status information
     /// * `Ok(None)` - Transaction not found (still pending)
-    /// * `Err(_)` - RPC query failed
+    /// * `Err(_)` - REST query failed
     ///
     /// # Example
     /// ```no_run
@@ -61,7 +61,7 @@ impl TxClient {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// let client = TxClient::new("https://rpc.xion-testnet-2.burnt.com:443".to_string());
+    /// let client = TxClient::new("https://api.xion-testnet-2.burnt.com".to_string());
     /// match client.get_tx("ABC123...").await? {
     ///     Some(tx_info) => println!("Transaction status: {:?}", tx_info.status),
     ///     None => println!("Transaction not found (pending)"),
@@ -72,9 +72,9 @@ impl TxClient {
     #[instrument(skip(self, hash))]
     pub async fn get_tx(&self, hash: &str) -> Result<Option<TxInfo>> {
         let normalized_hash = normalize_tx_hash(hash);
-        let url = format!("{}/tx?hash=0x{}", self.rpc_url, normalized_hash);
+        let url = format!("{}/tx?hash=0x{}", self.rest_url, normalized_hash);
 
-        debug!("Querying transaction status from RPC: {}", url);
+        debug!("Querying transaction status from REST API: {}", url);
 
         let response = self
             .http_client
@@ -208,7 +208,7 @@ impl TxClient {
     ///
     /// # #[tokio::main]
     /// # async fn main() -> anyhow::Result<()> {
-    /// let client = TxClient::new("https://rpc.xion-testnet-2.burnt.com:443".to_string());
+    /// let client = TxClient::new("https://api.xion-testnet-2.burnt.com".to_string());
     /// let result = client.wait_tx("ABC123...", 60, 2).await?;
     /// println!("Wait result: {:?}", result.status);
     /// # Ok(())
@@ -278,9 +278,9 @@ impl TxClient {
         }
     }
 
-    /// Get the RPC URL
-    pub fn rpc_url(&self) -> &str {
-        &self.rpc_url
+    /// Get the REST URL
+    pub fn rest_url(&self) -> &str {
+        &self.rest_url
     }
 }
 
@@ -306,8 +306,8 @@ mod tests {
 
     #[test]
     fn test_tx_client_creation() {
-        let client = TxClient::new("https://rpc.xion-testnet-2.burnt.com:443".to_string());
-        assert_eq!(client.rpc_url(), "https://rpc.xion-testnet-2.burnt.com:443");
+        let client = TxClient::new("https://api.xion-testnet-2.burnt.com".to_string());
+        assert_eq!(client.rest_url(), "https://api.xion-testnet-2.burnt.com");
     }
 
     // Note: Integration tests with mock server would require wiremock

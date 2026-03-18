@@ -4,6 +4,7 @@ pub mod auth;
 pub mod batch;
 pub mod config;
 pub mod contract;
+pub mod faucet;
 pub mod treasury;
 pub mod tx;
 
@@ -123,6 +124,10 @@ pub enum Commands {
     #[command(subcommand)]
     Tx(tx::TxCommands),
 
+    /// Faucet commands for testnet tokens
+    #[command(subcommand)]
+    Faucet(faucet::FaucetCommands),
+
     /// Generate shell completion scripts
     Completions {
         /// Shell type to generate completions for
@@ -178,6 +183,13 @@ pub async fn handle_asset_command(cmd: asset::AssetCommands, ctx: &ExecuteContex
 
 pub async fn handle_tx_command(cmd: tx::TxCommands, ctx: &ExecuteContext) -> Result<()> {
     tx::handle_command(cmd, ctx).await
+}
+
+pub async fn handle_faucet_command(
+    cmd: faucet::FaucetCommands,
+    ctx: &ExecuteContext,
+) -> Result<()> {
+    faucet::handle_command(cmd, ctx).await
 }
 
 pub fn handle_status_command(ctx: &ExecuteContext) -> Result<()> {

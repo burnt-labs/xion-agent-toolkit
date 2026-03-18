@@ -595,7 +595,7 @@ async fn handle_predict_address(args: &CreateArgs, ctx: &ExecuteContext) -> Resu
     let api_client = TreasuryApiClient::new(
         network_config.oauth_api_url.clone(),
         network_config.indexer_url.clone(),
-        network_config.rpc_url.clone(),
+        network_config.rest_url.clone(),
     );
 
     // Get code info for the treasury code ID

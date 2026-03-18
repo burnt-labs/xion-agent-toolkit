@@ -41,6 +41,7 @@ Format: `E{MODULE}{NUMBER}`
 | CONFIG | ECONFIG001-ECONFIG099 | Configuration |
 | NETWORK | ENETWORK001-ENETWORK099 | Network/API |
 | TX | ETX001-ETX099 | Transaction monitoring |
+| FAUCET | EFAUCET001-EFAUCET099 | Faucet operations |
 
 ---
 
@@ -240,6 +241,33 @@ curl https://rpc.xion-testnet-2.burnt.com:443/status
 
 # Test with verbose output
 xion-toolkit --verbose treasury list
+```
+
+---
+
+## Faucet Errors (EFAUCET001-EFAUCET099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| EFAUCET001 | Faucet claim failed | Check cooldown status first with `faucet status`. Ensure receiver has less than 1 XION balance. | No |
+| EFAUCET002 | Faucet query failed | Ensure address is valid. Check network connectivity. | No |
+| EFAUCET003 | Not authenticated | Run `xion-toolkit auth login` first to authenticate. | No |
+| EFAUCET004 | Faucet not available | Faucet is only available on testnet. Use `--network testnet`. | No |
+
+### Faucet Troubleshooting
+
+```bash
+# Check faucet status before claiming
+xion-toolkit faucet status
+
+# Claim tokens
+xion-toolkit faucet claim
+
+# Check authentication
+xion-toolkit auth status
+
+# Ensure you're on testnet
+xion-toolkit config show
 ```
 
 ---

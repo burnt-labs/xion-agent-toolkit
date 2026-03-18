@@ -38,8 +38,8 @@ pub struct TreasuryApiClient {
     base_url: String,
     /// DaoDao Indexer URL for treasury listing
     indexer_url: String,
-    /// RPC URL for on-chain queries
-    rpc_url: String,
+    /// REST URL for on-chain queries
+    rest_url: String,
     /// HTTP client for making requests
     http_client: Client,
 }
@@ -138,7 +138,7 @@ impl TreasuryApiClient {
     /// # Arguments
     /// * `base_url` - Base URL of the Treasury API service (e.g., "https://oauth2.testnet.burnt.com")
     /// * `indexer_url` - DaoDao Indexer URL for listing treasuries (e.g., "https://daodaoindexer.burnt.com/xion-testnet-2")
-    /// * `rpc_url` - RPC URL for on-chain queries (e.g., "https://rpc.xion-testnet-2.burnt.com:443")
+    /// * `rest_url` - REST URL for on-chain queries (e.g., "https://api.xion-testnet-2.burnt.com")
     ///
     /// # Example
     /// ```no_run
@@ -147,10 +147,10 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// ```
-    pub fn new(base_url: String, indexer_url: String, rpc_url: String) -> Self {
+    pub fn new(base_url: String, indexer_url: String, rest_url: String) -> Self {
         let http_client = Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
@@ -159,7 +159,7 @@ impl TreasuryApiClient {
         Self {
             base_url,
             indexer_url,
-            rpc_url,
+            rest_url,
             http_client,
         }
     }
@@ -397,7 +397,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// let treasuries = client.list_treasuries("access_token_123").await?;
     /// println!("Found {} treasuries", treasuries.len());
@@ -516,7 +516,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// let options = QueryOptions::default();
     /// let treasury = client.query_treasury(
@@ -654,7 +654,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     ///
     /// let request = BroadcastRequest {
@@ -746,7 +746,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// let result = client.fund_treasury(
     ///     "access_token_123",
@@ -812,7 +812,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// let result = client.withdraw_treasury(
     ///     "access_token_123",
@@ -899,7 +899,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     ///
     /// let request = CreateTreasuryRequest {
@@ -1119,7 +1119,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// let query = serde_json::json!({ "balance": {} });
     /// let result = client.query_contract_smart("xion1contract...", &query).await?;
@@ -1147,7 +1147,7 @@ impl TreasuryApiClient {
         // Step 3: Build URL
         let url = format!(
             "{}/cosmwasm/wasm/v1/contract/{}/smart/{}",
-            self.rpc_url, contract_address, query_base64
+            self.rest_url, contract_address, query_base64
         );
         debug!("Query URL: {}", url);
 
@@ -1171,29 +1171,39 @@ impl TreasuryApiClient {
             .into());
         }
 
-        // Step 5: Parse response - double-encoded format
-        // REST returns { "data": "base64_encoded_result" }
+        // Step 5: Parse response - two possible formats:
+        // 1. Double-encoded: { "data": "base64_encoded_result" }
+        // 2. Direct JSON: { "data": { ... actual result ... } }
         #[derive(Debug, Deserialize)]
-        struct QueryResponse {
-            data: String,
+        #[serde(untagged)]
+        enum QueryResponse {
+            Base64 { data: String },
+            Direct { data: serde_json::Value },
         }
 
         let query_response: QueryResponse = response.json().await.map_err(|e| {
             NetworkError::InvalidResponse(format!("Failed to parse query response: {}", e))
         })?;
 
-        // Step 6: Base64 decode the data field
-        let decoded = base64_decode(&query_response.data).map_err(|e| {
-            TreasuryError::OperationFailed(format!("Failed to decode base64 query result: {}", e))
-        })?;
-
-        // Step 7: Parse decoded string as JSON
-        let result: serde_json::Value = serde_json::from_str(&decoded).map_err(|e| {
-            TreasuryError::OperationFailed(format!(
-                "Failed to parse decoded query result as JSON: {}",
-                e
-            ))
-        })?;
+        // Step 6: Decode or extract the result
+        let result: serde_json::Value = match query_response {
+            QueryResponse::Base64 { data } => {
+                // Base64 decode the data field, then parse as JSON
+                let decoded = base64_decode(&data).map_err(|e| {
+                    TreasuryError::OperationFailed(format!(
+                        "Failed to decode base64 query result: {}",
+                        e
+                    ))
+                })?;
+                serde_json::from_str(&decoded).map_err(|e| {
+                    TreasuryError::OperationFailed(format!(
+                        "Failed to parse decoded query result as JSON: {}",
+                        e
+                    ))
+                })?
+            }
+            QueryResponse::Direct { data } => data,
+        };
 
         debug!("Query result: {:?}", result);
         Ok(result)
@@ -1219,7 +1229,7 @@ impl TreasuryApiClient {
     /// let client = TreasuryApiClient::new(
     ///     "https://oauth2.testnet.burnt.com".to_string(),
     ///     "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
-    ///     "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
+    ///     "https://api.xion-testnet-2.burnt.com".to_string(),
     /// );
     /// let code_info = client.get_code_info(522).await?;
     /// println!("Checksum: {}", code_info.checksum);
@@ -1228,7 +1238,7 @@ impl TreasuryApiClient {
     /// ```
     #[instrument(skip(self))]
     pub async fn get_code_info(&self, code_id: u64) -> XionResult<CodeInfo> {
-        let url = format!("{}/cosmwasm/wasm/v1/code/{}", self.rpc_url, code_id);
+        let url = format!("{}/cosmwasm/wasm/v1/code/{}", self.rest_url, code_id);
         debug!("Fetching code info from: {}", url);
 
         let response = self.http_client.get(&url).send().await.map_err(|e| {
@@ -2105,7 +2115,7 @@ impl TreasuryApiClient {
         // Endpoint: /cosmos/authz/v1beta1/grants?granter={treasury_address}
         let url = format!(
             "{}/cosmos/authz/v1beta1/grants?granter={}",
-            self.rpc_url, treasury_address
+            self.rest_url, treasury_address
         );
 
         let response = self.http_client.get(&url).send().await.map_err(|e| {
@@ -2186,7 +2196,7 @@ impl TreasuryApiClient {
         // Endpoint: /cosmos/feegrant/v1beta1/allowances/{granter}
         let url = format!(
             "{}/cosmos/feegrant/v1beta1/allowances/{}",
-            self.rpc_url, treasury_address
+            self.rest_url, treasury_address
         );
 
         let response = self.http_client.get(&url).send().await.map_err(|e| {
@@ -2396,7 +2406,7 @@ mod tests {
         let client = TreasuryApiClient::new(
             "https://test.com".to_string(),
             "https://indexer.test.com/network".to_string(),
-            "https://rpc.test.com:443".to_string(),
+            "https://api.test.com".to_string(),
         );
         assert_eq!(client.base_url, "https://test.com");
     }
@@ -2512,7 +2522,7 @@ mod tests {
         let client = TreasuryApiClient::new(
             mock_server.uri(),
             mock_server.uri(),
-            "https://rpc.test.com:443".to_string(),
+            "https://api.test.com".to_string(),
         );
 
         // Call the wait_for_treasury_creation method with expected address
@@ -2565,7 +2575,7 @@ mod tests {
         let client = TreasuryApiClient::new(
             mock_server.uri(),
             mock_server.uri(),
-            "https://rpc.test.com:443".to_string(),
+            "https://api.test.com".to_string(),
         );
 
         // Call with the expected address - should find it even though it's not first

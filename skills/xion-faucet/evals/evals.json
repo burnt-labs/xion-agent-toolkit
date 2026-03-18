@@ -1,0 +1,48 @@
+{
+  "skill_name": "xion-faucet",
+  "description": "Test prompts for evaluating xion-faucet skill responses. Each prompt is a realistic user request that should trigger and be handled by the skill.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just created a new Xion testnet account and need some tokens to start testing my dApp. Can you help me get some?",
+      "expected_output": "Should guide user through faucet claim process: (1) authenticate with xion-toolkit auth login, (2) check status with xion-toolkit faucet status, (3) claim with xion-toolkit faucet claim. Should NOT immediately try to claim without authentication check.",
+      "files": [],
+      "triggers": ["claim", "testnet tokens", "new account"]
+    },
+    {
+      "id": 2,
+      "prompt": "我刚才领过测试币了，想知道什么时候可以再领",
+      "expected_output": "Should use faucet status command to check cooldown, explain remaining time in Chinese. Should say something like '距离下次领取还有XX小时XX分钟' or '可以立即领取' depending on status.",
+      "files": [],
+      "triggers": ["cooldown", "Chinese", "status"]
+    },
+    {
+      "id": 3,
+      "prompt": "I need to send 1 XION to another address but I don't have any tokens yet",
+      "expected_output": "Should recognize user needs funds first, guide them to faucet. Clarify that faucet gives 1 XION and they can claim for themselves or delegate to the receiver address. Should NOT trigger transfer/send logic - that comes AFTER funding.",
+      "files": [],
+      "triggers": ["send", "no tokens", "funding"]
+    },
+    {
+      "id": 4,
+      "prompt": "What's my faucet status? Can I claim right now?",
+      "expected_output": "Should run xion-toolkit faucet status (with --address if provided or default to authenticated user), parse the response, and clearly state whether user can claim now or how long until cooldown expires.",
+      "files": [],
+      "triggers": ["status", "can I claim", "cooldown"]
+    },
+    {
+      "id": 5,
+      "prompt": "Claim 1000000uxion for xion1abc123def456... from the faucet",
+      "expected_output": "Should recognize this is a delegate claim (claiming for another address). The amount 1000000uxion is the standard faucet amount so should work. Should ask for confirmation and verify authentication before proceeding.",
+      "files": [],
+      "triggers": ["claim", "specific address", "delegate"]
+    }
+  ],
+  "validation_notes": [
+    "Eval 1: Tests that skill properly handles unauthenticated new user - must guide to login first",
+    "Eval 2: Tests Chinese language support and cooldown status explanation",
+    "Eval 3: Tests disambiguation - user thinks they need send but actually need faucet first",
+    "Eval 4: Tests status-only query without claiming",
+    "Eval 5: Tests delegate claim with explicit address and amount"
+  ]
+}

@@ -17,6 +17,7 @@ Xion Agent Toolkit is a CLI-first, agent-oriented toolkit for developing on the 
 - **Admin Management**: Propose, accept, and cancel admin transfers
 - **Contract Operations**: Instantiate and execute CosmWasm contracts
 - **Asset Builder**: Deploy and mint CW721 NFT collections
+- **Faucet Operations**: Claim testnet XION tokens programmatically
 
 ### Who Should Use It
 
@@ -276,6 +277,7 @@ npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a
 | | `xion-oauth2` | OAuth2 authentication |
 | | `xion-treasury` | Treasury management |
 | | `xion-asset` | NFT operations |
+| | `xion-faucet` | Claim testnet tokens |
 | `burnt-labs/xion-skills` | `xiond-init` | Install xiond CLI |
 | (optional) | `xiond-usage` | Chain queries, account management |
 | | `xiond-wasm` | CosmWasm deployment |
@@ -289,6 +291,7 @@ npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a
 | Gasless transactions | Checking transaction status |
 | OAuth2 authentication | Mnemonic wallet operations |
 | Authz/Fee grant configuration | Validator operations |
+| Claiming testnet tokens | - |
 
 ---
 
@@ -433,6 +436,17 @@ xion-toolkit config show
 | `xion-toolkit asset create --type cw721-base --name "..." --symbol "..."` | Create collection |
 | `xion-toolkit asset mint --contract <ADDR> --token-id "1" --owner <ADDR>` | Mint NFT |
 | `xion-toolkit asset predict --type cw721-base --name "..." --symbol "..." --salt "..."` | Predict address |
+
+### Faucet
+
+| Command | Purpose |
+|---------|---------|
+| `xion-toolkit faucet claim` | Claim testnet tokens for yourself |
+| `xion-toolkit faucet claim --receiver xion1...` | Claim tokens for another address |
+| `xion-toolkit faucet status` | Check claim cooldown status |
+| `xion-toolkit faucet info` | Query faucet configuration |
+
+**Note:** 1 XION per claim, 24-hour cooldown, testnet only.
 
 ### Batch
 
@@ -661,5 +675,5 @@ For issues and feature requests:
 ---
 
 *Document Version: 2.0.0*
-*Last Updated: 2026-03-14*
+*Last Updated: 2026-03-18*
 *Compatible CLI Version: >=0.1.0*

@@ -1,0 +1,58 @@
+{
+  "command": "faucet info",
+  "description": "Query faucet contract configuration",
+  "parameters": [
+    {
+      "name": "network",
+      "type": "enum",
+      "required": false,
+      "enum": ["local", "testnet", "mainnet"],
+      "default": "testnet",
+      "description": "Network to use"
+    }
+  ],
+  "prerequisites": [
+    "No authentication required for this query",
+    "Faucet is only available on testnet"
+  ],
+  "notes": [
+    "Shows faucet contract address, amount per claim, cooldown period, and denomination",
+    "No authentication required for this query",
+    "Use this to verify faucet configuration before claiming",
+    "AI AGENT NOTE: This is a read-only query that does not require authentication",
+    "AI AGENT NOTE: Useful for verifying faucet is operational before attempting a claim"
+  ],
+  "errors": [
+    {
+      "code": "EFAUCET002",
+      "description": "Failed to query faucet info",
+      "remediation": "Check network connectivity and verify the faucet contract is available"
+    },
+    {
+      "code": "EFAUCET004",
+      "description": "Faucet not available on this network",
+      "remediation": "Use '--network testnet' or 'xion-toolkit config set-network testnet'"
+    }
+  ],
+  "examples": [
+    {
+      "description": "Query faucet configuration",
+      "params": {}
+    },
+    {
+      "description": "Query faucet configuration on testnet explicitly",
+      "params": {
+        "network": "testnet"
+      }
+    }
+  ],
+  "output": {
+    "success": {
+      "faucet_address": "xion1kv2mz7yjk5azuuq7ptd7hrl7trwphu5enereqv8t66rkre00dxxqac9ywl",
+      "amount": 1000000,
+      "cooldown_secs": 86400,
+      "denom": "uxion",
+      "network": "testnet"
+    }
+  }
+}

@@ -29,6 +29,7 @@ fn create_test_config(server_url: &str) -> NetworkConfig {
         network_name: "test".to_string(),
         oauth_api_url: server_url.to_string(),
         rpc_url: "http://localhost:26657".to_string(),
+        rest_url: "http://localhost:1317".to_string(),
         chain_id: "xion-local".to_string(),
         oauth_client_id: "test-client-id".to_string(),
         treasury_code_id: 1,

@@ -9,7 +9,7 @@
 //!
 //! # #[tokio::main]
 //! # async fn main() -> anyhow::Result<()> {
-//! let client = TxClient::new("https://rpc.xion-testnet-2.burnt.com:443".to_string());
+//! let client = TxClient::new("https://api.xion-testnet-2.burnt.com".to_string());
 //!
 //! // Check transaction status
 //! match client.get_tx("ABC123...").await? {

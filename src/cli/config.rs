@@ -51,11 +51,15 @@ fn handle_show(ctx: &ExecuteContext) -> Result<()> {
             "network_name": network_config.network_name,
             "chain_id": network_config.chain_id,
             "oauth_api_url": network_config.oauth_api_url,
+            "rest_url": network_config.rest_url,
             "rpc_url": network_config.rpc_url,
             "oauth_client_id": network_config.oauth_client_id,
             "treasury_code_id": network_config.treasury_code_id,
             "callback_port": network_config.callback_port,
             "indexer_url": network_config.indexer_url,
+        },
+        "_notes": {
+            "rpc_url": "Reserved for future RPC/WebSocket features. Currently unused - all queries use rest_url."
         }
     });
 

@@ -16,6 +16,7 @@
 //! | 80-99 | Treasury errors |
 //! | 100-119 | Asset errors |
 //! | 120-139 | Batch errors |
+//! | 140-159 | Faucet errors |
 //!
 //! # Usage in Scripts
 //!
@@ -158,6 +159,18 @@ pub mod exit_code {
     pub const BATCH_PARTIAL_FAILURE: i32 = 122;
     /// Invalid batch item
     pub const INVALID_BATCH_ITEM: i32 = 123;
+
+    // ========================================================================
+    // Faucet Errors (140-159)
+    // ========================================================================
+    /// Faucet claim failed
+    pub const FAUCET_CLAIM_FAILED: i32 = 140;
+    /// Faucet query failed
+    pub const FAUCET_QUERY_FAILED: i32 = 141;
+    /// Not authenticated for faucet
+    pub const FAUCET_AUTH_REQUIRED: i32 = 142;
+    /// Faucet not available on this network
+    pub const FAUCET_NOT_AVAILABLE: i32 = 143;
 }
 
 impl XionErrorCode {
@@ -221,6 +234,12 @@ impl XionErrorCode {
             XionErrorCode::ETX001 => TX_QUERY_FAILED,
             XionErrorCode::ETX002 => TX_WAIT_FAILED,
             XionErrorCode::ETX003 => TX_TIMEOUT,
+
+            // Faucet errors
+            XionErrorCode::EFAUCET001 => FAUCET_CLAIM_FAILED,
+            XionErrorCode::EFAUCET002 => FAUCET_QUERY_FAILED,
+            XionErrorCode::EFAUCET003 => FAUCET_AUTH_REQUIRED,
+            XionErrorCode::EFAUCET004 => FAUCET_NOT_AVAILABLE,
         }
     }
 }
@@ -288,6 +307,12 @@ pub fn exit_code_name(code: i32) -> &'static str {
         BATCH_EXECUTION_FAILED => "BATCH_EXECUTION_FAILED",
         BATCH_PARTIAL_FAILURE => "BATCH_PARTIAL_FAILURE",
         INVALID_BATCH_ITEM => "INVALID_BATCH_ITEM",
+
+        // Faucet
+        FAUCET_CLAIM_FAILED => "FAUCET_CLAIM_FAILED",
+        FAUCET_QUERY_FAILED => "FAUCET_QUERY_FAILED",
+        FAUCET_AUTH_REQUIRED => "FAUCET_AUTH_REQUIRED",
+        FAUCET_NOT_AVAILABLE => "FAUCET_NOT_AVAILABLE",
 
         _ => "UNKNOWN",
     }
@@ -385,6 +410,9 @@ mod tests {
 
         // Batch: 120-139
         assert!((120..=139).contains(&XionErrorCode::EBATCH001.exit_code()));
+
+        // Faucet: 140-159
+        assert!((140..=159).contains(&XionErrorCode::EFAUCET001.exit_code()));
     }
 
     #[test]
