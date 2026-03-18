@@ -23,6 +23,9 @@ permissions:
 
 jobs:
   release-please:
+    # Prevent recursive release PR creation:
+    # when merging a "chore(main): release x.y.z" PR, skip release-please
+    if: "${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}"
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
@@ -49,22 +52,30 @@ jobs:
 
   # When draft:true, release-please creates draft release but NO tag
   # We manually create the tag here, then trigger release.yml to upload artifacts
-  # Only run when:
-  # 1. Commit message starts with "chore(main): release" (release-please PR merge)
-  # 2. Author is github-actions[bot] (ensures it's from release-please, not manual)
+  # Only run on release commits merged to main.
   trigger-dist:
-    needs: release-please
-    if: "${{ startsWith(github.event.head_commit.message, 'chore(main): release') && github.event.head_commit.author.username == 'github-actions[bot]' }}"
+    if: "${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main): release') && (github.event.head_commit.author.username == 'github-actions[bot]' || github.actor == 'github-actions[bot]') }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Extract tag from release commit message
+        id: extract-tag
+        run: |
+          MESSAGE="${{ github.event.head_commit.message }}"
+          TAG="$(echo "$MESSAGE" | sed -E 's/^chore\(main\): release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+          if [ -z "$TAG" ] || [ "$TAG" = "$MESSAGE" ]; then
+            echo "Failed to parse release tag from commit message: $MESSAGE"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Check if tag exists
         id: check-tag
         run: |
-          TAG="${{ needs.release-please.outputs.version }}"
+          TAG="${{ steps.extract-tag.outputs.tag }}"
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
@@ -74,7 +85,7 @@ jobs:
       - name: Create tag
         if: ${{ steps.check-tag.outputs.exists == 'false' }}
         run: |
-          TAG="${{ needs.release-please.outputs.version }}"
+          TAG="${{ steps.extract-tag.outputs.tag }}"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git tag "$TAG"
@@ -83,7 +94,7 @@ jobs:
       - name: Trigger cargo-dist release workflow
         if: ${{ steps.check-tag.outputs.exists == 'false' }}
         run: |
-          TAG="${{ needs.release-please.outputs.version }}"
+          TAG="${{ steps.extract-tag.outputs.tag }}"
           echo "Triggering release for tag $TAG"
           gh workflow run "release.yml" --repo "${{ github.repository }}" --ref main -f tag="$TAG"
         env:
