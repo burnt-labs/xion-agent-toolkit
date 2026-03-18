@@ -37,6 +37,7 @@ Unified entry point for Xion development. Routes to correct skill based on user 
 | Create / Manage Treasury | `xion-treasury` | Core functionality |
 | Fund / Withdraw | `xion-treasury` | Gasless transactions |
 | Authz / Fee Grant | `xion-treasury` | Specialized feature |
+| Get testnet tokens | `xion-faucet` | Testnet development |
 | Query chain data | `xiond-usage` | More powerful queries |
 | Deploy CosmWasm | `xiond-wasm` | Contract developer tool |
 
@@ -88,6 +89,23 @@ NFT operations.
 | predict | `xion-toolkit asset predict --type cw721-base --name "..." --symbol "..." --salt "..."` |
 | batch-mint | `xion-toolkit asset batch-mint --contract <ADDR> --tokens-file tokens.json` |
 | query | `xion-toolkit asset query --contract <ADDR> --msg '{"...": {}}'` |
+
+### xion-faucet
+
+Claim testnet XION tokens from the faucet.
+
+| Script | Command |
+|--------|---------|
+| claim | `xion-toolkit faucet claim` |
+| claim (delegate) | `xion-toolkit faucet claim --receiver xion1...` |
+| status | `xion-toolkit faucet status [--address xion1...]` |
+| info | `xion-toolkit faucet info` |
+
+**Details:**
+- Amount: 1 XION (1,000,000 uxion) per claim
+- Cooldown: 24 hours
+- Balance gate: Receiver must have < 1 XION
+- Network: Testnet only
 
 ## Output Format
 

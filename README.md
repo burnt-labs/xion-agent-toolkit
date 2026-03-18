@@ -11,6 +11,7 @@ A command-line tool for managing Xion MetaAccounts, Treasury contracts, and NFT 
 - **🔐 Login with Google, Email, or Passkey** — No seed phrases, no private keys
 - **💰 Manage Treasuries** — Create, fund, withdraw, configure permissions
 - **🎨 Create NFTs** — Deploy and mint CW721 collections
+- **💧 Claim Testnet Tokens** — Get testnet XION from the faucet
 - **🔮 Predict Addresses** — Know contract addresses before deployment
 - **📦 Batch Operations** — Manage multiple treasuries at once
 - **🔄 CI/CD Ready** — JSON output, exit codes, GitHub Actions support
@@ -67,7 +68,22 @@ xion-toolkit status
 }
 ```
 
-### 3. Create a Treasury
+### 3. Claim Testnet Tokens
+
+```bash
+# Check if you can claim (recommended before claiming)
+xion-toolkit faucet status
+
+# Claim tokens for yourself
+xion-toolkit faucet claim
+
+# Claim tokens for another address
+xion-toolkit faucet claim --receiver xion1abc123...
+```
+
+Each claim provides 1 XION (1,000,000 uxion) with a 24-hour cooldown.
+
+### 4. Create a Treasury
 
 ```bash
 # Create and fund a new treasury
@@ -77,7 +93,7 @@ xion-toolkit treasury create --fund 1000000uxion
 xion-toolkit treasury create --predict --salt "my-treasury-v1"
 ```
 
-### 4. Manage Your Treasury
+### 5. Manage Your Treasury
 
 ```bash
 # List all treasuries
@@ -93,7 +109,7 @@ xion-toolkit treasury withdraw xion1... --amount 500000uxion --to xion1recipient
 xion-toolkit treasury export --output backup.json
 ```
 
-### 5. Create an NFT Collection
+### 6. Create an NFT Collection
 
 ```bash
 # List available NFT types
@@ -200,6 +216,17 @@ treasury batch grant-config --config <file>   # Configure multiple
 | `asset predict --type --name --symbol --salt` | Predict contract address |
 | `asset batch-mint --contract --tokens-file` | Batch mint tokens |
 | `asset query --contract --msg` | Query NFT contract |
+
+### Faucet
+
+| Command | Description |
+|---------|-------------|
+| `faucet claim` | Claim testnet tokens (1 XION) |
+| `faucet claim --receiver <address>` | Claim tokens for another address |
+| `faucet status` | Check claim cooldown status |
+| `faucet info` | Query faucet configuration |
+
+**Note:** Faucet is testnet-only. Each claim provides 1 XION with 24-hour cooldown.
 
 ### Contract
 
