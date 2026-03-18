@@ -47,9 +47,12 @@ jobs:
 
   # When draft:true, release-please creates draft release but NO tag
   # We manually create the tag here, then trigger release.yml to upload artifacts
+  # Only run when:
+  # 1. Commit message starts with "chore(main): release" (release-please PR merge)
+  # 2. Author is github-actions[bot] (ensures it's from release-please, not manual)
   trigger-dist:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    if: ${{ startsWith(github.event.head_commit.message, 'chore(main): release') && github.event.head_commit.author.username == 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
