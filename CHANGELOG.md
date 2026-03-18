@@ -5,6 +5,28 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.0...0.8.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* add faucet command and REST API URL fix ([d52ea11](https://github.com/burnt-labs/xion-agent-toolkit/commit/d52ea116956d94d626480645452b4e195f1a250e))
+* **api:** handle both base64 and direct JSON responses in query_contract_smart ([34666a0](https://github.com/burnt-labs/xion-agent-toolkit/commit/34666a0f4d56943cb6c72c64a180294a192d9bfe))
+* **network:** add separate rest_url for chain queries ([7c2f228](https://github.com/burnt-labs/xion-agent-toolkit/commit/7c2f228179d209abdc99aa875af02811098bc346))
+* **tx:** Fix `tx wait` ([e512541](https://github.com/burnt-labs/xion-agent-toolkit/commit/e51254176c23e3cc5ff1596337d72203e7c1128a))
+* **tx:** use correct Cosmos SDK REST API endpoint for tx wait ([2d81ce2](https://github.com/burnt-labs/xion-agent-toolkit/commit/2d81ce2d8ce901add741a47bac185b375f1c14fe))
+
+
+### Documentation
+
+* **faucet:** add faucet command documentation ([2670c09](https://github.com/burnt-labs/xion-agent-toolkit/commit/2670c09af29b41e67d13ce58ce449cf4836e9160))
+* **network:** document rpc_url as reserved, add rest_url to config show ([ab220ba](https://github.com/burnt-labs/xion-agent-toolkit/commit/ab220ba82adb5d3b7f0899d687d7e542dc91bf1d))
+
+
+### Chores
+
+* **template:** remove cw-template subproject reference ([c92b009](https://github.com/burnt-labs/xion-agent-toolkit/commit/c92b009e7b93c0191c64e570d8f8008ec82de976))
+
 ## [0.8.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.7.0...0.8.0) (2026-03-17)
 
 
