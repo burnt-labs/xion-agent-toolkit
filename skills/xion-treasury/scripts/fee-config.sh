@@ -200,27 +200,27 @@ fi
 
 log_info "Processing fee config: action=$ACTION for treasury $ADDRESS"
 
-# Build command
-CMD="xion-toolkit --network $NETWORK treasury fee-config"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit --network "$NETWORK" treasury fee-config)
 
 case "$ACTION" in
     set)
-        CMD="$CMD set --config $CONFIG_FILE"
+        CMD+=(set --config "$CONFIG_FILE")
         ;;
     remove)
-        CMD="$CMD remove"
+        CMD+=(remove)
         ;;
     query)
-        CMD="$CMD query"
+        CMD+=(query)
         ;;
 esac
 
-CMD="$CMD $ADDRESS --output json"
+CMD+=("$ADDRESS" --output json)
 
-log_info "Executing: $CMD"
+log_info "Executing: ${CMD[*]}"
 
-# Execute command
-RESULT=$(eval "$CMD" 2>&1)
+# Execute command safely using array expansion
+RESULT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [[ $EXIT_CODE -eq 0 ]]; then

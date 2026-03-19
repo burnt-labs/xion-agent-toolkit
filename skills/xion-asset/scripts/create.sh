@@ -3,6 +3,9 @@ set -e
 
 # Asset Create - Create NFT collection
 # Usage: create.sh --type <TYPE> --name <NAME> --symbol <SYMBOL> [options]
+#
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 # Parse arguments
 TYPE=""
@@ -30,23 +33,23 @@ if [[ -z "$TYPE" ]] || [[ -z "$NAME" ]] || [[ -z "$SYMBOL" ]]; then
     exit 1
 fi
 
-# Build command
-CMD="xion-toolkit asset create --type $TYPE --name \"$NAME\" --symbol \"$SYMBOL\" --output json"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit asset create --type "$TYPE" --name "$NAME" --symbol "$SYMBOL" --output json)
 
 if [[ -n "$MINTER" ]]; then
-    CMD="$CMD --minter $MINTER"
+    CMD+=(--minter "$MINTER")
 fi
 
 if [[ -n "$SALT" ]]; then
-    CMD="$CMD --salt \"$SALT\""
+    CMD+=(--salt "$SALT")
 fi
 
 if [[ -n "$NETWORK" ]]; then
-    CMD="$CMD --network $NETWORK"
+    CMD+=(--network "$NETWORK")
 fi
 
-# Execute command and capture output
-OUTPUT=$(eval $CMD 2>&1)
+# Execute command safely using array expansion
+OUTPUT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 # Output result and propagate exit code

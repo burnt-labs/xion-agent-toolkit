@@ -161,9 +161,9 @@ fi
 # ==============================================================================
 
 if ! command -v xion-toolkit &> /dev/null; then
-    CLI_CMD="cargo run --quiet --"
+    CLI_CMD=(cargo run --quiet --)
 else
-    CLI_CMD="xion-toolkit"
+    CLI_CMD=(xion-toolkit)
 fi
 
 # ==============================================================================
@@ -172,19 +172,19 @@ fi
 
 log_info "Executing admin action '$ACTION' on treasury $ADDRESS..."
 
-# Build and execute command based on action
+# Build and execute command based on action (using array for safety)
 case "$ACTION" in
     propose)
         log_info "Proposing new admin: $NEW_ADMIN"
-        RESULT=$($CLI_CMD treasury admin propose "$ADDRESS" --new-admin "$NEW_ADMIN" --network "$NETWORK" --output json 2>&1)
+        RESULT=$("${CLI_CMD[@]}" treasury admin propose "$ADDRESS" --new-admin "$NEW_ADMIN" --network "$NETWORK" --output json 2>&1)
         ;;
     accept)
         log_info "Accepting admin role for treasury"
-        RESULT=$($CLI_CMD treasury admin accept "$ADDRESS" --network "$NETWORK" --output json 2>&1)
+        RESULT=$("${CLI_CMD[@]}" treasury admin accept "$ADDRESS" --network "$NETWORK" --output json 2>&1)
         ;;
     cancel)
         log_info "Canceling proposed admin"
-        RESULT=$($CLI_CMD treasury admin cancel "$ADDRESS" --network "$NETWORK" --output json 2>&1)
+        RESULT=$("${CLI_CMD[@]}" treasury admin cancel "$ADDRESS" --network "$NETWORK" --output json 2>&1)
         ;;
 esac
 

@@ -2,19 +2,21 @@
 #
 # xion-treasury/import.sh - Import Treasury configuration
 #
-# Imports configuration (grants, fee config, params) to a Treasury.
+# Imports Treasury configuration (grants, fee config, params) from a JSON file.
 #
 # Usage:
-#   ./import.sh <ADDRESS> --from-file <FILE> [--dry-run] [--network NETWORK]
+#   ./import.sh <ADDRESS> --from-file <FILE> [--network NETWORK] [--dry-run]
 #
 # Arguments:
 #   ADDRESS - Treasury contract address (required)
 #
 # Options:
-#   --from-file FILE - Path to JSON configuration file (required)
-#   --dry-run        - Preview actions without executing (optional)
-#   --network NETWORK - Network: testnet, mainnet (default: testnet)
+#   --from-file FILE   Configuration file to import (required)
+#   --network NETWORK  Network: testnet, mainnet (default: testnet)
+#   --dry-run          Preview changes without executing
 #
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 set -e
 
@@ -40,20 +42,20 @@ log_error() {
 
 ADDRESS=""
 FROM_FILE=""
-DRY_RUN=false
 NETWORK="testnet"
+DRY_RUN="false"
 
 # Check for help flag first
 if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
-    echo "Usage: $0 <ADDRESS> --from-file <FILE> [--dry-run] [--network NETWORK]" >&2
+    echo "Usage: $0 <ADDRESS> --from-file <FILE> [--network NETWORK] [--dry-run]" >&2
     echo "" >&2
     echo "Arguments:" >&2
-    echo "  ADDRESS         Treasury contract address (required)" >&2
+    echo "  ADDRESS            Treasury contract address (required)" >&2
     echo "" >&2
     echo "Options:" >&2
-    echo "  --from-file FILE Path to JSON configuration file (required)" >&2
-    echo "  --dry-run        Preview actions without executing (optional)" >&2
-    echo "  --network NETWORK Network: testnet, mainnet (default: testnet)" >&2
+    echo "  --from-file FILE   Configuration file to import (required)" >&2
+    echo "  --network NETWORK  Network: testnet, mainnet (default: testnet)" >&2
+    echo "  --dry-run          Preview changes without executing" >&2
     exit 0
 fi
 
@@ -69,24 +71,24 @@ while [[ $# -gt 0 ]]; do
             FROM_FILE="$2"
             shift 2
             ;;
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
         --network)
             NETWORK="$2"
             shift 2
             ;;
+        --dry-run)
+            DRY_RUN="true"
+            shift
+            ;;
         --help|-h)
-            echo "Usage: $0 <ADDRESS> --from-file <FILE> [--dry-run] [--network NETWORK]" >&2
+            echo "Usage: $0 <ADDRESS> --from-file <FILE> [--network NETWORK] [--dry-run]" >&2
             echo "" >&2
             echo "Arguments:" >&2
-            echo "  ADDRESS         Treasury contract address (required)" >&2
+            echo "  ADDRESS            Treasury contract address (required)" >&2
             echo "" >&2
             echo "Options:" >&2
-            echo "  --from-file FILE Path to JSON configuration file (required)" >&2
-            echo "  --dry-run        Preview actions without executing (optional)" >&2
-            echo "  --network NETWORK Network: testnet, mainnet (default: testnet)" >&2
+            echo "  --from-file FILE   Configuration file to import (required)" >&2
+            echo "  --network NETWORK  Network: testnet, mainnet (default: testnet)" >&2
+            echo "  --dry-run          Preview changes without executing" >&2
             exit 0
             ;;
         *)
@@ -147,17 +149,17 @@ if [[ "$DRY_RUN" == "true" ]]; then
     log_info "DRY RUN MODE - No transactions will be executed"
 fi
 
-# Build command
-CMD="xion-toolkit --network $NETWORK treasury import $ADDRESS --from-file $FROM_FILE --output json"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit --network "$NETWORK" treasury import "$ADDRESS" --from-file "$FROM_FILE" --output json)
 
 if [[ "$DRY_RUN" == "true" ]]; then
-    CMD="$CMD --dry-run"
+    CMD+=(--dry-run)
 fi
 
-log_info "Executing: $CMD"
+log_info "Executing: ${CMD[*]}"
 
-# Execute command
-RESULT=$(eval "$CMD" 2>&1)
+# Execute command safely using array expansion
+RESULT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [[ $EXIT_CODE -eq 0 ]]; then

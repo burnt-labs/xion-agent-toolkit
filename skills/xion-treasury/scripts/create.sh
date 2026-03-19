@@ -30,6 +30,9 @@
 #
 # Output:
 #   JSON to stdout with creation result
+#
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 set -e
 
@@ -166,12 +169,12 @@ check_cli
 
 log_info "Creating Treasury contract..."
 
-# Build CLI command
-CLI_ARGS="treasury create --output json"
+# Build CLI command as array (safe from injection)
+CMD=(xion-toolkit treasury create --output json)
 
 # Add network if specified
 if [ -n "$NETWORK" ]; then
-    CLI_ARGS="$CLI_ARGS --network $NETWORK"
+    CMD+=(--network "$NETWORK")
 fi
 
 # If using config file, use it directly
@@ -184,55 +187,55 @@ if [ -n "$CONFIG_FILE" ]; then
         }"
         exit 1
     fi
-    CLI_ARGS="$CLI_ARGS --config $CONFIG_FILE"
+    CMD+=(--config "$CONFIG_FILE")
     log_info "Using config file: $CONFIG_FILE"
 else
     # Build from individual flags
     if [ -n "$NAME" ]; then
-        CLI_ARGS="$CLI_ARGS --name \"$NAME\""
+        CMD+=(--name "$NAME")
     fi
     if [ -n "$REDIRECT_URL" ]; then
-        CLI_ARGS="$CLI_ARGS --redirect-url \"$REDIRECT_URL\""
+        CMD+=(--redirect-url "$REDIRECT_URL")
     fi
     if [ -n "$ICON_URL" ]; then
-        CLI_ARGS="$CLI_ARGS --icon-url \"$ICON_URL\""
+        CMD+=(--icon-url "$ICON_URL")
     fi
     
     # Fee grant configuration
     if [ -n "$FEE_ALLOWANCE_TYPE" ]; then
-        CLI_ARGS="$CLI_ARGS --fee-allowance-type $FEE_ALLOWANCE_TYPE"
+        CMD+=(--fee-allowance-type "$FEE_ALLOWANCE_TYPE")
     fi
     if [ -n "$FEE_SPEND_LIMIT" ]; then
-        CLI_ARGS="$CLI_ARGS --fee-spend-limit \"$FEE_SPEND_LIMIT\""
+        CMD+=(--fee-spend-limit "$FEE_SPEND_LIMIT")
     fi
     if [ -n "$FEE_DESCRIPTION" ]; then
-        CLI_ARGS="$CLI_ARGS --fee-description \"$FEE_DESCRIPTION\""
+        CMD+=(--fee-description "$FEE_DESCRIPTION")
     fi
     if [ -n "$FEE_PERIOD_SECONDS" ]; then
-        CLI_ARGS="$CLI_ARGS --fee-period-seconds $FEE_PERIOD_SECONDS"
+        CMD+=(--fee-period-seconds "$FEE_PERIOD_SECONDS")
     fi
     if [ -n "$FEE_PERIOD_SPEND_LIMIT" ]; then
-        CLI_ARGS="$CLI_ARGS --fee-period-spend-limit \"$FEE_PERIOD_SPEND_LIMIT\""
+        CMD+=(--fee-period-spend-limit "$FEE_PERIOD_SPEND_LIMIT")
     fi
     
     # Authz grant configuration
     if [ -n "$GRANT_TYPE_URL" ]; then
-        CLI_ARGS="$CLI_ARGS --grant-type-url \"$GRANT_TYPE_URL\""
+        CMD+=(--grant-type-url "$GRANT_TYPE_URL")
     fi
     if [ -n "$GRANT_AUTH_TYPE" ]; then
-        CLI_ARGS="$CLI_ARGS --grant-auth-type $GRANT_AUTH_TYPE"
+        CMD+=(--grant-auth-type "$GRANT_AUTH_TYPE")
     fi
     if [ -n "$GRANT_SPEND_LIMIT" ]; then
-        CLI_ARGS="$CLI_ARGS --grant-spend-limit \"$GRANT_SPEND_LIMIT\""
+        CMD+=(--grant-spend-limit "$GRANT_SPEND_LIMIT")
     fi
     if [ -n "$GRANT_DESCRIPTION" ]; then
-        CLI_ARGS="$CLI_ARGS --grant-description \"$GRANT_DESCRIPTION\""
+        CMD+=(--grant-description "$GRANT_DESCRIPTION")
     fi
 fi
 
-# Execute CLI command
-log_info "Executing: xion-toolkit $CLI_ARGS"
-RESULT=$(eval xion-toolkit $CLI_ARGS 2>&1)
+# Execute CLI command safely using array expansion
+log_info "Executing: ${CMD[*]}"
+RESULT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
