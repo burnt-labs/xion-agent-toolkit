@@ -128,5 +128,25 @@
     "query": "How do I get funds for my testnet account?",
     "should_trigger": true,
     "reason": "Indirect request for faucet funding"
+  },
+  {
+    "query": "Transfer 5 XION to xion1abc...",
+    "should_trigger": false,
+    "reason": "Transfer/send request, should use xiond or send command, not faucet"
+  },
+  {
+    "query": "I want to buy mainnet XION tokens",
+    "should_trigger": false,
+    "reason": "Mainnet token purchase, faucet only provides testnet tokens"
+  },
+  {
+    "query": "Set up authz grant for my treasury",
+    "should_trigger": false,
+    "reason": "Treasury authz configuration, should use xion-treasury skill"
+  },
+  {
+    "query": "Deploy a CosmWasm contract",
+    "should_trigger": false,
+    "reason": "Contract deployment, should use xiond-wasm skill"
   }
 ]

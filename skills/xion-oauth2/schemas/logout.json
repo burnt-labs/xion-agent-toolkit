@@ -15,6 +15,10 @@
     "This removes stored credentials from the keyring",
     "You will need to re-authenticate after logout"
   ],
+  "errors": [
+    {"code": "CLI_NOT_FOUND", "description": "xion-toolkit CLI not found", "remediation": "Install xion-toolkit first"},
+    {"code": "NO_CREDENTIALS", "description": "No credentials to logout", "remediation": "Already logged out"}
+  ],
   "output_includes": [
     "success: boolean",
     "message: string"

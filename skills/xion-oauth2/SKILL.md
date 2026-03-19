@@ -24,7 +24,7 @@ description: |
   Make sure to use this skill whenever authentication is mentioned, even if the user doesn't explicitly say "OAuth2" or "MetaAccount".
 metadata:
   author: burnt-labs
-  version: "1.2.1"
+  version: "1.2.2"
   requires:
     - xion-toolkit-init
   compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
@@ -287,76 +287,15 @@ The skill supports three networks:
 
 ## Integration Examples
 
-### Using with Claude Code
-
-```javascript
-// In your Claude Code skill
-{
-  "tools": [
-    {
-      "name": "xion_login",
-      "description": "Authenticate with Xion blockchain",
-      "command": "./skills/xion-oauth2/scripts/login.sh"
-    }
-  ]
-}
-```
-
-### Programmatic Usage
-
-```python
-import subprocess
-import json
-
-# Login
-result = subprocess.run(
-    ['./skills/xion-oauth2/scripts/login.sh'],
-    capture_output=True,
-    text=True
-)
-
-if result.returncode == 0:
-    data = json.loads(result.stdout)
-    if data['success']:
-        print(f"Authenticated on {data['network']}")
-    else:
-        print(f"Error: {data['error']}")
-else:
-    print(f"Script failed: {result.stderr}")
-```
-
-## Security Considerations
-
-1. **PKCE Protection** - All authorization requests use PKCE (Proof Key for Code Exchange)
-2. **Localhost Callback** - Callback server only accepts localhost connections
-3. **Encrypted Storage** - Tokens are stored in OS-native keyring
-4. **Network Isolation** - Credentials are isolated per network
+See `references/integration-examples.md` for Claude Code and programmatic usage examples.
 
 ## Troubleshooting
 
-### Port Already in Use
-
-If port 54321 is already in use:
-```bash
-./scripts/login.sh --port 54322
-```
-
-### Token Expired
-
-If you get `TOKEN_EXPIRED` error:
-```bash
-./scripts/refresh.sh
-# or
-./scripts/login.sh
-```
-
-### CLI Not Found
-
-Ensure `xion-toolkit` CLI is in PATH:
-```bash
-which xion-toolkit
-# If not found, add to PATH or create alias
-```
+| Issue | Solution |
+|-------|----------|
+| Port 54321 in use | Use `--port 54322` |
+| `TOKEN_EXPIRED` error | Run `auth refresh` or `auth login` |
+| CLI not found | Install via `xion-toolkit-init` skill |
 
 ## Related Skills
 
@@ -367,8 +306,14 @@ which xion-toolkit
 
 ## Version
 
-- Skill Version: 1.2.0
+- Skill Version: 1.2.2
 - Compatible CLI Version: >=0.1.0
+
+## References
+
+Detailed integration examples and testing documentation moved to:
+- `references/integration-examples.md` - Programmatic usage and Claude Code integration
+- `references/testing.md` - Test framework, mock responses, and CI integration
 
 ## Parameter Collection Workflow
 
@@ -462,139 +407,8 @@ Use the validation script to check parameters before execution:
 
 MIT License - See main project LICENSE file
 
-## Testing
+## References
 
-This skill includes comprehensive test coverage using the Skills Test Framework.
-
-### Test File
-
-- `tests/skills/test_oauth2.sh` - OAuth2 skill test suite
-
-### Running Tests
-
-#### Mock Mode (Fast, No Network Required)
-
-```bash
-# Run OAuth2 tests with mock responses
-MOCK_ENABLED=true ./tests/skills/run_all.sh oauth2
-
-# Or run all skill tests
-MOCK_ENABLED=true ./tests/skills/run_all.sh
-```
-
-#### E2E Mode (Requires Network and Credentials)
-
-```bash
-# Run with real CLI (requires xion-toolkit installed and configured)
-./tests/skills/run_all.sh oauth2
-
-# Requires valid credentials for testnet
-# Credentials should be in ~/.xion-toolkit/credentials/testnet.enc
-```
-
-### Test Coverage
-
-| Function | Mock Test | E2E Test |
-|----------|-----------|----------|
-| `login.sh` | ✅ | ⚠️ (requires browser) |
-| `status.sh` (authenticated) | ✅ | ✅ |
-| `status.sh` (not authenticated) | ✅ | ✅ |
-| `logout.sh` | ✅ | ✅ |
-| `refresh.sh` | ✅ | ✅ |
-| Error handling | ✅ | ✅ |
-
-### Mock Responses
-
-Mock responses are defined in `tests/skills/mocks/oauth2-responses.json`:
-
-```json
-{
-  "status_authenticated": {
-    "success": true,
-    "authenticated": true,
-    "network": "testnet",
-    "token_info": {
-      "expires_at": "2024-01-15T10:30:00Z",
-      "expires_in_seconds": 3600,
-      "needs_refresh": false
-    }
-  },
-  "status_not_authenticated": {
-    "success": true,
-    "authenticated": false,
-    "network": "testnet",
-    "message": "No credentials found"
-  },
-  "logout_success": {
-    "success": true,
-    "message": "Successfully logged out from testnet"
-  },
-  "refresh_success": {
-    "success": true,
-    "message": "Token refreshed successfully",
-    "expires_at": "2024-01-15T11:30:00Z",
-    "expires_in_seconds": 3600
-  }
-}
-```
-
-### Writing New Tests
-
-Tests use the framework from `tests/skills/lib.sh`:
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-# Source test framework
-source "$(dirname "$0")/lib.sh"
-
-# Test: Status returns valid JSON when authenticated
-test_status_authenticated() {
-    local output
-    output=$(mock_cli "oauth2" "auth status" "status_authenticated")
-    
-    assert_success "$output"
-    assert_json_contains "$output" ".authenticated" "true"
-    assert_json_has_key "$output" ".token_info.expires_at"
-}
-
-# Test: Status returns not authenticated when no credentials
-test_status_not_authenticated() {
-    local output
-    output=$(mock_cli "oauth2" "auth status" "status_not_authenticated")
-    
-    assert_success "$output"
-    assert_json_contains "$output" ".authenticated" "false"
-}
-
-# Run tests if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    run_test "test_status_authenticated" test_status_authenticated
-    run_test "test_status_not_authenticated" test_status_not_authenticated
-    test_exit
-fi
-```
-
-### CI Integration
-
-Tests run automatically in GitHub Actions:
-
-- **Mock Tests**: Run on every PR and push to main/develop
-- **E2E Tests**: Run on main branch with secrets (testnet credentials)
-- **Lint**: Shell scripts are checked with shellcheck
-
-See `.github/workflows/test-skills.yml` for configuration.
-
-### Debugging Failed Tests
-
-```bash
-# Run with verbose output
-bash -x tests/skills/test_oauth2.sh
-
-# Check JSON output manually
-MOCK_ENABLED=true bash -c 'source tests/skills/lib.sh; mock_cli "oauth2" "auth status" "status_authenticated"'
-
-# Validate mock response file
-jq '.' tests/skills/mocks/oauth2-responses.json
-```
+Detailed integration examples and testing documentation moved to:
+- `references/integration-examples.md` - Programmatic usage and Claude Code integration
+- `references/testing.md` - Test framework, mock responses, and CI integration

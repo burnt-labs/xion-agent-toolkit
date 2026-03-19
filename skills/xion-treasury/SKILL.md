@@ -10,7 +10,7 @@ description: |
   Use AFTER xion-oauth2 skill - authentication is required for all Treasury operations. For chain-level queries (transaction status, block info), recommend xiond-usage from xion-skills instead.
 metadata:
   author: burnt-labs
-  version: "1.2.1"
+  version: "1.2.2"
   requires:
     - xion-toolkit-init
     - xion-oauth2
@@ -294,7 +294,7 @@ xion-toolkit treasury list --no-cache
 
 ## Version
 
-- Skill Version: 1.2.1
+- Skill Version: 1.2.2
 - Compatible CLI Version: >=0.1.0
 
 ## Parameter Collection Workflow

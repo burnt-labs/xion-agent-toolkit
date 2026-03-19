@@ -13,6 +13,7 @@ ASSET_TYPE="cw721-base"
 ROYALTY_ADDRESS=""
 ROYALTY_PERCENTAGE=""
 EXPIRES_AT=""
+NETWORK=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -24,6 +25,7 @@ while [[ $# -gt 0 ]]; do
         --royalty-address) ROYALTY_ADDRESS="$2"; shift 2 ;;
         --royalty-percentage) ROYALTY_PERCENTAGE="$2"; shift 2 ;;
         --expires-at) EXPIRES_AT="$2"; shift 2 ;;
+        --network) NETWORK="$2"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -47,6 +49,10 @@ fi
 
 if [[ -n "$EXPIRES_AT" ]]; then
     CMD="$CMD --expires-at \"$EXPIRES_AT\""
+fi
+
+if [[ -n "$NETWORK" ]]; then
+    CMD="$CMD --network $NETWORK"
 fi
 
 # Execute command and capture output
