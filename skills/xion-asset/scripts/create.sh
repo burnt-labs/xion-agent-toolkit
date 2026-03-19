@@ -10,6 +10,7 @@ NAME=""
 SYMBOL=""
 MINTER=""
 SALT=""
+NETWORK=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -18,6 +19,7 @@ while [[ $# -gt 0 ]]; do
         --symbol) SYMBOL="$2"; shift 2 ;;
         --minter) MINTER="$2"; shift 2 ;;
         --salt) SALT="$2"; shift 2 ;;
+        --network) NETWORK="$2"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -37,6 +39,10 @@ fi
 
 if [[ -n "$SALT" ]]; then
     CMD="$CMD --salt \"$SALT\""
+fi
+
+if [[ -n "$NETWORK" ]]; then
+    CMD="$CMD --network $NETWORK"
 fi
 
 # Execute command and capture output

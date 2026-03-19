@@ -3,6 +3,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use xion_agent_toolkit::cli;
 use xion_agent_toolkit::cli::{Cli, Commands};
 use xion_agent_toolkit::shared::exit_codes::exit_code;
+use xion_agent_toolkit::shared::mainnet::{is_mainnet_disabled, print_mainnet_disabled_error};
 use xion_agent_toolkit::utils::output::{anyhow_to_xion_error, print_formatted};
 
 #[tokio::main]
@@ -20,6 +21,12 @@ async fn main() {
 
     // Set environment variable for network override (used by commands)
     std::env::set_var("XION_NETWORK_OVERRIDE", &ctx.network);
+
+    // Check if mainnet is disabled before processing any commands
+    if ctx.network == "mainnet" && is_mainnet_disabled() {
+        print_mainnet_disabled_error();
+        std::process::exit(exit_code::MAINNET_DISABLED);
+    }
 
     let result = match cli.command {
         Commands::Auth(auth_cmd) => cli::handle_auth_command(auth_cmd, &ctx).await,

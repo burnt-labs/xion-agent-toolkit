@@ -1,0 +1,60 @@
+{
+  "command": "xion-dev routing",
+  "description": "Route user request to the appropriate Xion skill based on their needs",
+  "parameters": [
+    {
+      "name": "user-intent",
+      "type": "string",
+      "required": true,
+      "description": "The user's expressed need or goal in natural language"
+    },
+    {
+      "name": "detected-keywords",
+      "type": "array",
+      "required": false,
+      "items": {"type": "string"},
+      "description": "Keywords detected from user message for routing decision"
+    }
+  ],
+  "routing_rules": {
+    "login": {
+      "keywords": ["login", "auth", "OAuth2", "authenticate", "sign in", "登录", "认证", "MetaAccount 登录"],
+      "skill": "xion-oauth2",
+      "priority": 1
+    },
+    "treasury": {
+      "keywords": ["treasury", "Treasury", "资金管理", "treasury 管理", "fund", "withdraw", "grant"],
+      "skill": "xion-treasury",
+      "priority": 1
+    },
+    "nft": {
+      "keywords": ["NFT", "nft", "collection", "mint", "royalties", "CW721", "CW2981", "NFT 铸造"],
+      "skill": "xion-asset",
+      "priority": 1
+    },
+    "faucet": {
+      "keywords": ["faucet", "testnet tokens", "test token", "get xion", "领取代币", "测试币", "水龙头"],
+      "skill": "xion-faucet",
+      "priority": 1
+    },
+    "toolkit-init": {
+      "keywords": ["install", "setup", "xion toolkit", "xion-toolkit", "install xion", "xion 开发入门"],
+      "skill": "xion-toolkit-init",
+      "priority": 1
+    },
+    "xiond-chain": {
+      "keywords": ["xiond", "chain query", "rpc", "block", "transaction status", "balance query", "链上查询"],
+      "skill": "xiond-usage (xion-skills)",
+      "priority": 2
+    },
+    "xiond-wasm": {
+      "keywords": ["deploy contract", "cosmwasm", "wasm", "instantiate", "migrate contract", "合约部署"],
+      "skill": "xiond-wasm (xion-skills)",
+      "priority": 2
+    }
+  },
+  "fallback": {
+    "skill": "xion-toolkit-init",
+    "reason": "Default entry point when no specific skill matches - helps user get started"
+  }
+}

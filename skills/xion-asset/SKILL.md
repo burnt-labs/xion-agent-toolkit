@@ -10,10 +10,10 @@ description: |
   
   Supports 5 NFT types: cw721-base, cw2981-royalties, cw721-expiration, cw721-metadata-onchain, cw721-non-transferable.
   
-  Triggers on: NFT, CW721, asset, mint, collection, royalty, soulbound, expiration, predict address, batch mint.
+  Triggers on: NFT, CW721, CW721 NFT, NFT collection, NFT token, mint NFT, minting, create NFT collection, NFT royalties, NFT royalty, NFT soulbound, non-transferable NFT, expirable NFT, on-chain metadata NFT, metadata-onchain, predict NFT address, batch mint NFT, batch mint tokens, mint multiple NFTs, NFT contract, NFT on Xion, Xion NFT, CosmWasm NFT, CosmWasm 721, asset builder, NFT 徽章, NFT 凭证, 创建 NFT, 铸造 NFT, NFT 版税.
 metadata:
   author: burnt-labs
-  version: "1.0.0"
+  version: "1.2.0"
   recommends:
     - xion-oauth2
     - xion-toolkit-init
@@ -41,15 +41,22 @@ xion-toolkit asset create --type cw721-base --name "My Collection" --symbol "NFT
 xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
 ```
 
-## Asset Types
+## Which NFT Type Should I Use?
 
-| Type | Code ID | Features |
-|------|---------|----------|
-| `cw721-base` | 522 | Standard NFT |
-| `cw721-metadata-onchain` | 525 | On-chain metadata |
-| `cw721-expiration` | 523 | Time-based expiry |
-| `cw721-non-transferable` | 526 | Soulbound NFT |
-| `cw2981-royalties` | 528 | Royalties at mint time |
+| Type | Use Case | Example |
+|------|----------|---------|
+| `cw721-base` | Standard NFTs without special features | Art collections, basic tokens |
+| `cw2981-royalties` | Commercial NFTs with royalties | Marketplace sales, creator earnings |
+| `cw721-non-transferable` | Soulbound credentials, badges | Certifications, achievements, SBTs |
+| `cw721-expiration` | Time-limited access tokens | Event tickets, subscriptions |
+| `cw721-metadata-onchain` | Fully on-chain data | On-chain art, immutable records |
+
+**Decision Guide:**
+- Need royalties on secondary sales? → `cw2981-royalties`
+- Need non-transferable credentials? → `cw721-non-transferable`
+- Need time-based expiration? → `cw721-expiration`
+- Need all data on-chain? → `cw721-metadata-onchain`
+- Just need basic NFT? → `cw721-base`
 
 ## Commands
 
@@ -150,6 +157,8 @@ xion-toolkit asset query \
 
 ## Scripts Reference
 
+**路径 (Path)**: `skills/xion-asset/scripts/`
+
 | Script | Description |
 |--------|-------------|
 | `types.sh` | List available asset types |
@@ -188,7 +197,7 @@ All commands return JSON:
 
 ## Version
 
-- Skill Version: 1.0.0
+- Skill Version: 1.2.0
 - Compatible CLI Version: >=0.1.0
 
 ## Parameter Collection Workflow

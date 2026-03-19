@@ -13,6 +13,40 @@
 #   JSON to stdout (for agent parsing)
 #   Status messages to stderr
 
+#
+# --upgrade: Reinstall if already installed (fetches latest version from GitHub Releases)
+# --force-reinstall: Force reinstall even if same version
+# --with-xion-skills: Also install xion-skills after xion-toolkit
+
+#
+# Prerequisites:
+# - curl        # For downloading installer
+# - bash        # For running shell scripts (macOS/Linux)
+# - powershell  # For Windows installations
+#
+# For upgrade scenarios:
+curl -fsSL https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
+
+### Option B: PowerShell Installer (Windows)
+
+```powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
+```
+
+### Option C: From Source (All platforms)
+```bash
+git clone https://github.com/burnt-labs/xion-agent-toolkit
+cd xion-agent-toolkit
+cargo install --path . --force
+```
+
+### Check Current version
+```bash
+xion-toolkit --version
+```
+
+> **Note**: Upgrading preserves your existing credentials (`~/.xion-toolkit/credentials/*.enc`). You do **NOT** need to re-authenticate after upgrading.
+
 set -e
 
 # Colors for stderr output

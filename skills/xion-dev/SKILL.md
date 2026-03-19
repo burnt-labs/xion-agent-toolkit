@@ -7,12 +7,15 @@ description: |
   - MetaAccount/gasless operations → xion-toolkit skills (this repo)
   - Chain queries/contract deployment → xiond skills (xion-skills repo)
   
-  Triggers on: xion, xion blockchain, xion 开发, MetaAccount, gasless, 无 gas, Treasury, OAuth2 xion, xion 认证, xion login, xion toolkit, burnt labs, building on xion.
+  Triggers on: xion, xion blockchain, xion 开发, MetaAccount, gasless, 无 gas, Treasury, OAuth2 xion, xion 认证, xion login, xion toolkit, burnt labs, building on xion, xion 开发入门, gasless 交易, 无 gas 交易, treasury 管理, build on xion, xion app, xion dapp, xion development, xion blockchain development, MetaAccount 登录, gasless auth, session key.
   
   Make sure to use this skill for ANY Xion-related question, even if the user doesn't explicitly ask for "xion-dev" or "toolkit".
 metadata:
   author: burnt-labs
-  version: "1.0.0"
+  version: "1.1.0"
+  requires:
+    - xion-toolkit-init
+  compatibility: Entry point for all Xion development - routes to appropriate skill
   recommends:
     - xion-toolkit-init
     - xion-oauth2
@@ -31,6 +34,30 @@ Unified entry point for Xion blockchain development. This skill helps you choose
 
 - Most developers (90%) use MetaAccount + OAuth2 for gasless transactions
 - Traditional xiond CLI is reserved for advanced scenarios (contract deployment, chain queries)
+
+## Parameter Collection Workflow
+
+When routing a user request to an appropriate skill:
+
+### Step 1: Detect Intent
+Parse the user's message to identify keywords and intent:
+- Login/auth → `xion-oauth2`
+- Treasury management → `xion-treasury`
+- NFT operations → `xion-asset`
+- Testnet tokens → `xion-faucet`
+- Tool installation → `xion-toolkit-init`
+- Chain queries (xiond) → `xiond-usage` (xion-skills)
+- Contract deployment → `xiond-wasm` (xion-skills)
+
+### Step 2: Confirm Routing
+Inform the user which skill you're routing to and why:
+```
+Routing to: xion-treasury skill
+Reason: User wants to create and manage a Treasury
+```
+
+### Step 3: Hand Off
+Load the target skill and let it handle parameter collection.
 
 ## Decision Matrix
 
@@ -171,6 +198,25 @@ npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a
 
 ### User mentions "royalties" or "CW2981"
 → Recommend xion-asset with cw2981-royalties type
+
+## Keeping Skills Updated
+
+Skills are actively developed and improved. If you encounter:
+- Unknown commands or flags
+- Outdated behavior
+- Missing features mentioned in documentation
+
+Re-install the skills to get the latest version:
+
+```bash
+# Update xion-agent-toolkit skills
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
+
+# Update xion-skills (for xiond operations)
+npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
+```
+
+Check the repository releases for changelog: https://github.com/burnt-labs/xion-agent-toolkit/releases
 
 ## Resources
 

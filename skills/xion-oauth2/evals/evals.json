@@ -1,0 +1,10 @@
+{
+  "skill_name": "xion-oauth2",
+  "evals": [
+    {"id": 1, "prompt": "I need to login to Xion", "expected_output": "Guide through auth login"},
+    {"id": 2, "prompt": "Check my authentication status", "expected_output": "Run auth status"},
+    {"id": 3, "prompt": "My token expired", "expected_output": "Guide to refresh or re-login"},
+    {"id": 4, "prompt": "xion 登录", "expected_output": "Chinese login guidance"},
+    {"id": 5, "prompt": "Logout from xion-toolkit", "expected_output": "Run auth logout"}
+  ]
+}

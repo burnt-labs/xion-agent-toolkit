@@ -67,7 +67,7 @@ audit ────┘
 - [x] Rewrite `ci.yml` with unified job structure
 - [x] Remove `test-skills.yml`
 - [x] Remove `e2e-tests.yml`
-- [x] Update `plans/status.json`
+- [x] Update `.agents/plans/status.json`
 
 ## Acceptance Criteria
 

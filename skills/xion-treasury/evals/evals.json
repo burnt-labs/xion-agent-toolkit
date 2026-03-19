@@ -1,0 +1,12 @@
+{
+  "skill_name": "xion-treasury",
+  "evals": [
+    {"id": 1, "prompt": "Create a treasury named 'My Treasury'", "expected_output": "Guide to treasury create command"},
+    {"id": 2, "prompt": "Fund my treasury with 10 XION", "expected_output": "Guide to treasury fund command"},
+    {"id": 3, "prompt": "Add send authorization to my treasury", "expected_output": "Guide to grant-config add command"},
+    {"id": 4, "prompt": "创建 treasury", "expected_output": "Chinese guidance for create"},
+    {"id": 5, "prompt": "Set up fee allowance for gasless transactions", "expected_output": "Guide to fee-config set command"},
+    {"id": 6, "prompt": "Query my treasury balance", "expected_output": "Guide to treasury query/balance"},
+    {"id": 7, "prompt": "Withdraw funds from treasury", "expected_output": "Guide to treasury withdraw"}
+  ]
+}

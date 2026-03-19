@@ -5,12 +5,12 @@ description: |
   
   Treasury contracts enable GASLESS transactions through MetaAccount - users don't need to hold XION for gas fees.
   
-  Triggers on: Treasury, MetaAccount Treasury, gasless 交易, gasless transactions, 无 gas 交易, authz grant, fee grant, treasury create, treasury fund, treasury withdraw, treasury 管理, MetaAccount treasury, burnt labs treasury, fee allowance, delegated authorization.
+  Triggers on: Treasury, MetaAccount Treasury, gasless 交易, gasless transactions, 无 gas 交易, authz grant, fee grant, treasury create, treasury fund, treasury withdraw, treasury 管理, MetaAccount treasury, burnt labs treasury, fee allowance, delegated authorization, set up treasury, manage treasury, give me a treasury, create xion treasury, xion treasury address, my treasury, treasury balance, check treasury, list treasuries, treasury permissions, grant permissions, revoke permissions, add spend limit, remove spend limit, configure fee allowance, treasury admin, update treasury, import treasury, export treasury.
   
   Use AFTER xion-oauth2 skill - authentication is required for all Treasury operations. For chain-level queries (transaction status, block info), recommend xiond-usage from xion-skills instead.
 metadata:
   author: burnt-labs
-  version: "1.2.0"
+  version: "1.2.2"
   requires:
     - xion-toolkit-init
     - xion-oauth2
@@ -70,6 +70,44 @@ xion-toolkit treasury create --name "My Treasury" --redirect-url "https://exampl
 
 # 5. Fund the treasury (1 XION = 1,000,000 uxion)
 xion-toolkit treasury fund xion1treasury... --amount 1000000uxion
+```
+
+## Multi-Step Workflows
+
+### Create and Configure New Treasury
+
+Complete setup workflow for a new treasury:
+
+1. **Create treasury**
+   ```bash
+   xion-toolkit treasury create --name "My Project Treasury" --redirect-url "https://example.com/callback"
+   ```
+
+2. **Fund treasury**
+   ```bash
+   xion-toolkit treasury fund <address> --amount 1000000uxion
+   ```
+
+3. **Add authz grant** (optional)
+   ```bash
+   xion-toolkit treasury grant-config add <address> --preset send --spend-limit "1000000uxion"
+   ```
+
+4. **Set fee allowance** (optional)
+   ```bash
+   xion-toolkit treasury fee-config set <address> --fee-allowance-type basic --fee-spend-limit "100000uxion"
+   ```
+
+### Emergency: Revoke All Grants
+
+If you need to revoke all permissions:
+
+```bash
+# List current grants
+xion-toolkit treasury grant-config list <address>
+
+# Remove specific grant
+xion-toolkit treasury grant-config remove <address> --grant-type-url "/cosmos.bank.v1beta1.MsgSend"
 ```
 
 ## Common Operations
@@ -256,7 +294,7 @@ xion-toolkit treasury list --no-cache
 
 ## Version
 
-- Skill Version: 1.2.0
+- Skill Version: 1.2.2
 - Compatible CLI Version: >=0.1.0
 
 ## Parameter Collection Workflow

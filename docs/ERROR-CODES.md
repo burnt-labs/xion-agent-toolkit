@@ -2,6 +2,57 @@
 
 > Complete error code reference for AI Agents and developers. All errors return structured JSON format.
 
+## Exit Codes
+
+The CLI returns standardized exit codes for CI/CD integration:
+
+| Code | Name | Description |
+|------|------|-------------|
+| 0 | SUCCESS | Operation completed successfully |
+| 1 | GENERAL_ERROR | General/unknown error |
+| 10 | MAINNET_DISABLED | Mainnet mode is currently disabled |
+
+### MAINNET_DISABLED (Exit Code 10)
+
+**Description**: Mainnet mode is currently disabled.
+
+**Error Message**:
+```
+Error: Mainnet mode is currently disabled.
+  The xion-toolkit CLI is currently only available for testnet.
+  Please use --network testnet or omit the flag (testnet is default).
+```
+
+**Solution**:
+- Use `--network testnet` to operate on testnet
+- Omit the `--network` flag (testnet is default)
+- To enable mainnet, set `XION_MAINNET_DISABLED=false` (use with caution)
+
+**Example**:
+```bash
+# This will fail with exit code 10
+xion-toolkit --network mainnet auth status
+echo $?  # Output: 10
+
+# Use testnet instead
+xion-toolkit --network testnet auth status
+
+# Or omit the flag (testnet is default)
+xion-toolkit auth status
+```
+
+**Configuration**:
+```bash
+# Check if mainnet is disabled (default)
+echo $XION_MAINNET_DISABLED
+
+# Enable mainnet (use with caution)
+export XION_MAINNET_DISABLED=false
+xion-toolkit --network mainnet auth status
+```
+
+---
+
 ## Error Response Format
 
 ### JSON Output (default for scripts/agents)

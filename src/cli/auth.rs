@@ -10,6 +10,10 @@ pub enum AuthCommands {
         /// Callback port (default: 54321)
         #[arg(short, long, default_value = "54321")]
         port: Option<u16>,
+
+        /// Force new browser authentication (skip refresh check)
+        #[arg(short, long)]
+        force: bool,
     },
 
     /// Logout and clear stored credentials
@@ -24,7 +28,7 @@ pub enum AuthCommands {
 
 pub async fn handle_command(cmd: AuthCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        AuthCommands::Login { port } => handle_login(port, ctx).await?,
+        AuthCommands::Login { port, force } => handle_login(port, force, ctx).await?,
         AuthCommands::Logout => handle_logout(ctx)?,
         AuthCommands::Status => handle_status(ctx)?,
         AuthCommands::Refresh => handle_refresh(ctx).await?,
@@ -32,7 +36,7 @@ pub async fn handle_command(cmd: AuthCommands, ctx: &ExecuteContext) -> Result<(
     Ok(())
 }
 
-async fn handle_login(port: Option<u16>, ctx: &ExecuteContext) -> Result<()> {
+async fn handle_login(port: Option<u16>, force: bool, ctx: &ExecuteContext) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::utils::output::{print_formatted, print_info};
@@ -40,23 +44,64 @@ async fn handle_login(port: Option<u16>, ctx: &ExecuteContext) -> Result<()> {
 
     let config_manager = ConfigManager::new()?;
     let mut network_config = config_manager.get_network_config()?;
+    let network = config_manager.get_current_network();
 
     // Override callback port if specified
     if let Some(p) = port {
         network_config.callback_port = p;
     }
 
-    print_info(&format!(
-        "Starting OAuth2 login on network: {}...",
-        config_manager.get_current_network()
-    ));
+    let oauth_client = OAuthClient::new(network_config.clone())?;
+
+    // Step 1: Check if refresh-first is possible (unless --force)
+    // Handle is_authenticated errors gracefully - fallback to browser auth
+    let is_auth = if !force {
+        oauth_client.is_authenticated().unwrap_or(false)
+    } else {
+        false
+    };
+
+    if is_auth {
+        print_info("Existing credentials found. Attempting to refresh token first...");
+        info!("Attempting token refresh before browser auth");
+
+        match oauth_client.refresh_token().await {
+            Ok(credentials) => {
+                info!("Token refresh successful, skipping browser auth");
+                let result = serde_json::json!({
+                    "success": true,
+                    "network": network,
+                    "xion_address": credentials.xion_address,
+                    "expires_at": credentials.expires_at,
+                    "refreshed": true,
+                    "message": "Token refreshed successfully. No browser auth needed."
+                });
+                let _ = print_formatted(&result, ctx.output_format());
+                return Ok(());
+            }
+            Err(e) => {
+                print_info(&format!(
+                    "Token refresh failed ({}), proceeding with browser auth...",
+                    e
+                ));
+                info!("Token refresh failed, falling back to browser auth");
+            }
+        }
+    }
+
+    // Step 2: Proceed with browser-based OAuth2 flow
+    if force {
+        print_info(&format!(
+            "Force flag provided. Starting fresh browser authentication on network: {}...",
+            network
+        ));
+    } else {
+        print_info(&format!("Starting OAuth2 login on network: {}...", network));
+    }
     print_info(&format!("OAuth API: {}", network_config.oauth_api_url));
     print_info(&format!("Callback port: {}", network_config.callback_port));
 
     info!("Creating OAuth2 client");
-
-    // Create OAuth client
-    let oauth_client = OAuthClient::new(network_config.clone())?;
 
     // Execute login flow
     info!("Starting OAuth2 login flow");
@@ -65,9 +110,10 @@ async fn handle_login(port: Option<u16>, ctx: &ExecuteContext) -> Result<()> {
             info!("Login successful");
             let result = serde_json::json!({
                 "success": true,
-                "network": config_manager.get_current_network(),
+                "network": network,
                 "xion_address": credentials.xion_address,
                 "expires_at": credentials.expires_at,
+                "refreshed": false,
             });
             print_formatted(&result, ctx.output_format())
         }

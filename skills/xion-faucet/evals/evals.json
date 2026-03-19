@@ -36,6 +36,20 @@
       "expected_output": "Should recognize this is a delegate claim (claiming for another address). The amount 1000000uxion is the standard faucet amount so should work. Should ask for confirmation and verify authentication before proceeding.",
       "files": [],
       "triggers": ["claim", "specific address", "delegate"]
+    },
+    {
+      "id": 6,
+      "prompt": "I tried to claim from the faucet but got 'Balance gate failed' error. What does that mean?",
+      "expected_output": "Should explain that faucet requires receiver to have < 1 XION balance. Should suggest user transfer some tokens out to another address before claiming again. Should NOT just retry the claim without addressing the balance issue.",
+      "files": [],
+      "triggers": ["balance gate", "error", "troubleshooting"]
+    },
+    {
+      "id": 7,
+      "prompt": "Why can't I use the faucet on mainnet?",
+      "expected_output": "Should explain that faucet is testnet-only (EFAUCET004 error). Should clarify that mainnet tokens must be obtained through other means (exchange, etc.). Should NOT attempt to run faucet claim on mainnet.",
+      "files": [],
+      "triggers": ["mainnet", "EFAUCET004", "network restriction"]
     }
   ],
   "validation_notes": [
@@ -43,6 +57,8 @@
     "Eval 2: Tests Chinese language support and cooldown status explanation",
     "Eval 3: Tests disambiguation - user thinks they need send but actually need faucet first",
     "Eval 4: Tests status-only query without claiming",
-    "Eval 5: Tests delegate claim with explicit address and amount"
+    "Eval 5: Tests delegate claim with explicit address and amount",
+    "Eval 6: Tests balance gate failure handling and remediation guidance",
+    "Eval 7: Tests mainnet restriction explanation and EFAUCET004 error handling"
   ]
 }

@@ -1,0 +1,10 @@
+{
+  "skill_name": "xion-asset",
+  "evals": [
+    {"id": 1, "prompt": "Create an NFT collection called 'My Art' with symbol 'ART'", "expected_output": "Guide to asset create command"},
+    {"id": 2, "prompt": "Mint token ID 001 to xion1abc...", "expected_output": "Guide to asset mint command"},
+    {"id": 3, "prompt": "I want soulbound badges that can't be transferred", "expected_output": "Recommend cw721-non-transferable type"},
+    {"id": 4, "prompt": "预测 NFT 合约地址", "expected_output": "Chinese guidance for predict command"},
+    {"id": 5, "prompt": "Batch mint 100 tokens", "expected_output": "Guide to batch-mint command"}
+  ]
+}

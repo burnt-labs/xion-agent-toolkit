@@ -1,0 +1,10 @@
+{
+  "skill_name": "xion-dev",
+  "evals": [
+    {"id": 1, "prompt": "I want to create a treasury for my Xion dApp", "expected_output": "Route to xion-treasury skill"},
+    {"id": 2, "prompt": "我的 Xion 应用需要管理 Treasury", "expected_output": "Route to xion-treasury skill (Chinese)"},
+    {"id": 3, "prompt": "How do I login to Xion?", "expected_output": "Route to xion-oauth2 skill"},
+    {"id": 4, "prompt": "Deploy a CosmWasm contract on Xion", "expected_output": "Route to xiond-wasm (xion-skills)"},
+    {"id": 5, "prompt": "I need testnet tokens", "expected_output": "Route to xion-faucet skill"}
+  ]
+}

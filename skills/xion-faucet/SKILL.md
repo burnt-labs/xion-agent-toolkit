@@ -5,12 +5,12 @@ description: |
   
   The faucet provides 1 XION (1,000,000 uxion) per claim with a 24-hour cooldown period.
   
-  Triggers on: faucet, faucet testnet, claim tokens, testnet tokens, get xion, get test tokens, when can I claim, claim cooldown, how often can I claim, fund my account, give me xion, request tokens, faucet status, cooldown check, need tokens, need xion, need testnet funds, 领取代币, 测试网代币, 领取测试币, 水龙头, 多久可以领取, 冷却时间, 领取状态, 获取 XION, 测试代币, 水龙头状态, 领取代币, XION 水龙头, 测试币领取.
+  Triggers on: faucet, faucet testnet, claim tokens, testnet tokens, get xion, get test tokens, when can I claim, claim cooldown, how often can I claim, fund my account, give me xion, request tokens, faucet status, cooldown check, need tokens, need xion, need testnet funds, 领取代币, 测试网代币, 领取测试币, 水龙头, 多久可以领取, 冷却时间, 领取状态, 获取 XION, 测试代币, 水龙头状态, XION 水龙头, 测试币领取.
   
   Use AFTER xion-oauth2 skill - authentication is required for claim operations.
 metadata:
   author: burnt-labs
-  version: "1.2.0"
+  version: "1.2.2"
   requires:
     - xion-toolkit-init
     - xion-oauth2
@@ -288,9 +288,14 @@ xion-toolkit faucet claim --network testnet
 
 ## Version
 
-- Skill Version: 1.2.0
+- Skill Version: 1.2.2
 - Compatible CLI Version: >=0.1.0
-- Last Updated: 2026-03-18
+- Last Updated: 2026-03-19
+
+### Changelog
+
+- **v1.2.2** (2026-03-19): Fixed duplicate trigger phrase, added negative test cases
+- **v1.2.0** (2026-03-18): Initial release with claim, status, info commands
 
 ## Parameter Schemas
 
