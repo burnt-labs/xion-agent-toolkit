@@ -225,13 +225,13 @@ xion-agent-toolkit/
 │   ├── *_integration_test.rs
 │   └── archived/        # Archived/legacy test scripts
 ├── scripts/             # Build and utility scripts (not tests)
-├── plans/               # Development plans & progress (see plans/status.json)
+├── .agents/plans/       # Development plans & progress (see .agents/plans/status.json)
 ├── docs/                # CLI reference, error codes, release process
 └── logs/                # Dev-time logs (git-ignored)
 ```
 
 - **tests/**: E2E scripts should be named `e2e_*.sh`. Do not put test scripts in `scripts/`.
-- **plans/**: Use `plans/status.json` as the single source of truth for roadmap and progress.
+- **.agents/plans/**: Use `.agents/plans/status.json` as the single source of truth for roadmap and progress.
 
 ## Adding New Features
 
@@ -347,7 +347,7 @@ git push origin main --tags
 
 - **GitHub Issues**: Bug reports and feature requests
 - **Code Review**: All PRs reviewed by maintainers
-- **Documentation**: See `plans/` for architecture details; `docs/` for CLI reference, error codes, and release process
+- **Documentation**: See `.agents/plans/` for architecture details; `docs/` for CLI reference, error codes, and release process
 - **Release Process**: See `docs/release.md`
 - **Agent/Contributor setup**: See `INSTALL-FOR-AGENTS.md` for AI agent installation
 

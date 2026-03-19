@@ -79,8 +79,8 @@ This directory contains historical planning documents that have been completed.
 
 ## Current Status
 
-See `plans/status.json` for the current project status and active plans.
+See `.agents/plans/status.json` for the current project status and active plans.
 
 ## Reference Material
 
-Ongoing reference material is maintained in `plans/knowledge/`.
+Ongoing reference material is maintained in `.agents/plans/knowledge/`.

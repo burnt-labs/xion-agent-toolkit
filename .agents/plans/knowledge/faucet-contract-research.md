@@ -116,7 +116,7 @@ User → CLI → OAuth2 API → ExecuteMsg::Faucet{} → Contract sends tokens
 
 ## CLI Implementation Plan
 
-See `plans/faucet-command.md` for the full development plan.
+See `.agents/plans/faucet-command.md` for the full development plan.
 
 ### Command Design
 

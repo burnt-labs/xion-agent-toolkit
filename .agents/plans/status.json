@@ -5,7 +5,7 @@
     {
       "id": "skill-patterns-optimization",
       "title": "Skill Patterns Optimization",
-      "file": "plans/skill-patterns-optimization.md",
+      "file": ".agents/plans/skill-patterns-optimization.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -19,7 +19,7 @@
     {
       "id": "rest-api-url-fix",
       "title": "REST API URL Fix - Separate Chain Query Endpoint",
-      "file": "plans/rest-api-url-fix.md",
+      "file": ".agents/plans/rest-api-url-fix.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -33,7 +33,7 @@
     {
       "id": "faucet-command",
       "title": "Faucet Command Implementation",
-      "file": "plans/faucet-command.md",
+      "file": ".agents/plans/faucet-command.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -47,7 +47,7 @@
     {
       "id": "qc-cross-review",
       "title": "QC Cross-Review: Source Code & Skills",
-      "file": "plans/qc-cross-review.md",
+      "file": ".agents/plans/qc-cross-review.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -61,7 +61,7 @@
     {
       "id": "unified-ci-workflow",
       "title": "Unified CI Workflow",
-      "file": "plans/unified-ci-workflow.md",
+      "file": ".agents/plans/unified-ci-workflow.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -75,7 +75,7 @@
     {
       "id": "skills-test-framework",
       "title": "Skills Test Framework",
-      "file": "plans/skills-test-framework.md",
+      "file": ".agents/plans/skills-test-framework.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -89,7 +89,7 @@
     {
       "id": "cicd-integration-output",
       "title": "CI/CD Integration Output",
-      "file": "plans/cicd-integration-output.md",
+      "file": ".agents/plans/cicd-integration-output.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -103,7 +103,7 @@
     {
       "id": "predicted-address-computation",
       "title": "Predicted Address Computation",
-      "file": "plans/predicted-address-computation.md",
+      "file": ".agents/plans/predicted-address-computation.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -117,7 +117,7 @@
     {
       "id": "batch-treasury-operations",
       "title": "Batch Treasury Operations",
-      "file": "plans/batch-treasury-operations.md",
+      "file": ".agents/plans/batch-treasury-operations.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -131,7 +131,7 @@
     {
       "id": "shell-completion",
       "title": "Shell Completion Support",
-      "file": "plans/shell-completion.md",
+      "file": ".agents/plans/shell-completion.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -145,7 +145,7 @@
     {
       "id": "shell-completion-install",
       "title": "Shell Completion --install Flag",
-      "file": "plans/shell-completion.md",
+      "file": ".agents/plans/shell-completion.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -159,7 +159,7 @@
     {
       "id": "skill-param-validation",
       "title": "Skill Parameter Validation Framework",
-      "file": "plans/skill-param-validation.md",
+      "file": ".agents/plans/skill-param-validation.md",
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
@@ -172,7 +172,7 @@
     }
   ],
   "_notes": {
-    "archived": "See plans/archived/README.md for archived plans summary.",
+    "archived": "See .agents/plans/archived/README.md for archived plans summary.",
     "removed": [
       {
         "id": "treasury-analytics",
@@ -219,23 +219,23 @@
     ],
     "knowledge": [
       {
-        "file": "plans/knowledge/oauth-client-implementation.md",
+        "file": ".agents/plans/knowledge/oauth-client-implementation.md",
         "desc": "OAuthClient implementation decisions."
       },
       {
-        "file": "plans/knowledge/treasury-create-design.md",
+        "file": ".agents/plans/knowledge/treasury-create-design.md",
         "desc": "Treasury create command design."
       },
       {
-        "file": "plans/knowledge/TYPES_COMPARISON.md",
+        "file": ".agents/plans/knowledge/TYPES_COMPARISON.md",
         "desc": "Treasury type comparison analysis."
       },
       {
-        "file": "plans/knowledge/faucet-contract-research.md",
+        "file": ".agents/plans/knowledge/faucet-contract-research.md",
         "desc": "Faucet contract research and deployment attempts."
       }
     ],
-    "roadmap": "plans/feature-roadmap.md",
+    "roadmap": ".agents/plans/feature-roadmap.md",
     "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing ✅, CI/CD integration ✅",
     "phase3_summary": "Advanced Features - Predicted Address ✅, Batch Treasury Ops ✅"
   }

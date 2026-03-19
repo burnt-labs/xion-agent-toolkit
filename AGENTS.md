@@ -51,7 +51,7 @@ xion-agent-toolkit/
 │   ├── e2e_treasury_grant_fee.sh      # grant/fee config E2E test
 │   └── archived/                      # archived/legacy test scripts
 ├── scripts/               # build and utility scripts (not tests)
-├── plans/
+├── .agents/plans/
 │   ├── status.json
 │   ├── *.md               # actual plans
 │   └── knowledge/         # reasoning, comparisons, dev logs
@@ -62,9 +62,9 @@ xion-agent-toolkit/
 
 - **tests/**: All test scripts (bash E2E tests, Rust integration tests). E2E test scripts should be named `e2e_*.sh`.
 - **scripts/**: Build scripts, deployment scripts, and utility scripts. NOT for test scripts.
-- **plans/**: Project planning documents and knowledge base.
+- **.agents/plans/**: Project planning documents and knowledge base.
 
-Development progress and roadmap live in `plans/`; use `plans/status.json` as the SSOT.
+Development progress and roadmap live in `.agents/plans/`; use `.agents/plans/status.json` as the SSOT.
 
 ## Code Standards
 
@@ -513,7 +513,7 @@ CI must pass:
 1. Conversation language
    - Match the user's language.
 2. Documentation and code language
-   - Persistent docs (`README.md`, `docs/`, `plans/`, skill `SKILL.md`, `AGENTS.md`) must be in English.
+   - Persistent docs (`README.md`, `docs/`, `.agents/plans/`, skill `SKILL.md`, `AGENTS.md`) must be in English.
    - All code comments must be in English.
 
 ## Related Resources

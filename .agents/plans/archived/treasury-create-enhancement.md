@@ -181,7 +181,7 @@ xion-toolkit treasury create --config treasury-config.json
 
 ### Phase 1: Architecture & Design ✅
 - [x] Research Developer Portal implementation
-- [x] Design CLI interface - See `plans/knowledge/treasury-create-design.md`
+- [x] Design CLI interface - See `.agents/plans/knowledge/treasury-create-design.md`
 - [x] Define data structures - Complete with builder pattern
 - [x] Plan encoding strategy - Using prost for protobuf
 
