@@ -10,11 +10,11 @@
       "progress": 100,
       "owner": "@project-manager",
       "agents": ["@prompt-engineer", "@fullstack-dev"],
-      "tags": ["skill", "ux", "auth", "patterns"],
+      "tags": ["skill", "ux", "auth", "patterns", "skill-creator"],
       "created_at": "2026-03-19",
       "updated_at": "2026-03-19",
       "done_at": "2026-03-19",
-      "notes": "QA SIGN-OFF: All acceptance criteria verified. Skill update guidance added to xion-dev, xion-toolkit-init. Refresh-first authentication prominently documented in xion-oauth2 v1.2.0. CLI --force flag implemented. 329 tests passing, clippy clean."
+      "notes": "QA SIGN-OFF: All acceptance criteria verified. Skill update guidance added to xion-dev, xion-toolkit-init. Refresh-first authentication in xion-oauth2 v1.2.1. CLI --force flag implemented. Skill-creator iteration on xion-treasury (v1.2.1) and xion-asset (v1.1.0). 329 tests passing, clippy clean."
     },
     {
       "id": "rest-api-url-fix",

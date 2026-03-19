@@ -81,3 +81,4 @@ Additionally, users requested:
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
 | 2026-03-19 | @qa-engineer | QA Sign-off: All 8 acceptance criteria verified | ✅ Signed-off |
+| 2026-03-19 | @prompt-engineer | Skill-creator iteration: xion-treasury (v1.2.1) + xion-asset (v1.1.0) | ✅ Complete |
