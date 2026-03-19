@@ -3,6 +3,20 @@
   "updated_at": "2026-03-19",
   "plans": [
     {
+      "id": "mainnet-disable-switch",
+      "title": "Mainnet Disable Switch",
+      "file": ".agents/plans/mainnet-disable-switch.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev"],
+      "tags": ["cli", "mainnet", "ux", "feature-flag"],
+      "created_at": "2026-03-19",
+      "updated_at": "2026-03-19",
+      "done_at": "2026-03-19",
+      "notes": "QA SIGN-OFF: All acceptance criteria verified. 334 unit tests + 48 integration tests passing. Clippy clean, fmt clean. E2E 6/6 passed with correct exit code 10. Ready for merge."
+    },
+    {
       "id": "skill-patterns-optimization",
       "title": "Skill Patterns Optimization",
       "file": ".agents/plans/skill-patterns-optimization.md",

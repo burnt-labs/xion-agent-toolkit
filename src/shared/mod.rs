@@ -6,6 +6,7 @@
 //! - **retry**: Automatic retry with exponential backoff
 //! - **exit_codes**: Standardized exit codes for CLI
 //! - **instantiate2**: Deterministic address computation for CosmWasm instantiate2
+//! - **mainnet**: Mainnet disable switch functionality
 //!
 //! # Error Handling
 //!
@@ -79,6 +80,7 @@
 pub mod error;
 pub mod exit_codes;
 pub mod instantiate2;
+pub mod mainnet;
 pub mod retry;
 
 // Re-export commonly used types
@@ -91,6 +93,7 @@ pub use instantiate2::{
     compute_address, detect_salt_encoding, predict_treasury_address, validate_salt,
     PredictedAddress, SaltEncoding,
 };
+pub use mainnet::{is_mainnet_disabled, print_mainnet_disabled_error};
 pub use retry::{
     is_retryable_reqwest_error, is_retryable_status, reqwest_to_xion_error, with_retry,
     with_retry_metadata, RetryConfig, RetryResult,
