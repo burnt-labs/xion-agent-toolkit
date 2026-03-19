@@ -5,6 +5,16 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.0...0.9.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* **security:** harden skills against command injection vulnerabilities ([e95b195](https://github.com/burnt-labs/xion-agent-toolkit/commit/e95b1959d8abe0669f617dac216fdf649cfef5c1))
+* **security:** harden skills against common vulnerabilities ([e4cdfc0](https://github.com/burnt-labs/xion-agent-toolkit/commit/e4cdfc0e032da122369ad32c0bd789a56e783af7))
+* **skills:** complete security hardening for all remaining scripts ([ebc0c33](https://github.com/burnt-labs/xion-agent-toolkit/commit/ebc0c330adbb940310da108a439a1465837946e1))
+* **skills:** correct security-utils path and CLI args in fund/withdraw scripts ([b693f53](https://github.com/burnt-labs/xion-agent-toolkit/commit/b693f532d7808bb9176899ae15a0a36b1fb01350))
+
 ## [0.9.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.3...0.9.0) (2026-03-19)
 
 
