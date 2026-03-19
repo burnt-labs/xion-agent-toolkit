@@ -73,17 +73,17 @@ if ! command -v xion-toolkit &> /dev/null; then
     handle_error "xion-toolkit CLI not found in PATH. Please install xion-agent-toolkit first." "CLI_NOT_FOUND"
 fi
 
-# Build command
-CMD_ARGS="auth status --output json"
+# Build command as array (safe from injection)
+CMD_ARGS=(auth status --output json)
 
-if [ -n "$NETWORK" ]; then
-    CMD_ARGS="$CMD_ARGS --network $NETWORK"
+if [[ -n "$NETWORK" ]]; then
+    CMD_ARGS+=(--network "$NETWORK")
 fi
 
-log_info "Running: xion-toolkit $CMD_ARGS"
+log_info "Running: xion-toolkit ${CMD_ARGS[*]}"
 
-# Execute xion-toolkit status command
-RESULT=$(xion-toolkit $CMD_ARGS 2>&1)
+# Execute command safely using array expansion
+RESULT=$(xion-toolkit "${CMD_ARGS[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then

@@ -593,14 +593,14 @@ EOF
 
 log_info "Processing grant config: action=$ACTION for treasury $ADDRESS"
 
-# Build the command
-CMD="xion-toolkit --network $NETWORK"
+# Build the command as array (safe from injection)
+CMD=(xion-toolkit --network "$NETWORK")
 
 case "$ACTION" in
     add)
         if [[ -n "$CONFIG_FILE" ]]; then
             # Use config file
-            CMD="$CMD treasury grant-config add --address $ADDRESS --config $CONFIG_FILE"
+            CMD+=(treasury grant-config add --address "$ADDRESS" --config "$CONFIG_FILE")
         else
             # Build config from flags
             GRANT_CONFIG_JSON=$(build_grant_config_json)
@@ -612,7 +612,7 @@ case "$ACTION" in
             log_info "Generated grant config:"
             log_info "$GRANT_CONFIG_JSON" >&2
             
-            CMD="$CMD treasury grant-config add --address $ADDRESS --config $TEMP_FILE"
+            CMD+=(treasury grant-config add --address "$ADDRESS" --config "$TEMP_FILE")
         fi
         ;;
     remove)
@@ -625,16 +625,16 @@ case "$ACTION" in
             }'
             exit 1
         fi
-        CMD="$CMD treasury grant-config remove --address $ADDRESS --type-url $TYPE_URL"
+        CMD+=(treasury grant-config remove --address "$ADDRESS" --type-url "$TYPE_URL")
         ;;
     list)
-        CMD="$CMD treasury grant-config list --address $ADDRESS"
+        CMD+=(treasury grant-config list --address "$ADDRESS")
         ;;
 esac
 
-# Execute command and capture output
-log_info "Executing: $CMD" >&2
-OUTPUT=$($CMD 2>&1)
+# Execute command safely using array expansion
+log_info "Executing: ${CMD[*]}" >&2
+OUTPUT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 # Clean up temp file if created

@@ -111,29 +111,29 @@ if ! command -v xion-toolkit &> /dev/null; then
     handle_error "xion-toolkit CLI not found in PATH. Please install xion-agent-toolkit first." "CLI_NOT_FOUND"
 fi
 
-# Build command
-CMD_ARGS="treasury query $ADDRESS --output json"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit treasury query "$ADDRESS" --output json)
 
-if [ -n "$NETWORK" ]; then
-    CMD_ARGS="$CMD_ARGS --network $NETWORK"
+if [[ -n "$NETWORK" ]]; then
+    CMD+=(--network "$NETWORK")
 fi
 
-if [ "$INCLUDE_GRANTS" = true ]; then
-    CMD_ARGS="$CMD_ARGS --include-grants"
+if [[ "$INCLUDE_GRANTS" == true ]]; then
+    CMD+=(--include-grants)
 fi
 
-if [ "$INCLUDE_FEE" = true ]; then
-    CMD_ARGS="$CMD_ARGS --include-fee"
+if [[ "$INCLUDE_FEE" == true ]]; then
+    CMD+=(--include-fee)
 fi
 
-if [ "$NO_CACHE" = true ]; then
-    CMD_ARGS="$CMD_ARGS --no-cache"
+if [[ "$NO_CACHE" == true ]]; then
+    CMD+=(--no-cache)
 fi
 
-log_info "Running: xion-toolkit $CMD_ARGS"
+log_info "Running: ${CMD[*]}"
 
-# Execute xion-toolkit query command
-RESULT=$(xion-toolkit $CMD_ARGS 2>&1)
+# Execute command safely using array expansion
+RESULT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
