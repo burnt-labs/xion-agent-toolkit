@@ -14,6 +14,8 @@
 #   --output FILE   - Output file path (optional, defaults to stdout)
 #   --network NETWORK - Network: testnet, mainnet (default: testnet)
 #
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 set -e
 
@@ -114,29 +116,24 @@ fi
 # Main Logic
 # ==============================================================================
 
-log_info "Exporting Treasury configuration for: $ADDRESS"
+log_info "Exporting configuration from Treasury: $ADDRESS"
 
-# Build command
-CMD="xion-toolkit --network $NETWORK treasury export $ADDRESS --output json"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit treasury export "$ADDRESS" --network "$NETWORK" --output json)
 
+# Execute command safely using array expansion
 if [[ -n "$OUTPUT_FILE" ]]; then
-    CMD="$CMD --output $OUTPUT_FILE"
-fi
-
-log_info "Executing: $CMD"
-
-# Execute command
-if [[ -n "$OUTPUT_FILE" ]]; then
-    # Output to file
-    RESULT=$(eval "$CMD" 2>&1)
+    log_info "Output file: $OUTPUT_FILE"
+    RESULT=$("${CMD[@]}" 2>&1)
     EXIT_CODE=$?
     
     if [[ $EXIT_CODE -eq 0 ]]; then
-        log_info "Configuration exported to: $OUTPUT_FILE"
+        echo "$RESULT" > "$OUTPUT_FILE"
+        log_info "Configuration exported successfully"
         output_json "{
             \"success\": true,
-            \"message\": \"Configuration exported successfully\",
-            \"output_file\": \"$OUTPUT_FILE\"
+            \"message\": \"Configuration exported to $OUTPUT_FILE\",
+            \"file\": \"$OUTPUT_FILE\"
         }"
     else
         log_error "Export failed: $RESULT"
@@ -149,7 +146,7 @@ if [[ -n "$OUTPUT_FILE" ]]; then
     fi
 else
     # Output to stdout
-    RESULT=$(eval "$CMD" 2>&1)
+    RESULT=$("${CMD[@]}" 2>&1)
     EXIT_CODE=$?
     
     if [[ $EXIT_CODE -eq 0 ]]; then

@@ -3,6 +3,9 @@ set -e
 
 # Asset Predict - Predict contract address
 # Usage: predict.sh --type <TYPE> --name <NAME> --symbol <SYMBOL> --salt <SALT> [options]
+#
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 # Parse arguments
 TYPE=""
@@ -28,11 +31,12 @@ if [[ -z "$TYPE" ]] || [[ -z "$NAME" ]] || [[ -z "$SYMBOL" ]] || [[ -z "$SALT" ]
     exit 1
 fi
 
-# Build command
-CMD="xion-toolkit asset predict --type $TYPE --name \"$NAME\" --symbol \"$SYMBOL\" --salt \"$SALT\" --output json"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit asset predict --type "$TYPE" --name "$NAME" --symbol "$SYMBOL" --salt "$SALT" --output json)
 
 if [[ -n "$MINTER" ]]; then
-    CMD="$CMD --minter $MINTER"
+    CMD+=(--minter "$MINTER")
 fi
 
-eval $CMD
+# Execute command safely using array expansion
+"${CMD[@]}"

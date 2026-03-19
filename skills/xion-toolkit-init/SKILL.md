@@ -1,18 +1,20 @@
 ---
 name: xion-toolkit-init
 description: |
-  Install xion-toolkit CLI for Xion MetaAccount development. Use this skill as the FIRST step when the user wants to develop on Xion, build Xion applications, use MetaAccount, perform gasless transactions, or manage Treasury contracts.
+  Guide installation of xion-toolkit CLI for Xion MetaAccount development. Use this skill as the FIRST step when the user wants to develop on Xion, build Xion applications, use MetaAccount, perform gasless transactions, or manage Treasury contracts.
   
-  This is the PRIMARY tool for Xion development - most Xion developers should use xion-toolkit (MetaAccount) instead of xiond (traditional CLI).
+  This is the PRIMARY entry point for Xion development - most Xion developers should use xion-toolkit (MetaAccount) instead of xiond (traditional CLI).
+  
+  IMPORTANT: This skill provides GUIDANCE ONLY. It does NOT execute installation commands. The agent should provide installation commands to the user or execute them via terminal tools.
   
   Triggers on: MetaAccount, gasless, 无 gas, xion toolkit, xion 开发, xion 开发入门, agent 开发, OAuth2 开发, xion setup, install xion, xion blockchain development, burnt labs, Treasury contracts, session key authentication, xion 安装, xion 入门, xion sdk, burnt-labs xion, xion-toolkit upgrade, update xion-toolkit, upgrade xion, xion 升级, xion 版本更新.
   
   Make sure to use this skill whenever the user mentions setting up Xion development, even if they don't explicitly say "toolkit" or "MetaAccount".
 metadata:
   author: burnt-labs
-  version: "1.3.0"
+  version: "2.0.0"
   provides:
-    - xion-toolkit CLI
+    - Installation guidance for xion-toolkit CLI
   recommends:
     - burnt-labs/xion-skills
   compatibility: macOS (x64/ARM64), Linux (x64/ARM64), Windows (PowerShell)
@@ -20,7 +22,9 @@ metadata:
 
 # xion-toolkit-init
 
-Installs the `xion-toolkit` command-line interface for Xion blockchain development. This CLI provides OAuth2 authentication and Treasury management capabilities for gasless transactions.
+Guides installation of the `xion-toolkit` command-line interface for Xion blockchain development. This CLI provides OAuth2 authentication and Treasury management capabilities for gasless transactions.
+
+> **Security Note**: This skill provides installation commands for the user to execute. It does NOT automatically run `curl | sh` patterns to avoid remote code execution risks.
 
 ## Core Philosophy: MetaAccount-First
 
@@ -36,10 +40,11 @@ For most Xion development, use xion-toolkit. Only use xiond (from xion-skills) f
 
 ## Overview
 
-This skill installs:
+This skill provides:
 
-1. **xion-toolkit CLI** - Command-line tool for Xion MetaAccount operations
-2. **Recommends xion-skills** - Additional skills for xiond CLI operations (optional)
+1. **Installation guidance** - Commands to install xion-toolkit CLI
+2. **Verification steps** - How to verify successful installation
+3. **Next steps** - Authentication and Treasury setup
 
 ### What xion-toolkit Provides
 
@@ -74,70 +79,23 @@ curl --proto '=https' --tlsv1.2 -LsSf \
 powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
 ```
 
-### Install with xion-skills
+### Manual Installation (All Platforms)
 
-For full xion development including xiond operations:
+For users who prefer manual installation:
 
-```bash
-# After xion-toolkit is installed, add xion-skills
-npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
-```
+1. Download from: https://github.com/burnt-labs/xion-agent-toolkit/releases
+2. Extract the archive for your platform
+3. Move binary to PATH (e.g., `~/.cargo/bin/` or `~/.local/bin/`)
 
-## Upgrading
+### Install from Source (All Platforms)
 
-xion-toolkit uses cargo-dist for releases. **To upgrade, simply re-run the installer** - it will automatically fetch and install the latest version.
-
-### Upgrade Command
-
-**macOS/Linux:**
-```bash
-curl --proto '=https' --tlsv1.2 -LsSf \
-  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
-```
-
-**Windows:**
-```powershell
-powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
-```
-
-### Check Current Version
+Requires Rust toolchain (rustc 1.75+):
 
 ```bash
-xion-toolkit --version
+git clone https://github.com/burnt-labs/xion-agent-toolkit
+cd xion-agent-toolkit
+cargo install --path .
 ```
-
-> **Note**: Upgrading preserves your existing credentials (`~/.xion-toolkit/credentials/*.enc`). You do **NOT** need to re-authenticate after upgrading.
-
-### Force Reinstall (Clean Slate)
-
-If you need a completely fresh installation:
-
-```bash
-# Remove existing installation
-rm -rf ~/.local/bin/xion-toolkit ~/.cargo/bin/xion-toolkit
-
-# Reinstall
-curl --proto '=https' --tlsv1.2 -LsSf \
-  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
-```
-
-### What the Installer Does
-
-1. Detects OS and architecture
-2. Downloads appropriate binary from GitHub Releases
-3. Installs to `~/.cargo/bin/` or `~/.local/bin/`
-4. Verifies installation
-5. Optionally installs xion-skills dependency
-
-### Supported Platforms
-
-| Platform | Architecture | Installer |
-|----------|--------------|-----------|
-| macOS | x86_64 (Intel) | Shell script |
-| macOS | ARM64 (Apple Silicon) | Shell script |
-| Linux | x86_64 | Shell script |
-| Linux | ARM64 | Shell script |
-| Windows | x86_64 | PowerShell script |
 
 ## Verification
 
@@ -158,9 +116,51 @@ Expected output:
 }
 ```
 
+## Upgrading
+
+xion-toolkit uses cargo-dist for releases. **To upgrade, simply re-run the installer**:
+
+**macOS/Linux:**
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
+```
+
+> **Note**: Upgrading preserves your existing credentials (`~/.xion-toolkit/credentials/*.enc`). You do **not** need to re-authenticate after upgrading.
+
+### Check Current Version
+
+```bash
+xion-toolkit --version
+```
+
+### Force Reinstall (Clean Slate)
+
+```bash
+# Remove existing installation
+rm -rf ~/.local/bin/xion-toolkit ~/.cargo/bin/xion-toolkit
+
+# Reinstall using the commands above
+```
+
+### Supported Platforms
+
+| Platform | Architecture | Installer |
+|----------|--------------|-----------|
+| macOS | x86_64 (Intel) | Shell script |
+| macOS | ARM64 (Apple Silicon) | Shell script |
+| Linux | x86_64 | Shell script |
+| Linux | ARM64 | Shell script |
+| Windows | x86_64 | PowerShell script |
+
 ## Post-Installation
 
-After installing xion-toolkit, you can:
+After installing xion-toolkit, guide the user through:
 
 1. **Authenticate** with `xion-oauth2` skill:
    ```bash
@@ -177,12 +177,29 @@ After installing xion-toolkit, you can:
    npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
    ```
 
+## Agent Workflow
+
+When using this skill, follow this workflow:
+
+1. **Check if already installed**:
+   ```bash
+   xion-toolkit --version
+   ```
+
+2. **If not installed**, provide the appropriate installation command based on OS:
+   - macOS/Linux: Use the shell installer command
+   - Windows: Use the PowerShell installer command
+
+3. **Verify installation** after user executes the command
+
+4. **Guide to next step** (authentication via `xion-oauth2`)
+
 ## Dependency Graph
 
 ```
 xion-dev (entry point - routes to correct skill)
     │
-    ├── xion-toolkit-init (this skill)
+    ├── xion-toolkit-init (this skill - guidance only)
     │       │
     │       ├── xion-oauth2 (authentication)
     │       │       │
@@ -215,10 +232,10 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 ### Permission denied
 
-Run the installer with appropriate permissions:
+Ensure the binary is executable:
 
 ```bash
-curl -fsSL https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+chmod +x ~/.cargo/bin/xion-toolkit
 ```
 
 ### Network issues
@@ -228,21 +245,6 @@ If GitHub is unreachable, try manual installation:
 1. Download from: https://github.com/burnt-labs/xion-agent-toolkit/releases
 2. Extract the archive
 3. Move binary to PATH
-
-## Keeping Skills Updated
-
-Skills are regularly updated with new features and bug fixes. If you notice:
-- Commands not working as expected
-- Missing flags or options
-- Outdated documentation
-
-Re-install the skill to get the latest version:
-
-```bash
-npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
-```
-
-Check for updates: https://github.com/burnt-labs/xion-agent-toolkit/releases
 
 ## Resources
 

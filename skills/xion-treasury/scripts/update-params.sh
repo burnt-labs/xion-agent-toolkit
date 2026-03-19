@@ -23,6 +23,9 @@
 #   ./update-params.sh xion1abc... --redirect-url "https://example.com/callback"
 #   ./update-params.sh xion1abc... --metadata '{"name":"My Treasury"}'
 #   ./update-params.sh xion1abc... --redirect-url "https://app.com" --icon-url "https://app.com/icon.png"
+#
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 set -e
 
@@ -118,22 +121,21 @@ if [[ -z "$REDIRECT_URL" && -z "$ICON_URL" && -z "$METADATA" ]]; then
 fi
 
 # ==============================================================================
-# Build CLI Command
+# Build CLI Command (using array for safety)
 # ==============================================================================
 
-# Check if xion-toolkit CLI is available
-if ! command -v xion-toolkit &> /dev/null; then
-    CLI_CMD="cargo run --quiet --"
+# Build command as array (safe from injection)
+if command -v xion-toolkit &> /dev/null; then
+    CMD=(xion-toolkit treasury params update "$ADDRESS")
 else
-    CLI_CMD="xion-toolkit"
+    CMD=(cargo run --quiet -- treasury params update "$ADDRESS")
 fi
 
-# Build command
-CMD="$CLI_CMD treasury params update $ADDRESS"
-[[ -n "$REDIRECT_URL" ]] && CMD="$CMD --redirect-url '$REDIRECT_URL'"
-[[ -n "$ICON_URL" ]] && CMD="$CMD --icon-url '$ICON_URL'"
-[[ -n "$METADATA" ]] && CMD="$CMD --metadata '$METADATA'"
-CMD="$CMD --network $NETWORK"
+# Add optional parameters
+[[ -n "$REDIRECT_URL" ]] && CMD+=(--redirect-url "$REDIRECT_URL")
+[[ -n "$ICON_URL" ]] && CMD+=(--icon-url "$ICON_URL")
+[[ -n "$METADATA" ]] && CMD+=(--metadata "$METADATA")
+CMD+=(--network "$NETWORK" --output json)
 
 # ==============================================================================
 # Main Logic
@@ -141,8 +143,8 @@ CMD="$CMD --network $NETWORK"
 
 log_info "Updating treasury $ADDRESS parameters on $NETWORK..."
 
-# Execute the command
-RESULT=$(eval $CMD --output json 2>&1)
+# Execute the command safely using array expansion
+RESULT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [[ $EXIT_CODE -eq 0 ]]; then

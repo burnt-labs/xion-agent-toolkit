@@ -3,6 +3,9 @@ set -e
 
 # Asset Mint - Mint NFT token
 # Usage: mint.sh --contract <ADDRESS> --token-id <ID> --owner <ADDRESS> [options]
+#
+# Security: This script uses array-based command execution instead of eval
+# to prevent command injection vulnerabilities.
 
 # Parse arguments
 CONTRACT=""
@@ -36,27 +39,27 @@ if [[ -z "$CONTRACT" ]] || [[ -z "$TOKEN_ID" ]] || [[ -z "$OWNER" ]]; then
     exit 1
 fi
 
-# Build command
-CMD="xion-toolkit asset mint --contract $CONTRACT --token-id \"$TOKEN_ID\" --owner $OWNER --asset-type $ASSET_TYPE --output json"
+# Build command as array (safe from injection)
+CMD=(xion-toolkit asset mint --contract "$CONTRACT" --token-id "$TOKEN_ID" --owner "$OWNER" --asset-type "$ASSET_TYPE" --output json)
 
 if [[ -n "$TOKEN_URI" ]]; then
-    CMD="$CMD --token-uri \"$TOKEN_URI\""
+    CMD+=(--token-uri "$TOKEN_URI")
 fi
 
 if [[ -n "$ROYALTY_ADDRESS" ]] && [[ -n "$ROYALTY_PERCENTAGE" ]]; then
-    CMD="$CMD --royalty-address $ROYALTY_ADDRESS --royalty-percentage $ROYALTY_PERCENTAGE"
+    CMD+=(--royalty-address "$ROYALTY_ADDRESS" --royalty-percentage "$ROYALTY_PERCENTAGE")
 fi
 
 if [[ -n "$EXPIRES_AT" ]]; then
-    CMD="$CMD --expires-at \"$EXPIRES_AT\""
+    CMD+=(--expires-at "$EXPIRES_AT")
 fi
 
 if [[ -n "$NETWORK" ]]; then
-    CMD="$CMD --network $NETWORK"
+    CMD+=(--network "$NETWORK")
 fi
 
-# Execute command and capture output
-OUTPUT=$(eval $CMD 2>&1)
+# Execute command safely using array expansion
+OUTPUT=$("${CMD[@]}" 2>&1)
 EXIT_CODE=$?
 
 # Output result and propagate exit code
