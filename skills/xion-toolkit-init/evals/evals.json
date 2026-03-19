@@ -5,6 +5,7 @@
     {"id": 2, "prompt": "帮我安装 xion 开发工具", "expected_output": "Chinese installation guidance"},
     {"id": 3, "prompt": "Install xion-toolkit with xion-skills", "expected_output": "Guide to --with-xion-skills flag"},
     {"id": 4, "prompt": "Check if xion-toolkit is installed", "expected_output": "Guide to verify installation"},
-    {"id": 5, "prompt": "How do I deploy CosmWasm on Xion?", "expected_output": "Should NOT trigger - route to xion-dev or xiond-wasm"}
+    {"id": 5, "prompt": "How do I upgrade xion-toolkit to the latest version?", "expected_output": "Guide to re-run installer for upgrade"},
+    {"id": 6, "prompt": "xion 升级到最新版本", "expected_output": "Chinese upgrade guidance - re-run installer"}
   ]
 }

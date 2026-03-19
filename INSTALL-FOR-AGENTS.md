@@ -580,28 +580,37 @@ xion-toolkit config set-network testnet
 
 ### Recovery (Clean Reinstall)
 
+If you need a completely fresh installation
+
 ```bash
-#!/bin/bash
-set -e
-
-echo "=== Recovery: Clean Reinstall ==="
-
 # Remove existing installation
-rm -rf ~/.local/bin/xion-toolkit
-rm -rf ~/.xion-toolkit
+rm -rf ~/.local/bin/xion-toolkit ~/.cargo/bin/xion-toolkit
 
 # Clear any cached downloads
 rm -rf /tmp/xion-toolkit-*
 
-# Reinstall
+# Reinstall (latest version)
 curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
 
-echo ""
-echo "Reinstall complete. Run verification:"
-echo "  xion-toolkit --version"
-echo "  xion-toolkit auth login"
 ```
+
+### Upgrade
+
+xion-toolkit uses cargo-dist for releases. To upgrade, **re-run the installer** - it will automatically fetch and install the latest version.
+
+**Upgrade (macOS/Linux):**
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
+
+**Upgrade (Windows):**
+```powershell
+powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
+```
+
+> **Note**: Upgrading preserves your existing credentials (`~/.xion-toolkit/credentials/*.enc`). You do **not** need to re-authenticate after upgrading.
 
 ---
 
@@ -674,6 +683,6 @@ For issues and feature requests:
 
 ---
 
-*Document Version: 2.0.0*
-*Last Updated: 2026-03-18*
+*Document Version: 2.1.0*
+*Last Updated: 2026-03-19*
 *Compatible CLI Version: >=0.1.0*

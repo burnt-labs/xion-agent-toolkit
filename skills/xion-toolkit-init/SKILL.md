@@ -10,7 +10,7 @@ description: |
   Make sure to use this skill whenever the user mentions setting up Xion development, even if they don't explicitly say "toolkit" or "MetaAccount".
 metadata:
   author: burnt-labs
-  version: "1.2.1"
+  version: "1.3.0"
   provides:
     - xion-toolkit CLI
   recommends:
@@ -49,6 +49,8 @@ This skill installs:
 - Fee allowance configuration
 - Admin management
 - Contract instantiation and execution
+- Asset (NFT) operations
+- Faucet operations (testnet tokens)
 
 ## Prerequisites
 
@@ -59,26 +61,43 @@ This skill installs:
 
 ## Installation
 
-### Quick Install
+### Quick Install (macOS/Linux)
 
 ```bash
-# Basic install
-bash /path/to/xion-toolkit-init/scripts/install.sh
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
 
-# With xion-skills (for xiond operations like contract deployment)
-bash /path/to/xion-toolkit-init/scripts/install.sh --with-xion-skills
+### Quick Install (Windows)
+
+```powershell
+powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
+```
+
+### Install with xion-skills
+
+For full xion development including xiond operations:
+
+```bash
+# After xion-toolkit is installed, add xion-skills
+npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
 ```
 
 ## Upgrading
 
-To upgrade xion-toolkit to the latest version:
+xion-toolkit uses cargo-dist for releases. **To upgrade, simply re-run the installer** - it will automatically fetch and install the latest version.
 
+### Upgrade Command
+
+**macOS/Linux:**
 ```bash
-# Upgrade to latest version (recommended)
-bash /path/to/xion-toolkit-init/scripts/install.sh --upgrade
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
 
-# Force reinstall (overwrite existing, even if same version)
-bash /path/to/xion-toolkit-init/scripts/install.sh --upgrade --force-reinstall
+**Windows:**
+```powershell
+powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
 ```
 
 ### Check Current Version
@@ -87,21 +106,26 @@ bash /path/to/xion-toolkit-init/scripts/install.sh --upgrade --force-reinstall
 xion-toolkit --version
 ```
 
-### Upgrade Behavior
-
-| Scenario | Behavior |
-|----------|----------|
-| Already latest | Skips download, reports current version |
-| Newer available | Downloads and installs new version |
-| `--force-reinstall` flag | Always reinstalls, even if same version |
-
 > **Note**: Upgrading preserves your existing credentials (`~/.xion-toolkit/credentials/*.enc`). You do **NOT** need to re-authenticate after upgrading.
+
+### Force Reinstall (Clean Slate)
+
+If you need a completely fresh installation:
+
+```bash
+# Remove existing installation
+rm -rf ~/.local/bin/xion-toolkit ~/.cargo/bin/xion-toolkit
+
+# Reinstall
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
+```
 
 ### What the Installer Does
 
 1. Detects OS and architecture
 2. Downloads appropriate binary from GitHub Releases
-3. Installs to `~/.cargo/bin/` or `/usr/local/bin/`
+3. Installs to `~/.cargo/bin/` or `~/.local/bin/`
 4. Verifies installation
 5. Optionally installs xion-skills dependency
 
@@ -121,7 +145,7 @@ After installation, verify:
 
 ```bash
 xion-toolkit --version
-xion-toolkit status
+xion-toolkit auth status
 ```
 
 Expected output:
@@ -164,11 +188,15 @@ xion-dev (entry point - routes to correct skill)
     │       │       │
     │       │       └── xion-treasury (gasless operations)
     │       │
-    │       └── recommends: burnt-labs/xion-skills
-    │               │
-    │               ├── xiond-init (xiond installation)
-    │               ├── xiond-usage (chain queries)
-    │               └── xiond-wasm (contract deployment)
+    │       └── xion-faucet (testnet tokens)
+    │       │
+    │       └── xion-asset (NFT operations)
+    │
+    └── recommends: burnt-labs/xion-skills
+            │
+            ├── xiond-init (xiond installation)
+            ├── xiond-usage (chain queries)
+            └── xiond-wasm (contract deployment)
 ```
 
 ## Troubleshooting
