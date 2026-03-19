@@ -1,16 +1,30 @@
 ---
 name: xion-oauth2
 description: |
-  OAuth2 authentication for Xion MetaAccount. Use this skill whenever the user needs to login to Xion, authenticate with MetaAccount, check authentication status, refresh tokens, or before any Treasury/contract operations that require authentication.
+  OAuth2 authentication for Xion MetaAccount with REFRESH-FIRST approach.
   
-  This skill provides GASLESS authentication through MetaAccount - no gas fees required for authentication.
+  **IMPORTANT: Always prefer `auth refresh` over `auth login` when credentials exist.**
   
-  Triggers on: MetaAccount 登录, MetaAccount login, browser login, gasless auth, gasless authentication, session key, OAuth2 登录, xion 认证, xion auth, xion login, access token, refresh token, OAuth2 xion, authenticate xion, login to xion, browser authentication.
+  Use this skill whenever the user mentions:
+  - Xion login, authentication, MetaAccount login, OAuth2 xion
+  - Token expired, refresh token, access token, session key
+  - xion 认证, xion 登录, MetaAccount 登录, OAuth2 登录
+  - "login to xion", "authenticate xion", "gasless auth"
+  - Token issues, authentication problems, credential errors
+  - Before any Treasury/contract operations that require authentication
   
-  Use this skill BEFORE xion-treasury - authentication is required for all Treasury operations. Make sure to use this skill whenever the user mentions logging into Xion, even if they don't explicitly say "OAuth2" or "MetaAccount".
+  This skill provides GASLESS authentication through MetaAccount - no gas fees required.
+  
+  Key commands:
+  - `auth status` - Check current authentication state
+  - `auth refresh` - Refresh token (PREFERRED when credentials exist)
+  - `auth login` - New browser auth (only if no credentials or refresh failed)
+  - `auth login --force` - Force fresh browser auth (skip refresh check)
+  
+  Make sure to use this skill whenever authentication is mentioned, even if the user doesn't explicitly say "OAuth2" or "MetaAccount".
 metadata:
   author: burnt-labs
-  version: "1.2.0"
+  version: "1.2.1"
   requires:
     - xion-toolkit-init
   compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
@@ -61,6 +75,25 @@ xion-toolkit auth login
 ### Automatic Refresh
 
 The CLI automatically refreshes expired access tokens when you run any command that requires authentication. You rarely need to manually call `auth refresh` - just run your intended command and the CLI will handle token refresh automatically.
+
+### When Refresh Fails
+
+If `auth refresh` fails with `TOKEN_EXPIRED` or `AUTH_FAILED`:
+
+1. Check `auth status` to confirm token state
+2. Use `auth login --force` to force fresh browser authentication
+3. Common reasons refresh fails:
+   - Refresh token expired (>30 days since last login)
+   - Credentials were manually deleted from keyring
+   - OAuth2 client permissions changed
+
+### When to Use --force
+
+Use `auth login --force` (skip refresh, open browser immediately) when:
+- User explicitly requests fresh authentication
+- Refresh failed due to expired refresh token
+- You suspect credential corruption
+- Switching to a different MetaAccount
 
 ## Overview
 
@@ -354,6 +387,9 @@ Most OAuth2 commands have minimal or no required parameters:
 > "I'll initiate the OAuth2 login flow. A browser will open for authorization. Ready? [y/n]"
 
 ### Step 4: Confirm Before Execution
+
+Present the parameters in a tree format and ask for confirmation:
+
 ```
 Will execute: login
 ├─ Network: testnet
@@ -361,6 +397,15 @@ Will execute: login
 └─ Opens browser for authorization
 Confirm? [y/n]
 ```
+
+### Quality Checklist
+
+Before executing auth commands, verify:
+- [ ] **Checked `auth status` first** (unless user explicitly requested login)
+- [ ] **Using correct network** (testnet vs mainnet)
+- [ ] **Prefer refresh over login** when user has existing credentials
+- [ ] **Confirmed with user** if browser will open (not headless-safe)
+- [ ] **Using `--force` only when necessary** (refresh failed or user requested fresh auth)
 
 ## Parameter Schemas
 
