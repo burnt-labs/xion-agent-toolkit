@@ -46,6 +46,7 @@ handle_error() {
 
 PORT=""
 NETWORK=""
+FORCE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -57,12 +58,17 @@ while [[ $# -gt 0 ]]; do
             NETWORK="$2"
             shift 2
             ;;
+        --force)
+            FORCE="--force"
+            shift
+            ;;
         --help|-h)
-            echo "Usage: $0 [--port PORT] [--network NETWORK]" >&2
+            echo "Usage: $0 [OPTIONS]" >&2
             echo "" >&2
             echo "Options:" >&2
             echo "  --port PORT       Callback server port (default: 54321)" >&2
-            echo "  --network NETWORK Network to use: local, testnet, mainnet (default: testnet)" >&2
+            echo "  --network NET     Network: local, testnet, mainnet (default: testnet)" >&2
+            echo "  --force           Force new browser authentication (skip refresh check)" >&2
             exit 0
             ;;
         *)
@@ -84,21 +90,28 @@ if ! command -v xion-toolkit &> /dev/null; then
 fi
 
 # Build command arguments
-CMD_ARGS="auth login --output json"
+CMD_ARGS=()
+CMD_ARGS+=("auth" "login" "--output" "json")
 
-if [ -n "$PORT" ]; then
-    CMD_ARGS="$CMD_ARGS --port $PORT"
+if [[ -n "$PORT" ]]; then
+    CMD_ARGS+=("--port" "$PORT")
 fi
 
-if [ -n "$NETWORK" ]; then
-    CMD_ARGS="$CMD_ARGS --network $NETWORK"
+if [[ -n "$NETWORK" ]]; then
+    CMD_ARGS+=("--network" "$NETWORK")
 fi
 
-log_info "Running: xion-toolkit $CMD_ARGS"
+if [[ -n "$FORCE" ]]; then
+    CMD_ARGS+=("--force")
+fi
+
+# Convert array to string for logging
+CMD_STR="${CMD_ARGS[*]}"
+log_info "Running: xion-toolkit $CMD_STR"
 
 # Execute xion-toolkit login command
 # Capture both stdout and stderr, but keep them separate
-RESULT=$(xion-toolkit $CMD_ARGS 2>&1)
+RESULT=$(xion-toolkit "${CMD_ARGS[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then

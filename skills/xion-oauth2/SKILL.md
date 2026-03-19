@@ -10,7 +10,7 @@ description: |
   Use this skill BEFORE xion-treasury - authentication is required for all Treasury operations. Make sure to use this skill whenever the user mentions logging into Xion, even if they don't explicitly say "OAuth2" or "MetaAccount".
 metadata:
   author: burnt-labs
-  version: "1.1.0"
+  version: "1.2.0"
   requires:
     - xion-toolkit-init
   compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
@@ -27,6 +27,40 @@ MetaAccount authentication provides:
 - **Browser-based login** - Familiar OAuth2 flow, no mnemonic management
 - **Session keys** - Secure, revocable access tokens
 - **30-day refresh tokens** - Long-lived sessions for automation
+
+## ⚠️ Refresh-First Authentication
+
+**ALWAYS prefer `auth refresh` over `auth login` when you have existing credentials.**
+
+Refresh tokens last 30 days. Using refresh is:
+- **Faster** - No browser interaction required
+- **More reliable** - No callback server needed
+- **Preserves session** - Same MetaAccount, same grants
+
+### When to Use Each Command
+
+| Command | Use When |
+|---------|----------|
+| `auth refresh` | ✅ You have existing credentials (default choice) |
+| `auth login` | ⚠️ First-time setup OR refresh failed |
+| `auth login --force` | 🔧 Force new browser auth (rarely needed) |
+
+### Recommended Workflow
+
+```bash
+# Step 1: Check if already authenticated
+xion-toolkit auth status
+
+# Step 2: If authenticated but token may be stale, refresh first
+xion-toolkit auth refresh
+
+# Step 3: Only use login if refresh fails or no credentials exist
+xion-toolkit auth login
+```
+
+### Automatic Refresh
+
+The CLI automatically refreshes expired access tokens when you run any command that requires authentication. You rarely need to manually call `auth refresh` - just run your intended command and the CLI will handle token refresh automatically.
 
 ## Overview
 
@@ -47,7 +81,21 @@ This skill wraps the `xion-toolkit` CLI tool to provide Agent-friendly OAuth2 au
 
 ## Quick Start
 
-### Login
+### Check Authentication Status
+
+```bash
+./scripts/status.sh
+```
+
+### Refresh Token (Recommended First Step)
+
+If you have existing credentials, refresh them first:
+
+```bash
+./scripts/refresh.sh
+```
+
+### Login (Only If No Credentials)
 
 ```bash
 ./scripts/login.sh
@@ -58,22 +106,10 @@ This will:
 2. Wait for you to approve the authorization
 3. Return authentication status as JSON
 
-### Check Status
-
-```bash
-./scripts/status.sh
-```
-
 ### Logout
 
 ```bash
 ./scripts/logout.sh
-```
-
-### Refresh Token
-
-```bash
-./scripts/refresh.sh
 ```
 
 ## Script Details
@@ -84,22 +120,33 @@ Initiates the OAuth2 login flow.
 
 **Usage:**
 ```bash
-./scripts/login.sh [--port PORT] [--network NETWORK]
+./scripts/login.sh [--port PORT] [--network NETWORK] [--force]
 ```
 
 **Options:**
 - `--port PORT` - Callback server port (default: 54321)
 - `--network NETWORK` - Network to use: local, testnet, mainnet (default: testnet)
+- `--force` - Force new browser authentication (skip refresh check)
 
 **Output (stdout):**
 ```json
+// Login success (browser auth):
 {
   "success": true,
   "network": "testnet",
-  "authenticated": true,
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "scope": "treasury:manage"
+  "xion_address": "xion1...",
+  "expires_at": "2024-01-15T10:30:00Z",
+  "refreshed": false
+}
+
+// Refresh success (no browser):
+{
+  "success": true,
+  "network": "testnet",
+  "xion_address": "xion1...",
+  "expires_at": "2024-01-15T10:30:00Z",
+  "refreshed": true,
+  "message": "Token refreshed successfully. No browser auth needed."
 }
 ```
 
@@ -287,7 +334,7 @@ which xion-toolkit
 
 ## Version
 
-- Skill Version: 1.1.0
+- Skill Version: 1.2.0
 - Compatible CLI Version: >=0.1.0
 
 ## Parameter Collection Workflow
@@ -333,6 +380,7 @@ See `schemas/` directory for detailed parameter definitions:
 |-----------|----------|-------------|
 | `port` | No | Callback server port (default: 54321) |
 | `network` | No | Network (default: testnet) |
+| `force` | No | Force new browser auth (default: false) |
 
 > **Note**: See `schemas/login.json` for complete parameter list including conditional parameters.
 

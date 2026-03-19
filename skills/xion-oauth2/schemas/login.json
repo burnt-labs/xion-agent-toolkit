@@ -1,6 +1,6 @@
 {
   "command": "login",
-  "description": "Initiate OAuth2 login flow via browser",
+  "description": "Initiate OAuth2 login flow via browser. Automatically attempts token refresh if credentials exist, unless --force is specified.",
   "parameters": [
     {
       "name": "port",
@@ -8,6 +8,13 @@
       "required": false,
       "default": 54321,
       "description": "Callback server port"
+    },
+    {
+      "name": "force",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Force new browser authentication (skip refresh check). Use when you need to re-authenticate or suspect token issues."
     },
     {
       "name": "network",
@@ -23,17 +30,19 @@
     "Browser available for OAuth2 authorization"
   ],
   "flow": [
-    "1. Opens browser to Xion authorization page",
-    "2. User approves authorization",
-    "3. Callback receives authorization code",
-    "4. Tokens are stored securely"
+    "1. If --force is NOT specified and credentials exist: attempt token refresh first",
+    "2. If refresh succeeds: return success (no browser needed)",
+    "3. If refresh fails or --force specified: open browser for authorization",
+    "4. User approves authorization",
+    "5. Callback receives authorization code",
+    "6. Tokens are stored securely"
   ],
   "output_includes": [
     "success: boolean",
     "network: string",
-    "authenticated: boolean",
-    "token_type: string",
-    "expires_in: number"
+    "xion_address: string",
+    "expires_at: string",
+    "refreshed: boolean (true if token was refreshed without browser)"
   ],
   "errors": [
     {
@@ -51,17 +60,34 @@
     {
       "code": "AUTH_FAILED",
       "description": "Authentication failed"
+    },
+    {
+      "code": "AUTH_LOGIN_FAILED",
+      "description": "Login failed during browser auth"
     }
   ],
   "examples": [
     {
-      "description": "Login with default settings",
+      "description": "Login with default settings (attempts refresh first)",
       "params": {}
+    },
+    {
+      "description": "Force fresh browser authentication",
+      "params": {
+        "force": true
+      }
     },
     {
       "description": "Login with custom port",
       "params": {
         "port": 54322
+      }
+    },
+    {
+      "description": "Force fresh login with custom port",
+      "params": {
+        "port": 54322,
+        "force": true
       }
     },
     {

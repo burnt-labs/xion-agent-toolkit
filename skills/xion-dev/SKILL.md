@@ -172,6 +172,25 @@ npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a
 ### User mentions "royalties" or "CW2981"
 → Recommend xion-asset with cw2981-royalties type
 
+## Keeping Skills Updated
+
+Skills are actively developed and improved. If you encounter:
+- Unknown commands or flags
+- Outdated behavior
+- Missing features mentioned in documentation
+
+Re-install the skills to get the latest version:
+
+```bash
+# Update xion-agent-toolkit skills
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
+
+# Update xion-skills (for xiond operations)
+npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a openclaw
+```
+
+Check the repository releases for changelog: https://github.com/burnt-labs/xion-agent-toolkit/releases
+
 ## Resources
 
 - [Xion Documentation](https://docs.burnt.com/xion)

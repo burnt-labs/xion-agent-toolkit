@@ -169,6 +169,21 @@ If GitHub is unreachable, try manual installation:
 2. Extract the archive
 3. Move binary to PATH
 
+## Keeping Skills Updated
+
+Skills are regularly updated with new features and bug fixes. If you notice:
+- Commands not working as expected
+- Missing flags or options
+- Outdated documentation
+
+Re-install the skill to get the latest version:
+
+```bash
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a cursor -a claude-code -a codex -a openclaw
+```
+
+Check for updates: https://github.com/burnt-labs/xion-agent-toolkit/releases
+
 ## Resources
 
 - [GitHub Repository](https://github.com/burnt-labs/xion-agent-toolkit)

@@ -1,7 +1,21 @@
 {
   "version": 1,
-  "updated_at": "2026-03-18",
+  "updated_at": "2026-03-19",
   "plans": [
+    {
+      "id": "skill-patterns-optimization",
+      "title": "Skill Patterns Optimization",
+      "file": "plans/skill-patterns-optimization.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@prompt-engineer", "@fullstack-dev"],
+      "tags": ["skill", "ux", "auth", "patterns"],
+      "created_at": "2026-03-19",
+      "updated_at": "2026-03-19",
+      "done_at": "2026-03-19",
+      "notes": "QA SIGN-OFF: All acceptance criteria verified. Skill update guidance added to xion-dev, xion-toolkit-init. Refresh-first authentication prominently documented in xion-oauth2 v1.2.0. CLI --force flag implemented. 329 tests passing, clippy clean."
+    },
     {
       "id": "rest-api-url-fix",
       "title": "REST API URL Fix - Separate Chain Query Endpoint",
