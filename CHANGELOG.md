@@ -5,6 +5,34 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.3...0.9.0) (2026-03-19)
+
+
+### Features
+
+* **cli:** add mainnet disable switch ([5ebdf41](https://github.com/burnt-labs/xion-agent-toolkit/commit/5ebdf419fa577fc6ec48d6eb54da73912a6c971b))
+* **skills:** batch quality review and fix all P0/P1 issues ([62868e3](https://github.com/burnt-labs/xion-agent-toolkit/commit/62868e33ed3f614c6483ff29c0220eeb7a7d9296))
+* **skills:** optimize skills with design patterns ([#46](https://github.com/burnt-labs/xion-agent-toolkit/issues/46)) ([63810ad](https://github.com/burnt-labs/xion-agent-toolkit/commit/63810ad30c5387e1481edc3d9ff35ca79710aee7))
+* **skills:** optimize skills with design patterns and add --force flag ([a28a915](https://github.com/burnt-labs/xion-agent-toolkit/commit/a28a915eaa391cc6116ba7627da728bfcb1949fd))
+* **skills:** skill-creator iteration on xion-oauth2 ([7bcf3c5](https://github.com/burnt-labs/xion-agent-toolkit/commit/7bcf3c51b5a5d81ffa12c6e1a42167a99d6d7320))
+* **skills:** skill-creator iteration on xion-treasury and xion-asset ([3677e58](https://github.com/burnt-labs/xion-agent-toolkit/commit/3677e580bc7f412c6ef2c55e256f65c50d994b75))
+
+
+### Bug Fixes
+
+* **skills/xion-toolkit-init:** correct upgrade docs ([7b99947](https://github.com/burnt-labs/xion-agent-toolkit/commit/7b999476087e8afd0b78c14412c0752abea9c32c))
+
+
+### Documentation
+
+* **plans:** update with skill-creator iteration results ([d893072](https://github.com/burnt-labs/xion-agent-toolkit/commit/d8930726cd5a5754962bf0f55ea9eea6e817f1bc))
+
+
+### Chores
+
+* **plans:** move plans folder ([9ae6e01](https://github.com/burnt-labs/xion-agent-toolkit/commit/9ae6e016bc78d2898096ab212ebbded6818cbcbb))
+* **plans:** update paths to plans directory and related files ([f649312](https://github.com/burnt-labs/xion-agent-toolkit/commit/f6493125edfde5c52ca1feabeadd076dd923a3e3))
+
 ## [0.8.3](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.8.2...0.8.3) (2026-03-18)
 
 
