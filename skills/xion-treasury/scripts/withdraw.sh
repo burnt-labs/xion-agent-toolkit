@@ -36,8 +36,8 @@ set -e
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../scripts/security-utils.sh
-source "$SCRIPT_DIR/../scripts/security-utils.sh" 2>/dev/null || {
+# shellcheck source=../../scripts/security-utils.sh
+source "$SCRIPT_DIR/../../scripts/security-utils.sh" 2>/dev/null || {
     # Fallback if security-utils.sh is not available
     log_info() { echo "[INFO] $1" >&2; }
     log_error() { echo "[ERROR] $1" >&2; }
@@ -175,7 +175,7 @@ else
 fi
 
 # Execute the withdraw command safely using array expansion
-RESULT=$("${CLI_CMD[@]}" treasury withdraw "$ADDRESS" --amount "$AMOUNT" --network "$NETWORK" --output json 2>&1)
+RESULT=$("${CLI_CMD[@]}" treasury withdraw "$ADDRESS" "$AMOUNT" --network "$NETWORK" --output json 2>&1)
 EXIT_CODE=$?
 
 if [[ $EXIT_CODE -eq 0 ]]; then

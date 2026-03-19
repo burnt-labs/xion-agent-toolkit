@@ -191,9 +191,9 @@ validate_address() {
         return 1
     fi
     
-    if [[ ! "$address" =~ ^xion1[a-z0-9]{38}$ ]]; then
+    if [[ ! "$address" =~ ^xion1[a-z0-9]{58}$ ]]; then
         log_error "Invalid Xion address format: $address"
-        log_error "Expected format: xion1... (39 characters after xion1)"
+        log_error "Expected format: xion1... (58 characters after xion1)"
         return 1
     fi
     
