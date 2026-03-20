@@ -22,18 +22,40 @@ permissions:
   pull-requests: write
 
 jobs:
+  # Substring checks like contains(..., 'chore(main): release') skip release-please on
+  # unrelated PRs whose squash message mentions that phrase in the body (e.g. #51).
+  # Only treat a line as a “release commit” when it matches chore(main): release x.y.z.
+  classify:
+    runs-on: ubuntu-latest
+    outputs:
+      skip_release_please: ${{ steps.check.outputs.skip }}
+    steps:
+      - id: check
+        env:
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if printf '%s\n' "$MSG" | grep -qE '^chore\(main\): release [0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Do not use contains(..., 'chore(main): release') here: routine PR bodies can mention
+  # that phrase without a version and would incorrectly skip this job (see PR #52).
   release-please:
-    # Prevent recursive release PR creation:
-    # when merging a "chore(main): release x.y.z" PR, skip release-please.
-    # GitHub "Merge pull request #…" squash/merge commits put that text on the
-    # first line; the release line is in the body — use contains(), not startsWith().
-    if: "${{ github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore(main): release') }}"
+    needs: classify
+    if: needs.classify.outputs.skip_release_please != 'true'
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.version.outputs.version }}
-    
+
     steps:
       - name: Release Please
         id: release
@@ -43,7 +65,6 @@ jobs:
           manifest-file: .release-please-manifest.json
           target-branch: main
 
-      # Only needed if we need to read manifest file
       - name: Get version from manifest
         if: ${{ steps.release.outputs.release_created == 'true' }}
         id: version
@@ -53,8 +74,7 @@ jobs:
           echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
 
   # When draft:true, release-please creates draft release but NO tag
-  # We manually create the tag here, then trigger release.yml to upload artifacts
-  # Only run on release commits merged to main.
+  # We manually create the tag here, then trigger release.yml to upload artifacts.
   trigger-dist:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
