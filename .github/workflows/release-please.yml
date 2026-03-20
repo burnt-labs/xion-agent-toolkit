@@ -45,6 +45,8 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+  # Do not use contains(..., 'chore(main): release') here: routine PR bodies can mention
+  # that phrase without a version and would incorrectly skip this job (see PR #52).
   release-please:
     needs: classify
     if: needs.classify.outputs.skip_release_please != 'true'
