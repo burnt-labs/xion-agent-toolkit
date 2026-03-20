@@ -24,8 +24,10 @@ permissions:
 jobs:
   release-please:
     # Prevent recursive release PR creation:
-    # when merging a "chore(main): release x.y.z" PR, skip release-please
-    if: "${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}"
+    # when merging a "chore(main): release x.y.z" PR, skip release-please.
+    # GitHub "Merge pull request #…" squash/merge commits put that text on the
+    # first line; the release line is in the body — use contains(), not startsWith().
+    if: "${{ github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore(main): release') }}"
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
@@ -54,32 +56,65 @@ jobs:
   # We manually create the tag here, then trigger release.yml to upload artifacts
   # Only run on release commits merged to main.
   trigger-dist:
-    if: "${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main): release') && (github.event.head_commit.author.username == 'github-actions[bot]' || github.actor == 'github-actions[bot]') }}"
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Extract tag from release commit message
+      - name: Detect release merge and extract tag
         id: extract-tag
         run: |
           set -euo pipefail
 
-          MESSAGE="${{ github.event.head_commit.message }}"
-          # GitHub release commits may include additional lines like "Co-authored-by: ...".
-          # $GITHUB_OUTPUT must be written as a single "key=value" line, so we only parse the first line.
-          FIRST_LINE="${MESSAGE%%$'\n'*}"
-          TAG="$(printf '%s' "$FIRST_LINE" | sed -E 's/^chore\(main\): release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
-          TAG="$(printf '%s' "$TAG" | tr -d '\r')"
+          subject="$(git log -1 --format=%s HEAD)"
+          body="$(git log -1 --format=%B HEAD)"
+          author_name="$(git log -1 --format=%an HEAD)"
 
-          if [ -z "$TAG" ]; then
-            echo "Failed to parse release tag from commit message first line: $FIRST_LINE"
-            exit 1
+          TAG=""
+          if printf '%s' "$subject" | grep -qE '^chore\(main\): release [0-9]+\.[0-9]+\.[0-9]+'; then
+            TAG="$(printf '%s' "$subject" | sed -E 's/^chore\(main\): release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
           fi
+          if [ -z "$TAG" ]; then
+            TAG="$(printf '%s\n' "$body" | grep -E '^chore\(main\): release [0-9]+\.[0-9]+\.[0-9]+' | head -1 | sed -E 's/^chore\(main\): release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/' || true)"
+          fi
+
+          parent_count="$(git rev-list --parents -n 1 HEAD | awk '{print NF-1}')"
+          if [ -z "$TAG" ] && [ "${parent_count}" -eq 2 ]; then
+            s2="$(git log -1 --format=%s 'HEAD^2')"
+            if printf '%s' "$s2" | grep -qE '^chore\(main\): release [0-9]+\.[0-9]+\.[0-9]+'; then
+              TAG="$(printf '%s' "$s2" | sed -E 's/^chore\(main\): release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+            fi
+          fi
+
+          TAG="$(printf '%s' "${TAG:-}" | tr -d '\r')"
+          if [ -z "$TAG" ]; then
+            echo "Not a release merge commit; skipping tag and dist trigger."
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          trusted=0
+          if [ "$author_name" = "github-actions[bot]" ]; then
+            trusted=1
+          elif printf '%s' "$subject" | grep -qE '^Merge pull request #[0-9]+ from .+/release-please'; then
+            trusted=1
+          fi
+
+          if [ "$trusted" -ne 1 ]; then
+            echo "Parsed tag $TAG but commit is not a trusted release merge (author=$author_name); skipping."
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "is_release=true" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag exists
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' }}
         id: check-tag
         run: |
           TAG="${{ steps.extract-tag.outputs.tag }}"
@@ -90,7 +125,7 @@ jobs:
           fi
 
       - name: Create tag
-        if: ${{ steps.check-tag.outputs.exists == 'false' }}
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' && steps.check-tag.outputs.exists == 'false' }}
         run: |
           TAG="${{ steps.extract-tag.outputs.tag }}"
           git config user.name github-actions[bot]
@@ -99,7 +134,7 @@ jobs:
           git push origin "$TAG"
 
       - name: Trigger cargo-dist release workflow
-        if: ${{ steps.check-tag.outputs.exists == 'false' }}
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' && steps.check-tag.outputs.exists == 'false' }}
         run: |
           TAG="${{ steps.extract-tag.outputs.tag }}"
           echo "Triggering release for tag $TAG"
