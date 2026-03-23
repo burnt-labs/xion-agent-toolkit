@@ -2,6 +2,24 @@
 
 > **Purpose**: This document enables AI Agents to autonomously install, configure, and use the Xion Agent Toolkit for gasless blockchain operations.
 
+## ⚠️ IMPORTANT: Installation Priority for AI Agents
+
+**AI Agents MUST follow this installation priority order:**
+
+1. **PRIMARY (Use This First)**: Curl installer script (shell or PowerShell)
+   - Fast, reliable, uses pre-built binaries
+   - Works on all supported platforms
+   - **USE THIS METHOD UNLESS IT FAILS**
+
+2. **FALLBACK (Only if curl installer fails)**: Build from source
+   - Requires Rust toolchain installation
+   - Slower and more error-prone
+   - Only use when the curl installer cannot be used
+
+**DO NOT choose "build from source" when the curl installer is available and working.**
+
+---
+
 ## Overview
 
 ### What is Xion Agent Toolkit?
@@ -62,45 +80,14 @@ which       # Check if commands exist in PATH
 
 ## Installation
 
-### Step 1: Detect Environment
+### Step 1: Install xion-toolkit CLI
 
-Before installation, detect the operating system and architecture:
+> **For AI Agents**: Use the curl installer below. DO NOT build from source unless this method fails.
 
-```bash
-# Detect OS
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-echo "Operating System: $OS"
-
-# Detect architecture
-ARCH=$(uname -m)
-echo "Architecture: $ARCH"
-
-# Normalize architecture names
-case "$ARCH" in
-  x86_64) ARCH_NORMALIZED="x86_64" ;;
-  arm64|aarch64) ARCH_NORMALIZED="aarch64" ;;
-  *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
-esac
-echo "Normalized Architecture: $ARCH_NORMALIZED"
-
-# Detect if running on macOS
-if [[ "$OS" == "darwin" ]]; then
-    OS_NORMALIZED="apple-darwin"
-elif [[ "$OS" == "linux" ]]; then
-    OS_NORMALIZED="unknown-linux-gnu"
-else
-    echo "Unsupported OS: $OS"
-    exit 1
-fi
-echo "OS Target: $OS_NORMALIZED"
-```
-
-### Step 2: Install xion-toolkit CLI
-
-#### Option A: Shell Installer (macOS/Linux - Recommended)
+#### macOS / Linux (Recommended)
 
 ```bash
-# Install using shell installer
+# Install using the official shell installer
 curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
 
@@ -111,7 +98,16 @@ export PATH="$HOME/.cargo/bin:$PATH"
 echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc
 ```
 
-#### Option B: Manual Installation (macOS/Linux)
+#### Windows (PowerShell)
+
+```powershell
+# Install using the official PowerShell installer
+powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
+```
+
+#### Alternative: Manual Binary Download
+
+If the shell installer fails, you can manually download and install the binary:
 
 ```bash
 #!/bin/bash
@@ -166,26 +162,7 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
 fi
 ```
 
-#### Option C: PowerShell Installer (Windows)
-
-```powershell
-powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
-```
-
-#### Option D: Install from Source (All Platforms)
-
-Requires Rust toolchain (rustc 1.75+):
-
-```bash
-# Clone repository
-git clone https://github.com/burnt-labs/xion-agent-toolkit
-cd xion-agent-toolkit
-
-# Install using cargo
-cargo install --path .
-```
-
-### Step 3: Verify CLI Installation
+### Step 2: Verify CLI Installation
 
 ```bash
 #!/bin/bash
@@ -252,7 +229,7 @@ Available command groups:
 === Installation Verification Complete ===
 ```
 
-### Step 4: Install Skills (Recommended)
+### Step 3: Install Skills (Recommended)
 
 Skills provide agent-friendly wrappers around CLI commands with JSON output and error handling.
 
@@ -612,6 +589,27 @@ powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/lat
 
 > **Note**: Upgrading preserves your existing credentials (`~/.xion-toolkit/credentials/*.enc`). You do **not** need to re-authenticate after upgrading.
 
+### Build from Source (Advanced - Fallback Only)
+
+> **For AI Agents**: Only use this method if the curl installer fails. Building from source is slower and requires additional setup.
+
+Requires Rust toolchain (rustc 1.75+):
+
+```bash
+# Clone repository
+git clone https://github.com/burnt-labs/xion-agent-toolkit
+cd xion-agent-toolkit
+
+# Required for local builds: set up environment variables
+# This file contains OAuth2 client IDs needed for compilation
+cp .env.example .env
+
+# Install using cargo
+cargo install --path .
+```
+
+**Note for maintainers:** The `.env` file contains build-time OAuth2 client IDs for testnet/mainnet. End users installing pre-built binaries do not need this file.
+
 ---
 
 ## Example Agent Workflow
@@ -683,6 +681,6 @@ For issues and feature requests:
 
 ---
 
-*Document Version: 2.1.0*
-*Last Updated: 2026-03-19*
+*Document Version: 2.2.0*
+*Last Updated: 2026-03-24*
 *Compatible CLI Version: >=0.1.0*
