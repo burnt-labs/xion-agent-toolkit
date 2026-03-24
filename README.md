@@ -38,6 +38,11 @@ powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/lat
 ```bash
 git clone https://github.com/burnt-labs/xion-agent-toolkit
 cd xion-agent-toolkit
+
+# Required for local builds: set up environment variables
+# This file contains OAuth2 client IDs needed for compilation
+cp .env.example .env
+
 cargo install --path .
 ```
 
