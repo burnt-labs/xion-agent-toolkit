@@ -5,6 +5,13 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.1...0.9.2) (2026-03-24)
+
+
+### Bug Fixes
+
+* **docs:** prioritize curl installer over build-from-source in installation guides ([#55](https://github.com/burnt-labs/xion-agent-toolkit/issues/55)) ([6c77a39](https://github.com/burnt-labs/xion-agent-toolkit/commit/6c77a396d066b20d216d9ae4b2be1e02b96feb06))
+
 ## [0.9.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.0...0.9.1) (2026-03-20)
 
 
