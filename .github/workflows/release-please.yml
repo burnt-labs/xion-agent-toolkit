@@ -178,7 +178,7 @@ jobs:
           fi
 
       - name: Trigger cargo-dist release workflow
-        if: ${{ steps.extract-tag.outputs.is_release == 'true' && steps.create-release.outputs.release_created == 'true' }}
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' && (steps.check-tag.outputs.exists == 'false' || steps.create-release.outputs.release_created == 'true') }}
         run: |
           TAG="${{ steps.extract-tag.outputs.tag }}"
           echo "Triggering release for tag $TAG"
