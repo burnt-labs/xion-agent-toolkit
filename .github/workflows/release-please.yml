@@ -4,9 +4,12 @@
 #
 # Flow:
 # 1. release-please creates/updates version PR
-# 2. When PR merged, release-please creates draft release (no tag due to draft:true)
-# 3. trigger-dist manually creates the git tag
+# 2. When PR merged, release-please creates draft release (if not skipped)
+# 3. trigger-dist manually creates the git tag AND draft release (when release-please is skipped)
 # 4. release.yml uploads artifacts to the draft release
+#
+# Note: When classify detects a release commit, release-please job is skipped to avoid
+# re-processing. In this case, trigger-dist creates both the tag and draft release.
 
 name: Release Please
 
@@ -79,7 +82,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -153,8 +156,72 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
+      - name: Create draft release if not exists
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' }}
+        id: create-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.extract-tag.outputs.tag }}"
+          # Check if release already exists
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping creation"
+            echo "release_created=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Creating draft release for $TAG"
+            NOTES_FILE=""
+            # Prefer using CHANGELOG content for release notes to match release-please behavior
+            if [ -f CHANGELOG.md ]; then
+              # Extract the section for this tag from CHANGELOG.md.
+              # Headings are like "## [0.9.2](https://...)" - extract version from [X.Y.Z]
+              CHANGELOG_SECTION="$(awk -v tag="$TAG" '
+                BEGIN { found = 0 }
+                /^##[[:space:]]+/ {
+                  header = $0
+                  gsub(/^##[[:space:]]+/, "", header)
+                  # Extract version from [X.Y.Z](...) format
+                  if (match(header, /^\[[0-9]+\.[0-9]+\.[0-9]+\]/)) {
+                    version = substr(header, RSTART + 1, RLENGTH - 2)
+                  } else {
+                    version = header
+                  }
+                  if (found == 1) {
+                    exit
+                  }
+                  if (version == tag || ("v" version) == tag) {
+                    found = 1
+                    next
+                  }
+                }
+                found == 1 { print }
+              ' CHANGELOG.md)"
+
+              if [ -n "$CHANGELOG_SECTION" ]; then
+                NOTES_FILE="$(mktemp)"
+                printf '%s\n' "$CHANGELOG_SECTION" > "$NOTES_FILE"
+              fi
+            fi
+
+            if [ -n "$NOTES_FILE" ] && [ -s "$NOTES_FILE" ]; then
+              gh release create "$TAG" \
+                --repo "${{ github.repository }}" \
+                --title "$TAG" \
+                --draft \
+                --notes-file "$NOTES_FILE"
+              rm -f "$NOTES_FILE"
+            else
+              # Fallback to GitHub-generated notes if no suitable CHANGELOG section is found
+              gh release create "$TAG" \
+                --repo "${{ github.repository }}" \
+                --title "$TAG" \
+                --draft \
+                --generate-notes
+            fi
+            echo "release_created=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Trigger cargo-dist release workflow
-        if: ${{ steps.extract-tag.outputs.is_release == 'true' && steps.check-tag.outputs.exists == 'false' }}
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' && (steps.check-tag.outputs.exists == 'false' || steps.create-release.outputs.release_created == 'true') }}
         run: |
           TAG="${{ steps.extract-tag.outputs.tag }}"
           echo "Triggering release for tag $TAG"
