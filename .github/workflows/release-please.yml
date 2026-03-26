@@ -163,11 +163,14 @@ jobs:
         run: |
           TAG="${{ steps.extract-tag.outputs.tag }}"
           # Find the release PR by title pattern
+          # NOTE: Do not use --search because GitHub search index has latency.
+          # Newly merged PRs may not be searchable immediately. Use jq filter instead.
+          EXPECTED_TITLE="chore(main): release ${TAG}"
           PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" \
             --state all \
-            --search "chore(main): release ${TAG}" \
+            --limit 100 \
             --json number,title \
-            --jq '.[] | select(.title == "chore(main): release '"${TAG}"'") | .number' | head -1)
+            --jq ".[] | select(.title == \"${EXPECTED_TITLE}\") | .number" | head -1)
           
           if [ -n "$PR_NUMBER" ]; then
             echo "Found release PR #$PR_NUMBER for tag $TAG"
