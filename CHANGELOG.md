@@ -5,6 +5,14 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.3...0.9.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* **ci:** avoid GitHub search index latency when finding release PR ([9d44e7a](https://github.com/burnt-labs/xion-agent-toolkit/commit/9d44e7a54ab8eccd26ddaf331650e93070a6324c))
+* **ci:** avoid GitHub search index latency when finding release PR ([#61](https://github.com/burnt-labs/xion-agent-toolkit/issues/61)) ([284ae80](https://github.com/burnt-labs/xion-agent-toolkit/commit/284ae80b1236d2b4fb0d0358a0486d04250515e5))
+
 ## [0.9.3](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.2...0.9.3) (2026-03-26)
 
 
