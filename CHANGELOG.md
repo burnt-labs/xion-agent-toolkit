@@ -5,6 +5,21 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.2...0.9.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **ci:** add skip-github-release to prevent duplicate release creation ([957aed2](https://github.com/burnt-labs/xion-agent-toolkit/commit/957aed2525ca5ed30af7f29877f24d2bfd89008d))
+* **ci:** add skip-github-release to prevent duplicate release creation ([0988c74](https://github.com/burnt-labs/xion-agent-toolkit/commit/0988c74994a9d968c678a2ba694f415ee9b09a3b))
+* **ci:** correctly parse CHANGELOG.md version format ([17aa84f](https://github.com/burnt-labs/xion-agent-toolkit/commit/17aa84fe7f74ada53746412b65135ba1f4a1d292))
+* **ci:** create draft release in trigger-dist when release-please is skipped ([c683d0a](https://github.com/burnt-labs/xion-agent-toolkit/commit/c683d0a962976c8ca153e79cb1353de33a159384))
+* **ci:** create draft release in trigger-dist when release-please is skipped ([cba6aae](https://github.com/burnt-labs/xion-agent-toolkit/commit/cba6aae97b5189625f82b0a1d4ea518f99349400))
+* **ci:** improve idempotency for draft release creation ([8b9a99d](https://github.com/burnt-labs/xion-agent-toolkit/commit/8b9a99dcf92f5fc616b9a36b6327b5a44cdea49d))
+* **ci:** update release PR labels when using skip-github-release ([4a52642](https://github.com/burnt-labs/xion-agent-toolkit/commit/4a5264279d144b25f4999db6d0b67c7316d8d0bc))
+* **ci:** update release PR labels when using skip-github-release ([015ec8b](https://github.com/burnt-labs/xion-agent-toolkit/commit/015ec8b16e72565dca1bf5c4901b16fa71bf6a35))
+* **ci:** upgrade actions/checkout to v6 in ci.yml ([41e53a7](https://github.com/burnt-labs/xion-agent-toolkit/commit/41e53a7208cbb6ead841cd8d563469657e466bbd))
+
 ## [0.9.2](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.1...0.9.2) (2026-03-24)
 
 
