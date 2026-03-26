@@ -156,6 +156,29 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
+      - name: Update release PR labels
+        if: ${{ steps.extract-tag.outputs.is_release == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.extract-tag.outputs.tag }}"
+          # Find the release PR by title pattern
+          PR_NUMBER=$(gh pr list --repo "${{ github.repository }}" \
+            --state all \
+            --search "chore(main): release ${TAG}" \
+            --json number,title \
+            --jq '.[] | select(.title == "chore(main): release '"${TAG}"'") | .number' | head -1)
+          
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Found release PR #$PR_NUMBER for tag $TAG"
+            # Remove 'autorelease: pending' and add 'autorelease: tagged'
+            gh api repos/${{ github.repository }}/issues/${PR_NUMBER}/labels -X DELETE -f "labels[]=autorelease: pending" || true
+            gh api repos/${{ github.repository }}/issues/${PR_NUMBER}/labels -X POST -f "labels[]=autorelease: tagged" || true
+            echo "Updated labels on PR #$PR_NUMBER"
+          else
+            echo "Warning: Could not find release PR for tag $TAG"
+          fi
+
       - name: Create draft release if not exists
         if: ${{ steps.extract-tag.outputs.is_release == 'true' }}
         id: create-release
