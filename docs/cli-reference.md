@@ -29,6 +29,17 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`asset predict`](#asset-predict)
   - [`asset batch-mint`](#asset-batch-mint)
   - [`asset query`](#asset-query)
+- [OAuth2 Client Commands](#oauth2-client-commands)
+  - [`oauth2 client list`](#oauth2-client-list)
+  - [`oauth2 client create`](#oauth2-client-create)
+  - [`oauth2 client get`](#oauth2-client-get)
+  - [`oauth2 client update`](#oauth2-client-update)
+  - [`oauth2 client delete`](#oauth2-client-delete)
+  - [`oauth2 client extension get`](#oauth2-client-extension-get)
+  - [`oauth2 client extension update`](#oauth2-client-extension-update)
+  - [`oauth2 client managers add`](#oauth2-client-managers-add)
+  - [`oauth2 client managers remove`](#oauth2-client-managers-remove)
+  - [`oauth2 client transfer-ownership`](#oauth2-client-transfer-ownership)
 - [Configuration Commands](#configuration-commands)
 - [Shell Completion Commands](#shell-completion-commands)
   - [`completions`](#completions)
@@ -2046,6 +2057,425 @@ Output:
 - Uses client-side batching of existing commands
 - Supports `--dry-run` to preview actions
 - Progress messages written to stderr
+
+---
+
+## OAuth2 Client Commands
+
+Manage OAuth2 clients via the Xion MGR API. Authentication is required for all commands.
+
+---
+
+### `oauth2 client list`
+
+Lists OAuth clients for the authenticated user.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client list [options]
+```
+
+**Options:**
+- `--limit <N>` - Maximum number of items to return
+- `--cursor <CURSOR>` - Pagination cursor for next page
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit oauth2 client list
+```
+
+With pagination:
+```bash
+xion-toolkit oauth2 client list --limit 10 --cursor "abc123"
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "clientId": "client_abc123...",
+      "clientName": "My App",
+      "redirectUris": ["https://example.com/callback"],
+      "bindedTreasury": "xion1treasury...",
+      "owner": "user_123"
+    }
+  ],
+  "count": 1
+}
+```
+
+---
+
+### `oauth2 client create`
+
+Creates a new OAuth client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client create [options]
+```
+
+**Options:**
+- `--redirect-uris <URIS>` - OAuth redirect URIs (required, comma-separated)
+- `--treasury <ADDRESS>` - Treasury contract address to bind (required unless --json-input is provided)
+- `--client-name <NAME>` - Human-readable client name
+- `--owner <USER_ID>` - Client owner user ID (defaults to authenticated user)
+- `--managers <IDS>` - Manager user IDs (comma-separated)
+- `--auth-method <METHOD>` - Token endpoint auth method (none, client_secret_basic, client_secret_post)
+- `--contacts <EMAILS>` - Contact email addresses (comma-separated)
+- `--client-uri <URL>` - Client homepage URL
+- `--logo-uri <URL>` - Client logo URL
+- `--policy-uri <URL>` - Privacy policy URL
+- `--tos-uri <URL>` - Terms of service URL
+- `--jwks-uri <URL>` - JWKS endpoint URL
+- `--json-input <FILE>` - Path to JSON file with full request body
+- `--show-secret` - Show client secret in output (default: redacted)
+
+**Examples:**
+
+Minimal create:
+```bash
+xion-toolkit oauth2 client create \
+  --redirect-uris "https://example.com/callback" \
+  --treasury "xion1treasury..."
+```
+
+Full create:
+```bash
+xion-toolkit oauth2 client create \
+  --redirect-uris "https://a.com/cb,https://b.com/cb" \
+  --treasury "xion1treasury..." \
+  --client-name "My App" \
+  --owner "user_123" \
+  --managers "user_456,user_789" \
+  --auth-method client_secret_basic \
+  --contacts "admin@example.com" \
+  --client-uri "https://myapp.com" \
+  --logo-uri "https://myapp.com/logo.png" \
+  --policy-uri "https://myapp.com/privacy" \
+  --tos-uri "https://myapp.com/terms"
+```
+
+From JSON file:
+```bash
+xion-toolkit oauth2 client create --json-input request.json
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123...",
+  "clientSecret": "********",
+  "clientName": "My App",
+  "redirectUris": ["https://example.com/callback"],
+  "bindedTreasury": "xion1treasury...",
+  "owner": "user_123"
+}
+```
+
+**Notes:**
+- Client secret is redacted by default; use `--show-secret` to reveal (store securely)
+- Owner defaults to authenticated user if `--owner` is not provided
+
+---
+
+### `oauth2 client get`
+
+Gets a specific OAuth client by ID.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client get <CLIENT_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID to query (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client get client_abc123
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "clientName": "My App",
+  "redirectUris": ["https://example.com/callback"],
+  "bindedTreasury": "xion1treasury...",
+  "owner": "user_123",
+  "tokenEndpointAuthMethod": "client_secret_basic"
+}
+```
+
+Output (error - not found):
+```json
+{
+  "success": false,
+  "error": {
+    "code": "EOAUTHCLIENT012",
+    "message": "Client not found",
+    "remediation": "Check the client ID and try again"
+  }
+}
+```
+
+---
+
+### `oauth2 client update`
+
+Updates an existing OAuth client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client update <CLIENT_ID> [options]
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID to update (required)
+
+**Options:**
+- `--redirect-uris <URIS>` - OAuth redirect URIs (comma-separated)
+- `--client-name <NAME>` - Human-readable client name
+- `--client-uri <URL>` - Client homepage URL
+- `--logo-uri <URL>` - Client logo URL
+- `--policy-uri <URL>` - Privacy policy URL
+- `--tos-uri <URL>` - Terms of service URL
+- `--jwks-uri <URL>` - JWKS endpoint URL
+- `--contacts <EMAILS>` - Contact email addresses (comma-separated)
+- `--json-input <FILE>` - Path to JSON file with full request body
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client update client_abc123 \
+  --client-name "Updated App" \
+  --contacts "new@example.com"
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "clientName": "Updated App"
+}
+```
+
+---
+
+### `oauth2 client delete`
+
+Deletes an OAuth client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client delete <CLIENT_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID to delete (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client delete client_abc123
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "message": "Client deleted successfully",
+  "clientId": "client_abc123"
+}
+```
+
+---
+
+### `oauth2 client extension get`
+
+Gets the extension data for a client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client extension get <CLIENT_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client extension get client_abc123
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "extension": {
+    "managers": ["user_456", "user_789"]
+  }
+}
+```
+
+---
+
+### `oauth2 client extension update`
+
+Updates the extension data for a client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client extension update <CLIENT_ID> --managers <IDS>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID (required)
+
+**Options:**
+- `--managers <IDS>` - Manager user IDs (comma-separated)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client extension update client_abc123 \
+  --managers "user_a,user_b"
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "message": "Extension updated successfully"
+}
+```
+
+---
+
+### `oauth2 client managers add`
+
+Adds a manager to a client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client managers add <CLIENT_ID> --manager-id <USER_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID (required)
+
+**Options:**
+- `--manager-id <USER_ID>` - User ID of the manager to add (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client managers add client_abc123 --manager-id user_456
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "managerId": "user_456",
+  "action": "added"
+}
+```
+
+---
+
+### `oauth2 client managers remove`
+
+Removes a manager from a client.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client managers remove <CLIENT_ID> --manager-id <USER_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID (required)
+
+**Options:**
+- `--manager-id <USER_ID>` - User ID of the manager to remove (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client managers remove client_abc123 --manager-id user_456
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "managerId": "user_456",
+  "action": "removed"
+}
+```
+
+---
+
+### `oauth2 client transfer-ownership`
+
+Transfers client ownership to a new user.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID (required)
+
+**Options:**
+- `--new-owner <USER_ID>` - User ID of the new owner (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "clientId": "client_abc123",
+  "previousOwner": "user_123",
+  "newOwner": "user_789"
+}
+```
+
+Output (error - not owner):
+```json
+{
+  "success": false,
+  "error": {
+    "code": "EOAUTHCLIENT011",
+    "message": "Only owner allowed",
+    "remediation": "Only the client owner can perform this action"
+  }
+}
+```
+
+**Notes:**
+- Only the current owner can transfer ownership
+- The new owner must be a valid user
 
 ---
 

@@ -1,0 +1,38 @@
+{
+  "command": "oauth2 client managers add",
+  "description": "Add a manager to an OAuth2 client",
+  "parameters": [
+    {
+      "name": "client-id",
+      "type": "string",
+      "required": true,
+      "description": "OAuth2 client ID"
+    },
+    {
+      "name": "manager-id",
+      "type": "string",
+      "required": true,
+      "description": "Manager user ID to add",
+      "notes": "This is a user ID, not a Xion address"
+    }
+  ],
+  "validation_rules": [
+    "Only the client owner or existing managers can add new managers"
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:write scope" },
+    { "code": "EOAUTHCLIENT011", "description": "Not authorized to manage managers", "remediation": "Only owner or managers can add new managers" },
+    { "code": "EOAUTHCLIENT012", "description": "Client not found", "remediation": "Check the client ID and try again" },
+    { "code": "EOAUTHCLIENT007", "description": "Manager user ID required", "remediation": "Provide --manager-id with a valid user ID" }
+  ],
+  "examples": [
+    {
+      "description": "Add a manager",
+      "params": {
+        "client-id": "client_abc123",
+        "manager-id": "user_456"
+      }
+    }
+  ]
+}

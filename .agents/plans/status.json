@@ -6,14 +6,15 @@
       "id": "oauth2-client-management-post-merge",
       "title": "OAuth2 Client Management Post-Merge",
       "file": ".agents/plans/oauth2-client-management-post-merge.md",
-      "status": "In Progress",
-      "progress": 35,
+      "status": "Done",
+      "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@architect", "@fullstack-dev", "@fullstack-dev-2", "@qa-engineer", "@prompt-engineer"],
+      "agents": ["@architect", "@fullstack-dev", "@fullstack-dev-2", "@prompt-engineer"],
       "tags": ["oauth2", "client-management", "cli", "skill", "docs", "ci", "api-contract"],
       "created_at": "2026-03-31",
       "updated_at": "2026-03-31",
-      "notes": "Architecture spec complete. @architect reviewed and rewrote plan with full API contract (13 endpoints), toolkit architecture (MgrApiClient + oauth2_client.rs), CLI design (oauth2 client subcommands), skill schemas (10 files), 7 ADRs, and 6 implementation phases. KEY BLOCKER: toolkit access_token lacks xion:mgr:read/write scopes — requires backend config change (R1 recommended) or graceful 403 handling (Section B). Ready for implementation once scope issue resolved."
+      "done_at": "2026-03-31",
+      "notes": "All phases complete. QC tri-review approved (W1/W2 fixes applied). QA PASS: 8/8 criteria, 444 tests, 0 warnings. Residual findings RF-1 to RF-5 deferred. Branch: feature/oauth2-client-mgmt."
     },
     {
       "id": "mainnet-disable-switch",

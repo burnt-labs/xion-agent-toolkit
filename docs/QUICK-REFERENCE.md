@@ -233,6 +233,51 @@ xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
 
 ---
 
+## OAuth2 Client Management
+
+```bash
+# List OAuth clients
+xion-toolkit oauth2 client list
+
+# Create OAuth client
+xion-toolkit oauth2 client create \
+  --redirect-uris "https://example.com/callback" \
+  --treasury "xion1treasury..."
+
+# Get client details
+xion-toolkit oauth2 client get <CLIENT_ID>
+
+# Update client
+xion-toolkit oauth2 client update <CLIENT_ID> \
+  --client-name "Updated App"
+
+# Delete client
+xion-toolkit oauth2 client delete <CLIENT_ID>
+
+# Extension management
+xion-toolkit oauth2 client extension get <CLIENT_ID>
+xion-toolkit oauth2 client extension update <CLIENT_ID> --managers "user_a,user_b"
+
+# Manager management
+xion-toolkit oauth2 client managers add <CLIENT_ID> --manager-id <USER_ID>
+xion-toolkit oauth2 client managers remove <CLIENT_ID> --manager-id <USER_ID>
+
+# Transfer ownership
+xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID>
+```
+
+### OAuth2 Client Error Codes
+
+| Code | Meaning | Fix |
+|------|---------|-----|
+| EOAUTHCLIENT008 | Not authenticated | `auth login` |
+| EOAUTHCLIENT012 | Client not found | Check client ID |
+| EOAUTHCLIENT014 | Treasury not found | Check treasury address |
+| EOAUTHCLIENT011 | Not owner | Only owner can perform action |
+| EOAUTHCLIENT010 | Insufficient scope | Re-authorize with xion:mgr:write scope |
+
+---
+
 ## Output Formats (Phase 2)
 
 ```bash
