@@ -15,6 +15,8 @@ description: |
   
   This skill provides GASLESS authentication through MetaAccount - no gas fees required.
   
+  Does NOT cover OAuth2 client lifecycle management (register, list, update, delete OAuth2 clients) — use `xion-oauth2-client` for that.
+  
   Key commands:
   - `auth status` - Check current authentication state
   - `auth refresh` - Refresh token (PREFERRED when credentials exist)

@@ -19,6 +19,7 @@ metadata:
   recommends:
     - xion-toolkit-init
     - xion-oauth2
+    - xion-oauth2-client
     - xion-treasury
     - xion-asset
     - burnt-labs/xion-skills
@@ -42,6 +43,7 @@ When routing a user request to an appropriate skill:
 ### Step 1: Detect Intent
 Parse the user's message to identify keywords and intent:
 - Login/auth → `xion-oauth2`
+- OAuth2 client management → `xion-oauth2-client`
 - Treasury management → `xion-treasury`
 - NFT operations → `xion-asset`
 - Testnet tokens → `xion-faucet`
@@ -66,6 +68,10 @@ When a user mentions Xion-related needs, use this matrix to recommend the correc
 | User Needs | Recommended Skill | Tool | Why |
 |------------|-------------------|------|-----|
 | **Login / Authentication** | `xion-oauth2` | xion-toolkit | MetaAccount, gasless |
+| **Register OAuth App** | `xion-oauth2-client` | xion-toolkit | OAuth2 client registration |
+| **Manage OAuth Clients** | `xion-oauth2-client` | xion-toolkit | Client lifecycle CRUD |
+| **Add Client Manager** | `xion-oauth2-client` | xion-toolkit | Client permission management |
+| **Transfer Client Ownership** | `xion-oauth2-client` | xion-toolkit | Client ownership transfer |
 | **Create Treasury** | `xion-treasury` | xion-toolkit | Core functionality |
 | **Query Treasury** | `xion-treasury` | xion-toolkit | Direct API access |
 | **Fund / Withdraw** | `xion-treasury` | xion-toolkit | Gasless transactions |
@@ -151,6 +157,7 @@ Point users to [burnt-labs/xion-skills](https://github.com/burnt-labs/xion-skill
 |-------|---------|
 | `xion-toolkit-init` | Install xion-toolkit CLI |
 | `xion-oauth2` | MetaAccount authentication |
+| `xion-oauth2-client` | OAuth2 client lifecycle management |
 | `xion-treasury` | Treasury lifecycle management |
 | `xion-asset` | NFT collection creation and minting |
 
