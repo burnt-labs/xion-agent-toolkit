@@ -40,9 +40,17 @@ updated_at: 2026-03-31
 | QC Tri-Review | ✅ Done | — | 3 reviewers, consolidated decision: Approve |
 | QA Verification | ✅ Done | — | 8/8 criteria PASS, 444 tests, 0 warnings |
 
-### Known Issue — Phase 3 Clap Bug
+### Known Issue — Phase 3 Clap Bug (RESOLVED)
 
-`Get`, `Delete`, `TransferOwnership` variants use inline struct syntax (`Get { client_id: String }`) which clap treats as `#[command(subcommand)]`. Must convert to `#[derive(Args)]` structs. See test output: `Usage: delete <COMMAND>` (should accept positional `client_id`).
+~~`Get`, `Delete`, `TransferOwnership` variants use inline struct syntax which clap treats as `#[command(subcommand)]`.~~ **Fixed** by converting to `#[derive(Args)]` structs (`GetArgs`, `DeleteArgs`, `TransferOwnershipArgs`). All tests pass.
+
+### Post-Implementation: SKILL.md Creation
+
+After QA sign-off, a `SKILL.md` was created following the `xion-treasury` skill pattern:
+
+| File | Action | Description |
+|------|--------|-------------|
+| `skills/xion-oauth2-client/SKILL.md` | CREATE | 403 lines — full skill document with 35+ triggers, all 10 commands, secret redaction, error handling, parameter collection workflow, schema references |
 
 ---
 
@@ -843,25 +851,29 @@ All schemas live under `skills/xion-oauth2-client/schemas/`:
 
 **Tests:** 25 pass (wiremock integration tests for success + error cases)
 
-### Phase 3: CLI Commands 🔧 FIX NEEDED
+### Phase 3: CLI Commands ✅ DONE
 
-**Owner:** @fullstack-dev | **Status:** Code exists, tests failing (clap parse bug)
+**Owner:** @fullstack-dev | **Completed:** 2026-03-31
 
 **File changes:**
 
 | File | Action | Description |
 |------|--------|-------------|
 | `src/cli/mod.rs` | MODIFY | ✅ Added `OAuth2(OAuth2Commands)` variant + dispatch |
-| `src/cli/oauth2_client.rs` | CREATE | ✅ 805 lines — 10 command handlers, secret redaction |
+| `src/cli/oauth2_client.rs` | CREATE | ✅ 846 lines — 10 command handlers, secret redaction |
 | `src/main.rs` | MODIFY | ✅ Updated main to handle new command |
 
-**Known bug:** `Get`, `Delete`, `TransferOwnership` use inline struct syntax which clap treats as `#[command(subcommand)]`. Must convert to `#[derive(Args)]` structs. 13 test failures.
+**Clap bug fixed:** `Get`, `Delete`, `TransferOwnership` converted from inline struct syntax to `#[derive(Args)]` structs (`GetArgs`, `DeleteArgs`, `TransferOwnershipArgs`). All tests pass.
 
-### Phase 4: Secret Redaction 🔧 IN CODE (BLOCKED BY PHASE 3)
+### Phase 4: Secret Redaction ✅ DONE
 
-**Status:** Implemented in `src/cli/oauth2_client.rs` but untested due to Phase 3 test failures.
+**Owner:** @fullstack-dev | **Completed:** 2026-03-31
 
-### Phase 5: Skill Schemas + Documentation ⬚️ PENDING
+**Status:** Implemented in `src/cli/oauth2_client.rs`. `--show-secret` flag for opt-in; default `"********"` redaction.
+
+### Phase 5: Skill Schemas + Documentation ✅ DONE
+
+**Owner:** @fullstack-dev, @prompt-engineer | **Completed:** 2026-03-31
 
 **File changes:**
 
@@ -877,18 +889,20 @@ All schemas live under `skills/xion-oauth2-client/schemas/`:
 | `skills/xion-oauth2-client/schemas/managers-add.json` | CREATE | Schema for `managers add` |
 | `skills/xion-oauth2-client/schemas/managers-remove.json` | CREATE | Schema for `managers remove` |
 | `skills/xion-oauth2-client/schemas/transfer-ownership.json` | CREATE | Schema for `transfer-ownership` |
+| `skills/xion-oauth2-client/SKILL.md` | CREATE | 403-line skill document (triggers, workflows, commands, error handling) |
 | `docs/cli-reference.md` | MODIFY | Add OAuth2 Client section |
 | `docs/QUICK-REFERENCE.md` | MODIFY | Add OAuth2 Client quick reference |
 | `docs/ERROR-CODES.md` | MODIFY | Add `EOAUTHCLIENT001`–`EOAUTHCLIENT018` |
 
-### Phase 6: Final Tests + CI ⬚️ PENDING
+### Phase 6: Final Tests + CI ✅ DONE
 
-**Pre-commit checklist (must pass):**
-```bash
-cargo fmt
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test
-```
+**Owner:** @fullstack-dev | **Completed:** 2026-03-31
+
+**Results:**
+- `cargo fmt` ✅ clean
+- `cargo clippy --all-targets --all-features -- -D warnings` ✅ 0 warnings
+- `cargo test` ✅ 444 tests passed
+- Shell completions verified: bash/zsh/fish all include full `oauth2 client` subcommand tree
 
 ---
 

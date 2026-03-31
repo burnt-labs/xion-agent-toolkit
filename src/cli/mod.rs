@@ -126,7 +126,7 @@ pub enum Commands {
     Tx(tx::TxCommands),
 
     /// OAuth2 client management commands
-    #[command(subcommand)]
+    #[command(subcommand, name = "oauth2")]
     OAuth2(oauth2_client::OAuth2Commands),
 
     /// Faucet commands for testnet tokens
