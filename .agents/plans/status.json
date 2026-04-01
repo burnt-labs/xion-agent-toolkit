@@ -3,6 +3,19 @@
   "updated_at": "2026-04-01",
   "plans": [
     {
+      "id": "interactive-cli",
+      "title": "Interactive CLI Mode (missing arg prompts)",
+      "file": ".agents/plans/2026-04-01-interactive-cli.md",
+      "status": "InReview",
+      "progress": 15,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qa-engineer"],
+      "tags": ["cli", "ux", "interactive", "dialoguer", "human-experience"],
+      "created_at": "2026-04-01",
+      "updated_at": "2026-04-01",
+      "notes": "TTY auto-detect + --no-interactive flag. Re-exec pattern to avoid changing param types. dialoguer crate for prompts. Batch 1 (18 high-freq commands) in scope. Batch 2 (treasury subs), Batch 3 (oauth2 subs), Batch 4 (docs) deferred."
+    },
+    {
       "id": "local-scope-validation",
       "title": "Local Scope Validation for MGR API",
       "file": ".agents/plans/2026-04-01-local-scope-validation.md",
