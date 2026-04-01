@@ -92,7 +92,7 @@ pub fn get_mainnet_config() -> NetworkConfig {{
     }}
 }}
 "#,
-        testnet_client_id, testnet_oauth_api_url, mainnet_client_id
+        testnet_oauth_api_url, testnet_client_id, mainnet_client_id
     );
 
     fs::write(&dest_path, config_content).unwrap();
