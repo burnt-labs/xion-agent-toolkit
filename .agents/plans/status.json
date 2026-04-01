@@ -3,6 +3,20 @@
   "updated_at": "2026-04-01",
   "plans": [
     {
+      "id": "local-scope-validation",
+      "title": "Local Scope Validation for MGR API",
+      "file": ".agents/plans/2026-04-01-local-scope-validation.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@product-manager"],
+      "tags": ["oauth2", "scope", "validation", "dev-mode", "security"],
+      "created_at": "2026-04-01",
+      "updated_at": "2026-04-01",
+      "done_at": "2026-04-01",
+      "notes": "Implemented local scope validation for MGR API calls. Scope field added to TokenResponse and UserCredentials with backward-compatible serde(default). has_scope()/has_all_scopes() helpers on UserCredentials. get_valid_token() now returns UserCredentials instead of bare String. Pre-flight scope check in prepare_api_client() fails fast with --dev-mode hint. Error hints updated. 4 unit tests for scope helpers. Also includes --dev-mode flag (Task in same session), build.rs format!() parameter order fix, and .env compile-time injection documentation. CI clean: fmt, clippy, 505 tests passing."
+    },
+    {
       "id": "oauth2-client-advanced-lifecycle",
       "title": "OAuth2 Client Advanced Lifecycle",
       "file": ".agents/plans/oauth2-client-advanced-lifecycle.md",
