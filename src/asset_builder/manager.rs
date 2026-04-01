@@ -135,7 +135,8 @@ impl AssetBuilderManager {
             .oauth_client
             .get_valid_token()
             .await
-            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?;
+            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?
+            .access_token;
 
         // Broadcast instantiate2 transaction
         let tx_hash = self
@@ -212,7 +213,8 @@ impl AssetBuilderManager {
             .oauth_client
             .get_valid_token()
             .await
-            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?;
+            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?
+            .access_token;
 
         // Broadcast execute contract transaction
         let tx_hash = self
@@ -510,7 +512,8 @@ impl AssetBuilderManager {
             .oauth_client
             .get_valid_token()
             .await
-            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?;
+            .map_err(|e| AssetBuilderError::ApiError(e.to_string()))?
+            .access_token;
 
         // Broadcast batch execute
         let tx_hash = self

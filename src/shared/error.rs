@@ -368,7 +368,7 @@ impl XionErrorCode {
             XionErrorCode::EOAUTHCLIENT008 => "Run 'xion-toolkit auth login' first",
             XionErrorCode::EOAUTHCLIENT009 => "Run 'xion-toolkit auth login' first",
             XionErrorCode::EOAUTHCLIENT010 => {
-                "Re-authorize with xion:mgr:read or xion:mgr:write scope"
+                "Re-authorize with --dev-mode: xion-toolkit auth login --dev-mode"
             }
             XionErrorCode::EOAUTHCLIENT011 => "Only the client owner can perform this action",
             XionErrorCode::EOAUTHCLIENT012 => "Check the client ID and try again",
@@ -1027,7 +1027,7 @@ impl OAuthClientError {
                 "Run 'xion-toolkit auth login' first".to_string()
             }
             OAuthClientError::InsufficientScope { .. } => {
-                "Re-authorize with xion:mgr:read or xion:mgr:write scope".to_string()
+                "Re-authorize with --dev-mode: xion-toolkit auth login --dev-mode".to_string()
             }
             OAuthClientError::OnlyOwnerAllowed { .. } => {
                 "Only the client owner can perform this action".to_string()

@@ -113,7 +113,8 @@ impl BatchExecutor {
             .get_valid_token()
             .await
             .context("Failed to get valid access token")
-            .map_err(|e| BatchExecutorError::NetworkError(e.to_string()))?;
+            .map_err(|e| BatchExecutorError::NetworkError(e.to_string()))?
+            .access_token;
 
         // Get user address
         let from_address = self

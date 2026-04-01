@@ -11,6 +11,9 @@ use std::fs;
 use std::path::PathBuf;
 use tracing::debug;
 
+/// OAuth2 scopes required for Manager API operations.
+const MGR_REQUIRED_SCOPES: &[&str] = &["xion:mgr:read", "xion:mgr:write"];
+
 use crate::api::mgr_api::{
     CreateClientRequest, MgrApiClient, UpdateClientRequest, UpdateExtensionRequest,
 };
@@ -271,7 +274,22 @@ async fn prepare_api_client(_ctx: &ExecuteContext) -> Result<(String, MgrApiClie
         anyhow::bail!("Not authenticated. Please run 'xion-toolkit auth login' first.");
     }
 
-    let access_token = oauth_client.get_valid_token().await?;
+    let credentials = oauth_client.get_valid_token().await?;
+
+    // Pre-flight scope validation: fail fast if token lacks required scopes
+    if !credentials.has_all_scopes(MGR_REQUIRED_SCOPES) {
+        let missing: Vec<&str> = MGR_REQUIRED_SCOPES
+            .iter()
+            .filter(|s| !credentials.has_scope(s))
+            .copied()
+            .collect();
+        anyhow::bail!(
+            "Insufficient scope: missing {}. Re-login with --dev-mode: xion-toolkit auth login --dev-mode",
+            missing.join(", ")
+        );
+    }
+
+    let access_token = credentials.access_token;
 
     // Never log the access token
     debug!("Obtained valid access token for MGR API call");

@@ -58,8 +58,8 @@ const DEV_MODE_SCOPES: &[&str] = &["xion:mgr:read", "xion:mgr:write"];
 /// println!("Logged in as: {:?}", credentials.xion_address);
 ///
 /// // Get valid token (auto-refresh if needed)
-/// let token = client.get_valid_token().await?;
-/// println!("Access token: {}", token);
+/// let credentials = client.get_valid_token().await?;
+/// println!("Access token: {}", credentials.access_token);
 ///
 /// # Ok(())
 /// # }
@@ -346,6 +346,7 @@ impl OAuthClient {
             expires_at,
             refresh_token_expires_at,
             xion_address: Some(user_info.id),
+            scope: token_response.scope,
         };
 
         self.credentials_manager
@@ -501,13 +502,13 @@ impl OAuthClient {
         }
     }
 
-    /// Get valid access token (auto-refresh if needed)
+    /// Get valid credentials (auto-refresh if needed)
     ///
-    /// Returns a valid access token, automatically refreshing it if expired.
-    /// This is the primary method for obtaining tokens for API calls.
+    /// Returns valid credentials, automatically refreshing the access token if expired.
+    /// This is the primary method for obtaining credentials for API calls.
     ///
     /// # Returns
-    /// Valid access token ready for use
+    /// Valid credentials ready for use
     ///
     /// # Errors
     /// Returns an error if:
@@ -538,13 +539,13 @@ impl OAuthClient {
     /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
-    /// let token = client.get_valid_token().await?;
-    /// println!("Access token: {}", token);
+    /// let credentials = client.get_valid_token().await?;
+    /// println!("Access token: {}", credentials.access_token);
     /// # Ok(())
     /// # }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_valid_token(&self) -> Result<String> {
+    pub async fn get_valid_token(&self) -> Result<UserCredentials> {
         debug!("Getting valid access token");
         self.token_manager
             .get_valid_token()
