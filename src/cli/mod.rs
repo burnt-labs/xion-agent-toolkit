@@ -5,6 +5,7 @@ pub mod batch;
 pub mod config;
 pub mod contract;
 pub mod faucet;
+pub mod interactive;
 pub mod oauth2_client;
 pub mod treasury;
 pub mod tx;
@@ -23,20 +24,23 @@ pub struct ExecuteContext {
     pub output_format: OutputFormat,
     /// Network to use (testnet, mainnet)
     pub network: String,
+    /// Whether interactive prompts are allowed
+    pub interactive: bool,
 }
 
 impl ExecuteContext {
     /// Create a new execution context
-    pub fn new(output_format: OutputFormat, network: String) -> Self {
+    pub fn new(output_format: OutputFormat, network: String, interactive: bool) -> Self {
         Self {
             output_format,
             network,
+            interactive,
         }
     }
 
     /// Create a default context (JSON output, testnet)
     pub fn default_context() -> Self {
-        Self::new(OutputFormat::default(), "testnet".to_string())
+        Self::new(OutputFormat::default(), "testnet".to_string(), false)
     }
 
     /// Get the output format
@@ -75,6 +79,10 @@ pub struct Cli {
     #[arg(short, long, global = true)]
     pub config: Option<String>,
 
+    /// Disable interactive prompts (exit on missing required arguments)
+    #[arg(long, global = true)]
+    pub no_interactive: bool,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -87,7 +95,7 @@ fn parse_output_format(s: &str) -> Result<OutputFormat, String> {
 impl Cli {
     /// Create an execution context from CLI options
     pub fn to_context(&self) -> ExecuteContext {
-        ExecuteContext::new(self.output, self.network.clone())
+        ExecuteContext::new(self.output, self.network.clone(), !self.no_interactive)
     }
 }
 

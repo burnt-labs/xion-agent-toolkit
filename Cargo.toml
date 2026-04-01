@@ -81,6 +81,9 @@ chrono = { version = "0.4", features = ["serde"] }
 # Open browser
 open = "5.1"
 
+# Interactive prompts
+dialoguer = "0.11"
+
 # Axum for callback server
 axum = "0.7"
 tower = "0.4"
