@@ -17,13 +17,14 @@ description: |
   
   Does NOT cover OAuth2 client lifecycle management (register, list, update, delete OAuth2 clients) — use `xion-oauth2-client` for that.
   
-  Key commands:
-  - `auth status` - Check current authentication state
-  - `auth refresh` - Refresh token (PREFERRED when credentials exist)
-  - `auth login` - New browser auth (only if no credentials or refresh failed)
-  - `auth login --force` - Force fresh browser auth (skip refresh check)
-  
-  Make sure to use this skill whenever authentication is mentioned, even if the user doesn't explicitly say "OAuth2" or "MetaAccount".
+   Key commands:
+   - `auth status` - Check current authentication state
+   - `auth refresh` - Refresh token (PREFERRED when credentials exist)
+   - `auth login` - New browser auth (only if no credentials or refresh failed)
+   - `auth login --force` - Force fresh browser auth (skip refresh check)
+   - `auth login --dev-mode` - Request Manager API scopes for OAuth2 client management
+   
+   Make sure to use this skill whenever authentication is mentioned, even if the user doesn't explicitly say "OAuth2" or "MetaAccount".
 metadata:
   author: burnt-labs
   version: "1.2.2"
@@ -155,13 +156,23 @@ Initiates the OAuth2 login flow.
 
 **Usage:**
 ```bash
-./scripts/login.sh [--port PORT] [--network NETWORK] [--force]
+./scripts/login.sh [--port PORT] [--network NETWORK] [--force] [--dev-mode]
 ```
 
 **Options:**
 - `--port PORT` - Callback server port (default: 54321)
 - `--network NETWORK` - Network to use: local, testnet, mainnet (default: testnet)
 - `--force` - Force new browser authentication (skip refresh check)
+- `--dev-mode` - Request additional Manager API scopes (`xion:mgr:read`, `xion:mgr:write`)
+
+**Scopes:**
+
+| Mode | Scopes Requested | Use Case |
+|------|------------------|----------|
+| Default | `xion:identity:read`, `xion:blockchain:read`, `xion:transactions:submit` | Treasury operations, contract execution |
+| `--dev-mode` | Default + `xion:mgr:read`, `xion:mgr:write` | Manager API (OAuth2 client management) |
+
+**Note:** Use `--dev-mode` when working with OAuth2 client management endpoints. Without it, Manager API calls will return `INSUFFICIENT_SCOPE`.
 
 **Output (stdout):**
 ```json
@@ -287,6 +298,19 @@ The skill supports three networks:
 | testnet | https://oauth2.testnet.burnt.com | xion-testnet-2 |
 | mainnet | https://oauth2.burnt.com | xion-mainnet-1 |
 
+## OAuth2 Scopes
+
+| Scope | Description | Required For |
+|-------|-------------|--------------|
+| `xion:identity:read` | Read identity information | All authenticated operations |
+| `xion:blockchain:read` | Read blockchain state | Queries, balance checks |
+| `xion:transactions:submit` | Submit transactions | Treasury ops, contract execution |
+| `xion:mgr:read` | Read Manager API resources | OAuth2 client management |
+| `xion:mgr:write` | Write Manager API resources | OAuth2 client create/update/delete |
+
+**Default login:** Requests the first 3 scopes (identity, blockchain, transactions).
+**With `--dev-mode`:** Requests all 5 scopes including Manager API access.
+
 ## Integration Examples
 
 See `references/integration-examples.md` for Claude Code and programmatic usage examples.
@@ -353,6 +377,7 @@ Before executing auth commands, verify:
 - [ ] **Prefer refresh over login** when user has existing credentials
 - [ ] **Confirmed with user** if browser will open (not headless-safe)
 - [ ] **Using `--force` only when necessary** (refresh failed or user requested fresh auth)
+- [ ] **Using `--dev-mode` for Manager API operations** (OAuth2 client management, treasury admin)
 
 ## Parameter Schemas
 
@@ -373,6 +398,7 @@ See `schemas/` directory for detailed parameter definitions:
 | `port` | No | Callback server port (default: 54321) |
 | `network` | No | Network (default: testnet) |
 | `force` | No | Force new browser auth (default: false) |
+| `dev-mode` | No | Request Manager API scopes (default: false) |
 
 > **Note**: See `schemas/login.json` for complete parameter list including conditional parameters.
 

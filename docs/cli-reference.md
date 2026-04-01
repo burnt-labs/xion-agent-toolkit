@@ -150,6 +150,9 @@ Complete authentication management:
 # Login (opens browser)
 xion-toolkit auth login
 
+# Login with dev mode (for Manager API access)
+xion-toolkit auth login --dev-mode
+
 # Check status
 xion-toolkit auth status
 # Output: {"success": true, "authenticated": true, ...}
@@ -295,11 +298,23 @@ Initiates OAuth2 authentication flow with PKCE security.
 
 **Usage:**
 ```bash
-xion-toolkit auth login [--port <PORT>]
+xion-toolkit auth login [--port <PORT>] [--dev-mode]
 ```
 
 **Options:**
 - `--port <PORT>` - Callback server port (default: 54321)
+- `--dev-mode` - Request additional Manager API scopes (`xion:mgr:read`, `xion:mgr:write`)
+
+**Scopes:**
+
+The `auth login` command requests OAuth2 scopes based on the mode:
+
+| Mode | Scopes Requested | Use Case |
+|------|------------------|----------|
+| Default (no flag) | `xion:identity:read`, `xion:blockchain:read`, `xion:transactions:submit` | Standard treasury operations, contract execution, queries |
+| `--dev-mode` | All default scopes + `xion:mgr:read`, `xion:mgr:write` | Manager API endpoints (OAuth2 client management, treasury admin operations) |
+
+**Note:** Without `--dev-mode`, calling Manager API endpoints will return `INSUFFICIENT_SCOPE` error.
 
 **Examples:**
 
@@ -322,6 +337,11 @@ With custom port:
 xion-toolkit auth login --port 8080
 ```
 
+With dev mode (for Manager API access):
+```bash
+xion-toolkit auth login --dev-mode
+```
+
 Output (error - port in use):
 ```json
 {
@@ -336,6 +356,7 @@ Output (error - port in use):
 - Opens browser automatically for authentication
 - Stores encrypted credentials in `~/.xion-toolkit/credentials/`
 - Refresh tokens valid for 30 days
+- Use `--dev-mode` when working with OAuth2 client management or other Manager API endpoints
 
 ---
 

@@ -6,10 +6,18 @@
 
 ```bash
 xion-toolkit auth login          # OAuth2 login (opens browser)
+xion-toolkit auth login --dev-mode  # Login with Manager API scopes
 xion-toolkit auth status         # Check auth status
 xion-toolkit auth refresh        # Refresh access token
 xion-toolkit auth logout         # Clear credentials
 ```
+
+### Auth Scopes
+
+| Mode | Scopes | Use Case |
+|------|--------|----------|
+| Default | `xion:identity:read`, `xion:blockchain:read`, `xion:transactions:submit` | Treasury, contracts, queries |
+| `--dev-mode` | Default + `xion:mgr:read`, `xion:mgr:write` | Manager API (OAuth2 client management) |
 
 ### Auth Output Examples
 

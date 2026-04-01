@@ -6,7 +6,7 @@
 # It opens a browser for user authorization and returns JSON status.
 #
 # Usage:
-#   ./login.sh [--port PORT] [--network NETWORK]
+#   ./login.sh [--port PORT] [--network NETWORK] [--dev-mode]
 #
 # Output:
 #   JSON to stdout with authentication result
@@ -47,6 +47,7 @@ handle_error() {
 PORT=""
 NETWORK=""
 FORCE=""
+DEV_MODE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -62,6 +63,10 @@ while [[ $# -gt 0 ]]; do
             FORCE="--force"
             shift
             ;;
+        --dev-mode)
+            DEV_MODE="--dev-mode"
+            shift
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS]" >&2
             echo "" >&2
@@ -69,6 +74,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --port PORT       Callback server port (default: 54321)" >&2
             echo "  --network NET     Network: local, testnet, mainnet (default: testnet)" >&2
             echo "  --force           Force new browser authentication (skip refresh check)" >&2
+            echo "  --dev-mode        Request Manager API scopes (xion:mgr:read, xion:mgr:write)" >&2
             exit 0
             ;;
         *)
@@ -103,6 +109,10 @@ fi
 
 if [[ -n "$FORCE" ]]; then
     CMD_ARGS+=("--force")
+fi
+
+if [[ -n "$DEV_MODE" ]]; then
+    CMD_ARGS+=("--dev-mode")
 fi
 
 # Convert array to string for logging
