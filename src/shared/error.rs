@@ -187,6 +187,8 @@ pub enum XionErrorCode {
     EOAUTHCLIENT017,
     /// Unknown network
     EOAUTHCLIENT018,
+    /// Re-run the command with --force to confirm
+    EOAUTHCLIENT019,
 }
 
 impl XionErrorCode {
@@ -274,6 +276,7 @@ impl XionErrorCode {
             XionErrorCode::EOAUTHCLIENT016 => "Treasury fetch error",
             XionErrorCode::EOAUTHCLIENT017 => "Treasury query error",
             XionErrorCode::EOAUTHCLIENT018 => "Unknown network",
+            XionErrorCode::EOAUTHCLIENT019 => "Confirmation required",
         }
     }
 
@@ -377,6 +380,7 @@ impl XionErrorCode {
             XionErrorCode::EOAUTHCLIENT016 => "Failed to fetch treasury data. Try again later.",
             XionErrorCode::EOAUTHCLIENT017 => "Failed to query treasury data. Try again later.",
             XionErrorCode::EOAUTHCLIENT018 => "Verify network configuration and try again",
+            XionErrorCode::EOAUTHCLIENT019 => "Re-run the command with --force to confirm",
         }
     }
 
@@ -463,6 +467,7 @@ impl XionErrorCode {
             | XionErrorCode::EOAUTHCLIENT016
             | XionErrorCode::EOAUTHCLIENT017
             | XionErrorCode::EOAUTHCLIENT018 => "OAUTH_CLIENT",
+            XionErrorCode::EOAUTHCLIENT019 => "OAUTH_CLIENT",
         }
     }
 }
@@ -990,6 +995,9 @@ pub enum OAuthClientError {
 
     #[error("Invalid response: {message}")]
     InvalidResponse { message: String },
+
+    #[error("Confirmation required: {message}")]
+    ConfirmationRequired { message: String },
 }
 
 impl OAuthClientError {
@@ -1006,6 +1014,7 @@ impl OAuthClientError {
             OAuthClientError::ServerError { .. } => XionErrorCode::EOAUTHCLIENT015,
             OAuthClientError::NetworkError { .. } => XionErrorCode::ENETWORK005,
             OAuthClientError::InvalidResponse { .. } => XionErrorCode::ENETWORK004,
+            OAuthClientError::ConfirmationRequired { .. } => XionErrorCode::EOAUTHCLIENT019,
         }
     }
 
@@ -1043,6 +1052,9 @@ impl OAuthClientError {
             }
             OAuthClientError::InvalidResponse { .. } => {
                 "Server returned unexpected data. Check API version.".to_string()
+            }
+            OAuthClientError::ConfirmationRequired { .. } => {
+                "Re-run the command with --force to confirm the destructive operation".to_string()
             }
         }
     }

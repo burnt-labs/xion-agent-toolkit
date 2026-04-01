@@ -118,10 +118,11 @@ xion-toolkit oauth2 client extension update client_abc123 --managers "user_a,use
 Transfer client ownership when team roles change:
 
 ```bash
-xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789
+xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789 --force
 ```
 
 > Only the current owner can transfer. The new owner must already have a Xion MetaAccount.
+> The `--force` flag is required to confirm the ownership transfer.
 
 ## Common Operations
 
@@ -210,10 +211,11 @@ xion-toolkit oauth2 client update client_abc123 \
 ### Delete OAuth Client
 
 ```bash
-xion-toolkit oauth2 client delete client_abc123
+xion-toolkit oauth2 client delete client_abc123 --force
 ```
 
 > Only the owner can delete a client. This action is irreversible.
+> The `--force` flag is required to confirm deletion.
 
 ### Extension Operations
 
@@ -238,7 +240,7 @@ xion-toolkit oauth2 client managers remove client_abc123 --manager-id user_456
 ### Transfer Ownership
 
 ```bash
-xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789
+xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789 --force
 ```
 
 ## Secret Redaction Policy

@@ -252,7 +252,7 @@ xion-toolkit oauth2 client update <CLIENT_ID> \
   --client-name "Updated App"
 
 # Delete client
-xion-toolkit oauth2 client delete <CLIENT_ID>
+xion-toolkit oauth2 client delete <CLIENT_ID> --force
 
 # Extension management
 xion-toolkit oauth2 client extension get <CLIENT_ID>
@@ -263,7 +263,7 @@ xion-toolkit oauth2 client managers add <CLIENT_ID> --manager-id <USER_ID>
 xion-toolkit oauth2 client managers remove <CLIENT_ID> --manager-id <USER_ID>
 
 # Transfer ownership
-xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID>
+xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID> --force
 ```
 
 ### OAuth2 Client Error Codes
@@ -275,6 +275,7 @@ xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID>
 | EOAUTHCLIENT014 | Treasury not found | Check treasury address |
 | EOAUTHCLIENT011 | Not owner | Only owner can perform action |
 | EOAUTHCLIENT010 | Insufficient scope | Re-authorize with xion:mgr:write scope |
+| EOAUTHCLIENT019 | Confirmation required | Re-run with `--force` to confirm |
 
 ---
 

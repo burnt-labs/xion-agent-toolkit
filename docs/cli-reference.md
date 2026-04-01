@@ -2273,20 +2273,23 @@ Output (success):
 
 ### `oauth2 client delete`
 
-Deletes an OAuth client.
+Deletes an OAuth client. The `--force` flag is required to confirm the destructive operation.
 
 **Usage:**
 ```bash
-xion-toolkit oauth2 client delete <CLIENT_ID>
+xion-toolkit oauth2 client delete <CLIENT_ID> --force
 ```
 
 **Arguments:**
 - `CLIENT_ID` - Client ID to delete (required)
 
+**Options:**
+- `--force` - Confirm the deletion (required)
+
 **Examples:**
 
 ```bash
-xion-toolkit oauth2 client delete client_abc123
+xion-toolkit oauth2 client delete client_abc123 --force
 ```
 
 Output (success):
@@ -2432,11 +2435,11 @@ Output (success):
 
 ### `oauth2 client transfer-ownership`
 
-Transfers client ownership to a new user.
+Transfers client ownership to a new user. The `--force` flag is required to confirm the ownership transfer.
 
 **Usage:**
 ```bash
-xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID>
+xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID> --force
 ```
 
 **Arguments:**
@@ -2444,11 +2447,12 @@ xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID>
 
 **Options:**
 - `--new-owner <USER_ID>` - User ID of the new owner (required)
+- `--force` - Confirm the ownership transfer (required)
 
 **Examples:**
 
 ```bash
-xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789
+xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789 --force
 ```
 
 Output (success):

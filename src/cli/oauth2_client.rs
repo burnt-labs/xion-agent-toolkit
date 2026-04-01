@@ -83,6 +83,9 @@ pub struct GetArgs {
 pub struct DeleteArgs {
     /// Client ID to delete
     pub client_id: String,
+    /// Skip confirmation prompt and force deletion
+    #[arg(long)]
+    pub force: bool,
 }
 
 /// Arguments for transferring client ownership
@@ -93,6 +96,9 @@ pub struct TransferOwnershipArgs {
     /// User ID of the new owner
     #[arg(long)]
     pub new_owner: String,
+    /// Skip confirmation prompt and force ownership transfer
+    #[arg(long)]
+    pub force: bool,
 }
 
 /// Arguments for creating an OAuth client
@@ -235,11 +241,11 @@ async fn handle_client_command(cmd: OAuth2ClientCommands, ctx: &ExecuteContext) 
         OAuth2ClientCommands::Create(args) => handle_create(args, ctx).await,
         OAuth2ClientCommands::Get(args) => handle_get(&args.client_id, ctx).await,
         OAuth2ClientCommands::Update(args) => handle_update(args, ctx).await,
-        OAuth2ClientCommands::Delete(args) => handle_delete(&args.client_id, ctx).await,
+        OAuth2ClientCommands::Delete(args) => handle_delete(&args.client_id, args.force, ctx).await,
         OAuth2ClientCommands::Extension(ext_cmd) => handle_extension(ext_cmd, ctx).await,
         OAuth2ClientCommands::Managers(mgr_cmd) => handle_managers(mgr_cmd, ctx).await,
         OAuth2ClientCommands::TransferOwnership(args) => {
-            handle_transfer_ownership(&args.client_id, &args.new_owner, ctx).await
+            handle_transfer_ownership(&args.client_id, &args.new_owner, args.force, ctx).await
         }
     }
 }
@@ -429,7 +435,24 @@ async fn handle_update(args: UpdateClientArgs, ctx: &ExecuteContext) -> Result<(
 }
 
 /// Handle `oauth2 client delete`
-async fn handle_delete(client_id: &str, ctx: &ExecuteContext) -> Result<()> {
+async fn handle_delete(client_id: &str, force: bool, ctx: &ExecuteContext) -> Result<()> {
+    if !force {
+        print_warning("This will permanently delete the client and cannot be undone.");
+        eprintln!(
+            "Use --force to confirm: oauth2 client delete {} --force",
+            client_id
+        );
+        return Err(
+            crate::shared::error::OAuthClientError::ConfirmationRequired {
+                message: format!(
+                    "Destructive operation cancelled. Re-run with --force to confirm deletion of client '{}'.",
+                    client_id
+                ),
+            }
+            .into(),
+        );
+    }
+
     let (access_token, mgr_client) = prepare_api_client(ctx).await?;
 
     let result = mgr_client
@@ -524,8 +547,26 @@ async fn handle_managers(cmd: ManagersCommands, ctx: &ExecuteContext) -> Result<
 async fn handle_transfer_ownership(
     client_id: &str,
     new_owner: &str,
+    force: bool,
     ctx: &ExecuteContext,
 ) -> Result<()> {
+    if !force {
+        print_warning("This will permanently transfer ownership and cannot be undone.");
+        eprintln!(
+            "Use --force to confirm: oauth2 client transfer-ownership {} --new-owner {} --force",
+            client_id, new_owner
+        );
+        return Err(
+            crate::shared::error::OAuthClientError::ConfirmationRequired {
+                message: format!(
+                    "Destructive operation cancelled. Re-run with --force to confirm ownership transfer of client '{}' to '{}'.",
+                    client_id, new_owner
+                ),
+            }
+            .into(),
+        );
+    }
+
     let (access_token, mgr_client) = prepare_api_client(ctx).await?;
 
     let result = mgr_client
@@ -725,6 +766,19 @@ mod tests {
         match cmd {
             OAuth2ClientCommands::Delete(args) => {
                 assert_eq!(args.client_id, "client_abc123");
+                assert!(!args.force);
+            }
+            _ => panic!("Expected Delete command"),
+        }
+    }
+
+    #[test]
+    fn test_delete_with_force() {
+        let cmd = parse_oauth2_client(&["delete", "client_abc123", "--force"]);
+        match cmd {
+            OAuth2ClientCommands::Delete(args) => {
+                assert_eq!(args.client_id, "client_abc123");
+                assert!(args.force);
             }
             _ => panic!("Expected Delete command"),
         }
@@ -839,8 +893,70 @@ mod tests {
             OAuth2ClientCommands::TransferOwnership(args) => {
                 assert_eq!(args.client_id, "client_abc123");
                 assert_eq!(args.new_owner, "user_789");
+                assert!(!args.force);
             }
             _ => panic!("Expected TransferOwnership command"),
         }
+    }
+
+    #[test]
+    fn test_transfer_ownership_with_force() {
+        let cmd = parse_oauth2_client(&[
+            "transfer-ownership",
+            "client_abc123",
+            "--new-owner",
+            "user_789",
+            "--force",
+        ]);
+        match cmd {
+            OAuth2ClientCommands::TransferOwnership(args) => {
+                assert_eq!(args.client_id, "client_abc123");
+                assert_eq!(args.new_owner, "user_789");
+                assert!(args.force);
+            }
+            _ => panic!("Expected TransferOwnership command"),
+        }
+    }
+
+    // ========================================================================
+    // ConfirmationRequired guard tests
+    // ========================================================================
+
+    #[test]
+    fn test_delete_without_force_returns_confirmation_error() {
+        let err = crate::shared::error::OAuthClientError::ConfirmationRequired {
+            message: "Destructive operation cancelled.".to_string(),
+        };
+        let xion_err: crate::shared::error::XionError = err.into();
+        assert_eq!(
+            xion_err.code(),
+            crate::shared::error::XionErrorCode::EOAUTHCLIENT019
+        );
+        let display = format!("{}", xion_err);
+        assert!(display.contains("Destructive operation cancelled"));
+    }
+
+    #[test]
+    fn test_transfer_ownership_without_force_returns_confirmation_error() {
+        let err = crate::shared::error::OAuthClientError::ConfirmationRequired {
+            message: "Re-run with --force to confirm ownership transfer of client 'c1' to 'u1'."
+                .to_string(),
+        };
+        let xion_err: crate::shared::error::XionError = err.into();
+        assert_eq!(
+            xion_err.code(),
+            crate::shared::error::XionErrorCode::EOAUTHCLIENT019
+        );
+        let hint = xion_err.hint();
+        assert!(hint.contains("--force"));
+    }
+
+    #[test]
+    fn test_confirmation_required_exit_code() {
+        let err = crate::shared::error::OAuthClientError::ConfirmationRequired {
+            message: "test".to_string(),
+        };
+        let xion_err: crate::shared::error::XionError = err.into();
+        assert_eq!(xion_err.code().exit_code(), 178);
     }
 }
