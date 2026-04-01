@@ -16,7 +16,22 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let cli = Cli::parse();
+    // Try normal parse first; if missing required args and TTY, prompt interactively
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(_) => {
+            match cli::interactive_fallback::try_interactive_parse(
+                &std::env::args().collect::<Vec<_>>(),
+            ) {
+                Some(supplemented_args) => Cli::parse_from(supplemented_args),
+                None => {
+                    // Not interactive or not a missing-arg error — let clap print its error and exit
+                    Cli::parse();
+                    unreachable!("Cli::parse() exits on error")
+                }
+            }
+        }
+    };
     let ctx = cli.to_context();
 
     // Set environment variable for network override (used by commands)

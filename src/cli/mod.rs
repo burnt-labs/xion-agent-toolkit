@@ -6,6 +6,7 @@ pub mod config;
 pub mod contract;
 pub mod faucet;
 pub mod interactive;
+pub mod interactive_fallback;
 pub mod oauth2_client;
 pub mod treasury;
 pub mod tx;
