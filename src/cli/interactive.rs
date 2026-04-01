@@ -43,19 +43,20 @@ impl std::error::Error for PromptError {}
 // ============================================================================
 
 /// Prompt for a non-empty text string.
-pub fn prompt_text(label: &str, help_text: &str) -> PromptResult<String> {
-    let input: String = Input::new()
+pub fn prompt_text(label: &str) -> PromptResult<String> {
+    let input: String = Input::<String>::new()
         .with_prompt(label)
-        .with_initial_text(help_text)
-        .allow_empty(true)
+        .validate_with(|input: &String| -> Result<(), &str> {
+            if input.trim().is_empty() {
+                Err("Input cannot be empty")
+            } else {
+                Ok(())
+            }
+        })
         .interact_text()
         .map_err(|_| PromptError::Cancelled)?;
 
-    if input.trim().is_empty() {
-        Err(PromptError::EmptyInput)
-    } else {
-        Ok(input.trim().to_string())
-    }
+    Ok(input.trim().to_string())
 }
 
 /// Prompt for a text string with a default value.
@@ -69,18 +70,14 @@ pub fn prompt_text_with_default(label: &str, default: &str) -> PromptResult<Stri
     Ok(input)
 }
 
-/// Prompt for a u64 number.
-pub fn prompt_u64(label: &str, help_text: &str) -> PromptResult<u64> {
-    let input: String = Input::new()
+/// Prompt for a u64 number. Re-prompts on invalid input.
+pub fn prompt_u64(label: &str) -> PromptResult<u64> {
+    let value: u64 = Input::<u64>::new()
         .with_prompt(label)
-        .with_initial_text(help_text)
         .interact_text()
         .map_err(|_| PromptError::Cancelled)?;
 
-    input
-        .trim()
-        .parse::<u64>()
-        .map_err(|_| PromptError::ValidationFailed("Must be a valid number".to_string()))
+    Ok(value)
 }
 
 /// Prompt for a blockchain address (xion1... format).
@@ -106,7 +103,8 @@ pub fn prompt_address(label: &str) -> PromptResult<String> {
     Ok(input.trim().to_string())
 }
 
-/// Prompt for an amount string (e.g., "1000000uxion").
+/// Prompt for an amount string (e.g., "1000000uxion" or "1000000").
+/// If the user enters a plain number without a denomination, "uxion" is appended automatically.
 pub fn prompt_amount(label: &str) -> PromptResult<String> {
     let input: String = Input::<String>::new()
         .with_prompt(label)
@@ -123,12 +121,29 @@ pub fn prompt_amount(label: &str) -> PromptResult<String> {
             {
                 return Err("Amount must start with a number");
             }
+            // Accept: "1000000uxion" (digits + denom) or "1000000" (pure digits)
+            if !trimmed.ends_with("uxion") {
+                if !trimmed.chars().all(|c| c.is_ascii_digit()) {
+                    return Err("Amount must be a number (e.g., 1000000) or with denom (e.g., 1000000uxion)");
+                }
+            } else {
+                let prefix = &trimmed[..trimmed.len() - 5];
+                if prefix.is_empty() || !prefix.chars().all(|c| c.is_ascii_digit()) {
+                    return Err("Amount must be a number (e.g., 1000000) or with denom (e.g., 1000000uxion)");
+                }
+            }
             Ok(())
         })
         .interact_text()
         .map_err(|_| PromptError::Cancelled)?;
 
-    Ok(input.trim().to_string())
+    let trimmed = input.trim().to_string();
+    // Auto-append "uxion" denomination if user entered a plain number
+    if !trimmed.ends_with("uxion") {
+        Ok(format!("{}uxion", trimmed))
+    } else {
+        Ok(trimmed)
+    }
 }
 
 /// Prompt for a file path. Does NOT validate existence (caller decides).

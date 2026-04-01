@@ -99,16 +99,33 @@ pub fn try_interactive_parse(args: &[String]) -> Option<Vec<String>> {
 
 /// Extract missing required argument names from a clap error.
 ///
-/// Clap renders errors with lines like:
-///   `  --address <ADDRESS>` or
-///   `  <CODE_ID>`
-/// We parse the rendered string to pull out these entries.
+/// Clap renders errors with a section listing missing args between
+/// "required arguments were not provided" and the next empty/Usage line.
+/// We only parse that section to avoid picking up args from the usage template.
 fn extract_missing_args(err: &clap::error::Error) -> Vec<MissingArg> {
     let rendered = err.to_string();
 
     let mut args = Vec::new();
+    let mut in_missing_section = false;
+
     for line in rendered.lines() {
         let trimmed = line.trim();
+
+        // Detect the start of the "missing required arguments" section
+        if trimmed.contains("required arguments were not provided") {
+            in_missing_section = true;
+            continue;
+        }
+
+        if !in_missing_section {
+            continue;
+        }
+
+        // End of missing section: empty line or "Usage:" line
+        if trimmed.is_empty() || trimmed.starts_with("Usage:") {
+            in_missing_section = false;
+            continue;
+        }
 
         // Try to match `  --flag-name <ARG_NAME>` pattern
         if let Some(caps) = parse_flag_arg(trimmed) {
@@ -116,7 +133,7 @@ fn extract_missing_args(err: &clap::error::Error) -> Vec<MissingArg> {
             continue;
         }
 
-        // Try to match `<ARG_NAME>` or `ARG_NAME` positional pattern
+        // Try to match `<ARG_NAME>` positional pattern
         if let Some(caps) = parse_positional_arg(trimmed) {
             args.push(caps);
         }
@@ -262,13 +279,13 @@ fn prompt_for_arg(arg: &MissingArg) -> Result<String, PromptError> {
     let label = format!("  {}", arg.description);
 
     match arg.prompt_type {
-        PromptType::Text => prompt_text(&label, &format!("Enter {}", arg.name)),
+        PromptType::Text => prompt_text(&label),
         PromptType::Address => prompt_address(&label),
         PromptType::Amount => prompt_amount(&label),
         PromptType::ExistingPath => {
             prompt_existing_path(&label).map(|v| v.to_string_lossy().to_string())
         }
-        PromptType::U64 => prompt_u64(&label, "Enter a number").map(|v| v.to_string()),
+        PromptType::U64 => prompt_u64(&label).map(|v| v.to_string()),
         PromptType::Hash => prompt_hash(&label),
         PromptType::Enum(ref choices) => {
             use crate::cli::interactive::prompt_select;
@@ -431,5 +448,42 @@ mod tests {
 
         // Flag line returns None
         assert!(parse_positional_arg("--address <ADDRESS>").is_none());
+    }
+
+    #[test]
+    fn test_extract_missing_args_no_duplicates_from_usage_line() {
+        // Simulate a clap error output for `treasury fund` missing ADDRESS and AMOUNT.
+        // The Usage line also contains <ADDRESS> <AMOUNT> — we must NOT pick those up.
+        use clap::error::ErrorKind;
+        use clap::CommandFactory;
+
+        let mut cmd = crate::cli::Cli::command();
+        let result = cmd.try_get_matches_from_mut(["xion-toolkit", "treasury", "fund"]);
+        match result {
+            Ok(_) => panic!("expected error"),
+            Err(err) => {
+                assert_eq!(err.kind(), ErrorKind::MissingRequiredArgument);
+                let missing = extract_missing_args(&err);
+                // Should be exactly 2: ADDRESS and AMOUNT (not 4 from the Usage line)
+                assert_eq!(
+                    missing.len(),
+                    2,
+                    "Expected 2 missing args, got {}: {:?}",
+                    missing.len(),
+                    missing.iter().map(|a| a.name.as_str()).collect::<Vec<_>>()
+                );
+                let names: Vec<&str> = missing.iter().map(|a| a.name.as_str()).collect();
+                assert!(
+                    names.contains(&"address"),
+                    "Expected 'address' in {:?}",
+                    names
+                );
+                assert!(
+                    names.contains(&"amount"),
+                    "Expected 'amount' in {:?}",
+                    names
+                );
+            }
+        }
     }
 }
