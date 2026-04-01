@@ -19,6 +19,8 @@ xion-toolkit auth logout         # Clear credentials
 | Default | `xion:identity:read`, `xion:blockchain:read`, `xion:transactions:submit` | Treasury, contracts, queries |
 | `--dev-mode` | Default + `xion:mgr:read`, `xion:mgr:write` | Manager API (OAuth2 client management) |
 
+**Note:** OAuth2 scopes are persisted with credentials and validated locally before HTTP requests. If you attempt to use Manager API commands without the required scopes, the CLI fails fast with: `"Insufficient scope: missing xion:mgr:read, xion:mgr:write. Re-login with --dev-mode: xion-toolkit auth login --dev-mode"`
+
 ### Auth Output Examples
 
 **Success:**

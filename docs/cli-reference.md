@@ -356,6 +356,10 @@ Output (error - port in use):
 - Opens browser automatically for authentication
 - Stores encrypted credentials in `~/.xion-toolkit/credentials/`
 - Refresh tokens valid for 30 days
+- OAuth2 scopes are persisted with credentials and validated locally before HTTP requests
+- Manager API commands require `xion:mgr:read` and `xion:mgr:write` scopes
+  - Use `--dev-mode` flag to obtain these scopes during login
+  - If scopes are missing, the CLI fails fast with: `"Insufficient scope: missing xion:mgr:read, xion:mgr:write. Re-login with --dev-mode: xion-toolkit auth login --dev-mode"`
 - Use `--dev-mode` when working with OAuth2 client management or other Manager API endpoints
 
 ---

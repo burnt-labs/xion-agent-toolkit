@@ -172,7 +172,7 @@ Initiates the OAuth2 login flow.
 | Default | `xion:identity:read`, `xion:blockchain:read`, `xion:transactions:submit` | Treasury operations, contract execution |
 | `--dev-mode` | Default + `xion:mgr:read`, `xion:mgr:write` | Manager API (OAuth2 client management) |
 
-**Note:** Use `--dev-mode` when working with OAuth2 client management endpoints. Without it, Manager API calls will return `INSUFFICIENT_SCOPE`.
+**Note:** Use `--dev-mode` when working with OAuth2 client management endpoints. OAuth2 scopes are persisted with credentials and validated locally before HTTP requests. If scopes are missing for Manager API operations, the CLI fails fast with a clear error message directing you to re-login with `--dev-mode`.
 
 **Output (stdout):**
 ```json
