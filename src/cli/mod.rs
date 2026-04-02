@@ -78,7 +78,7 @@ pub struct Cli {
     pub config: Option<String>,
 
     /// Disable interactive prompts (exit on missing required arguments)
-    #[arg(short = 'N', long, global = true)]
+    #[arg(long, global = true)]
     pub no_interactive: bool,
 
     #[command(subcommand)]

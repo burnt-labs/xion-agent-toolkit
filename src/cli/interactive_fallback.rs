@@ -63,8 +63,8 @@ pub enum PromptType {
 pub fn try_interactive_parse(args: &[String]) -> Option<Vec<String>> {
     use clap::CommandFactory;
 
-    // Check if --no-interactive or -N was explicitly passed
-    if args.iter().any(|a| a == "--no-interactive" || a == "-N") {
+    // Check if --no-interactive was explicitly passed
+    if args.iter().any(|a| a == "--no-interactive") {
         return None;
     }
 
