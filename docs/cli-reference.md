@@ -319,7 +319,7 @@ xion-toolkit --no-interactive treasury fund xion1abc... --amount 1000000uxion
 **Prompt validation:**
 | Input Type | Validation |
 |------------|-----------|
-| Address | Must start with `xion1`, min 20 chars |
+| Address | Valid bech32 with `xion` prefix (checksum verified) |
 | Amount | Number or Nuxion format (plain numbers auto-append uxion) |
 | Hash | Valid hex, min 10 chars |
 | File path | Must exist on disk |
