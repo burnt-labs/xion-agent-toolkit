@@ -365,7 +365,9 @@ impl XionErrorCode {
             XionErrorCode::EOAUTHCLIENT005 => "Provide an owner user ID",
             XionErrorCode::EOAUTHCLIENT006 => "Use a valid grant type (authorization_code, etc.)",
             XionErrorCode::EOAUTHCLIENT007 => "Provide a manager user ID",
-            XionErrorCode::EOAUTHCLIENT008 => "Run 'xion-toolkit auth login' first",
+            XionErrorCode::EOAUTHCLIENT008 => {
+                "Token was rejected by the server. Try re-authenticating: xion-toolkit auth login --force --dev-mode"
+            }
             XionErrorCode::EOAUTHCLIENT009 => "Run 'xion-toolkit auth login' first",
             XionErrorCode::EOAUTHCLIENT010 => {
                 "Re-authorize with --dev-mode: xion-toolkit auth login --dev-mode"
