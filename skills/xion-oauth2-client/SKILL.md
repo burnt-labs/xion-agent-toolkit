@@ -124,6 +124,18 @@ xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789
 > Only the current owner can transfer. The new owner must already have a Xion MetaAccount.
 > The `--force` flag is required to confirm the ownership transfer.
 
+### Rotate Client Secret
+
+Rotate the client secret for confidential clients:
+
+```bash
+xion-toolkit oauth2 client rotate-secret client_abc123
+```
+
+> **Owner-only operation.** Only confidential clients (auth_method: `client_secret_basic` or `client_secret_post`) support secrets.
+> The new secret is returned **only once** — store it securely immediately.
+> Requires `--dev-mode` authentication for `xion:mgr:write` scope.
+
 ## Common Operations
 
 ### List OAuth Clients
@@ -243,6 +255,15 @@ xion-toolkit oauth2 client managers remove client_abc123 --manager-id user_456
 xion-toolkit oauth2 client transfer-ownership client_abc123 --new-owner user_789 --force
 ```
 
+### Rotate Client Secret
+
+```bash
+xion-toolkit oauth2 client rotate-secret client_abc123
+```
+
+> **Note:** Only works for confidential clients (auth_method: `client_secret_basic` or `client_secret_post`).
+> Owner-only operation. The new secret is returned **once** — save it immediately.
+
 ## Secret Redaction Policy
 
 The `clientSecret` is **redacted by default** in all output (`"********"`).
@@ -357,6 +378,7 @@ See `schemas/` directory for detailed parameter definitions:
 | `managers-add.json` | `oauth2 client managers add` | Add a manager |
 | `managers-remove.json` | `oauth2 client managers remove` | Remove a manager |
 | `transfer-ownership.json` | `oauth2 client transfer-ownership` | Transfer ownership |
+| `rotate-secret.json` | `oauth2 client rotate-secret` | Rotate client secret |
 
 ## Troubleshooting
 

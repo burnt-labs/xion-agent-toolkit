@@ -40,6 +40,7 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`oauth2 client managers add`](#oauth2-client-managers-add)
   - [`oauth2 client managers remove`](#oauth2-client-managers-remove)
   - [`oauth2 client transfer-ownership`](#oauth2-client-transfer-ownership)
+  - [`oauth2 client rotate-secret`](#oauth2-client-rotate-secret)
 - [Configuration Commands](#configuration-commands)
 - [Shell Completion Commands](#shell-completion-commands)
   - [`completions`](#completions)
@@ -2546,6 +2547,72 @@ Output (error - not owner):
 **Notes:**
 - Only the current owner can transfer ownership
 - The new owner must be a valid user
+
+---
+
+### `oauth2 client rotate-secret`
+
+Rotates the client secret for a confidential OAuth2 client. The new secret is returned **only once** and must be stored securely.
+
+**Usage:**
+```bash
+xion-toolkit oauth2 client rotate-secret <CLIENT_ID>
+```
+
+**Arguments:**
+- `CLIENT_ID` - Client ID to rotate secret for (required)
+
+**Examples:**
+
+```bash
+xion-toolkit oauth2 client rotate-secret client_abc123
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "client": {
+    "clientId": "client_abc123",
+    "clientName": "My App",
+    "tokenEndpointAuthMethod": "client_secret_basic"
+  },
+  "clientSecret": "new-32-char-secret-here"
+}
+```
+
+> **⚠️ Save the client secret immediately — it will NOT be shown again.**
+
+Output (error - not confidential client):
+```json
+{
+  "success": false,
+  "error": {
+    "code": "CLIENT_NOT_CONFIDENTIAL",
+    "message": "Cannot rotate secret for public client",
+    "remediation": "Only confidential clients (auth_method: client_secret_basic or client_secret_post) can have secrets rotated"
+  }
+}
+```
+
+Output (error - not owner):
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ONLY_OWNER_ALLOWED",
+    "message": "Only owner allowed",
+    "remediation": "Only the client owner can rotate the client secret"
+  }
+}
+```
+
+**Notes:**
+- **Owner-only operation** — only the client owner can rotate the secret
+- **Confidential clients only** — public clients (auth_method: `none`) do not have secrets
+- Requires `--dev-mode` authentication for `xion:mgr:write` scope
+- The new secret is returned **only once** in the response — store it securely
+- The old secret is immediately invalidated
 
 ---
 
