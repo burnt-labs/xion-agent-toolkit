@@ -61,22 +61,26 @@
   },
   "deferred_items": [
     {
+      "id": "verify-address",
+      "source": "predicted-address-computation",
+      "desc": "treasury verify-address command (optional Phase 4)",
+      "owner": "@fullstack-dev"
+    }
+  ],
+  "resolved_items": [
+    {
       "id": "RF-2",
       "source": "interactive-cli",
       "desc": "Unit tests for prompt validators (reject invalid address/amount/hash)",
-      "owner": "@qa-engineer"
+      "resolved_at": "2026-04-02",
+      "commit": "46eb262"
     },
     {
       "id": "RF-8",
       "source": "interactive-cli",
       "desc": "Use bech32::decode() for proper address validation instead of prefix+length check",
-      "owner": "@fullstack-dev"
-    },
-    {
-      "id": "verify-address",
-      "source": "predicted-address-computation",
-      "desc": "treasury verify-address command (optional Phase 4)",
-      "owner": "@fullstack-dev"
+      "resolved_at": "2026-04-02",
+      "commit": "46eb262"
     }
   ]
 }
