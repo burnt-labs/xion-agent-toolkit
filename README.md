@@ -91,11 +91,14 @@ Each claim provides 1 XION (1,000,000 uxion) with a 24-hour cooldown.
 ### 4. Create a Treasury
 
 ```bash
-# Create and fund a new treasury
-xion-toolkit treasury create --fund 1000000uxion
+# Create a new treasury
+xion-toolkit treasury create --redirect-url "https://..." --name "My Treasury"
 
 # Or predict the address first (without deploying)
 xion-toolkit treasury create --predict --salt "my-treasury-v1"
+
+# Then fund it separately
+xion-toolkit treasury fund xion1... --amount 1000000uxion
 ```
 
 ### 5. Manage Your Treasury
@@ -138,9 +141,14 @@ Allow your treasury to perform specific actions:
 ```bash
 # Allow sending funds (up to 1 XION)
 xion-toolkit treasury grant-config add xion1... \
-  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
-  --grant-auth-type send \
-  --grant-spend-limit "1000000uxion"
+  --type-url "/cosmos.bank.v1beta1.MsgSend" \
+  --auth-type send \
+  --spend-limit "1000000uxion"
+
+# Or use preset shortcuts
+xion-toolkit treasury grant-config add xion1... --preset send
+xion-toolkit treasury grant-config add xion1... --preset execute
+xion-toolkit treasury grant-config add xion1... --preset instantiate
 ```
 
 ### Configure Gasless Fees
@@ -148,20 +156,24 @@ xion-toolkit treasury grant-config add xion1... \
 Set up fee allowance for gasless transactions:
 
 ```bash
-xion-toolkit treasury fee-config set xion1... \
-  --fee-allowance-type basic \
-  --fee-spend-limit "5000000uxion"
+xion-toolkit treasury fee-config set xion1... --fee-config fee-config.json
 ```
+
+**Note:** `fee-config set` requires a JSON config file. See [CLI Reference](./docs/cli-reference.md#treasury-fee-config-set) for the file format.
 
 ### Batch Operations
 
 Manage multiple treasuries at once:
 
 ```bash
-# Create a config file (see examples/batch-fund.json)
-xion-toolkit treasury batch fund --config funds.json
+# Validate batch config before execution
+xion-toolkit batch validate --from-file funds.json
 
-# Configure grants for multiple treasuries
+# Execute batch operations
+xion-toolkit batch execute --from-file funds.json [--simulate] [--memo "notes"]
+
+# Or use treasury batch commands (legacy)
+xion-toolkit treasury batch fund --config funds.json
 xion-toolkit treasury batch grant-config --config grants.json
 ```
 
@@ -183,10 +195,12 @@ xion-toolkit treasury admin accept xion1...
 
 | Command | Description |
 |---------|-------------|
-| `xion-toolkit auth login` | Login via OAuth2 (browser) |
-| `xion-toolkit auth logout` | Clear stored credentials |
-| `xion-toolkit auth status` | Check authentication status |
-| `xion-toolkit auth refresh` | Refresh access token |
+| `auth login` | Login via OAuth2 (browser) |
+| `auth login --force` | Force new browser auth (skip refresh) |
+| `auth login --dev-mode` | Login with Manager API scopes |
+| `auth logout` | Clear stored credentials |
+| `auth status` | Check authentication status |
+| `auth refresh` | Refresh access token |
 
 ### Treasury
 
@@ -203,6 +217,18 @@ xion-toolkit treasury admin accept xion1...
 **Predicted Address:**
 ```bash
 treasury create --predict --salt <salt>  # Get address before deploying
+treasury create --is-oauth2-app          # Mark as OAuth2 application
+```
+
+**Chain Queries:**
+```bash
+treasury chain-query grants <ADDRESS>      # Query on-chain authz grants
+treasury chain-query allowances <ADDRESS>  # Query on-chain fee allowances
+```
+
+**Update Parameters:**
+```bash
+treasury params update <ADDRESS> [--redirect-url] [--icon-url] [--name] [--is-oauth2-app]
 ```
 
 **Batch Operations:**
@@ -217,7 +243,11 @@ treasury batch grant-config --config <file>   # Configure multiple
 |---------|-------------|
 | `asset types` | List NFT contract types |
 | `asset create --type --name --symbol` | Create NFT collection |
+| `asset create --salt` | Predictable address (hex) |
 | `asset mint --contract --token-id --owner` | Mint NFT |
+| `asset mint --asset-type <TYPE>` | Asset type (default: cw721-base) |
+| `asset mint --royalty-address --royalty-percentage` | CW2981 royalties |
+| `asset mint --expires-at <TIMESTAMP>` | cw721-expiration |
 | `asset predict --type --name --symbol --salt` | Predict contract address |
 | `asset batch-mint --contract --tokens-file` | Batch mint tokens |
 | `asset query --contract --msg` | Query NFT contract |
@@ -242,12 +272,49 @@ treasury batch grant-config --config <file>   # Configure multiple
 | `contract execute --contract --msg` | Execute contract message |
 | `contract query --contract --msg` | Query contract (read-only) |
 
+### OAuth2 Client
+
+| Command | Description |
+|---------|-------------|
+| `oauth2 client list [--limit] [--cursor]` | List your OAuth clients |
+| `oauth2 client create --redirect-uris --treasury` | Create new OAuth client |
+| `oauth2 client get <CLIENT_ID>` | Get client details |
+| `oauth2 client update <CLIENT_ID>` | Update client metadata |
+| `oauth2 client delete <CLIENT_ID> --force` | Delete client |
+| `oauth2 client extension get/update <ID>` | Manage client extension |
+| `oauth2 client managers add/remove <ID>` | Manage client managers |
+| `oauth2 client transfer-ownership <ID>` | Transfer ownership |
+| `oauth2 client rotate-secret <ID>` | Rotate client secret |
+
+**Note:** OAuth2 client management requires `--dev-mode` authentication for Manager API scopes.
+
+### Transaction
+
+| Command | Description |
+|---------|-------------|
+| `tx status <HASH>` | Query transaction status |
+| `tx wait <HASH> [--timeout] [--interval]` | Wait for transaction confirmation |
+
+**Example:**
+```bash
+# Wait for transaction with custom timeout
+xion-toolkit tx wait ABC123... --timeout 120 --interval 5
+```
+
+### Account
+
+| Command | Description |
+|---------|-------------|
+| `account info` | Show current MetaAccount info (address, balances) |
+
 ### Configuration
 
 | Command | Description |
 |---------|-------------|
 | `config show` | Show current config |
 | `config set-network <network>` | Switch network |
+| `config get <KEY>` | Get config value |
+| `config reset` | Reset to defaults |
 | `completions <shell>` | Generate shell completion scripts |
 | `status` | Show status |
 
@@ -258,6 +325,8 @@ treasury batch grant-config --config <file>   # Configure multiple
 ```bash
 xion-toolkit --network <testnet|mainnet>  # Network override
 xion-toolkit --output <format>             # Output format
+xion-toolkit --config <CONFIG>             # Path to config file
+xion-toolkit --no-interactive              # Disable prompts
 xion-toolkit --help                        # Show help
 xion-toolkit --version                     # Show version
 ```
@@ -269,6 +338,7 @@ xion-toolkit --version                     # Show version
 | `json` (default) | Human reading, debugging |
 | `json-compact` | CI/CD pipelines, parsing |
 | `github-actions` | GitHub Actions workflow commands |
+| `human` | Simplified human-readable output |
 
 ```bash
 xion-toolkit treasury list --output json-compact
@@ -357,6 +427,7 @@ xion-toolkit completions --install
 xion-toolkit completions bash --install
 xion-toolkit completions zsh --install
 xion-toolkit completions fish --install
+xion-toolkit completions powershell --install
 ```
 
 Restart your shell after installation.

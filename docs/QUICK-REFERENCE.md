@@ -113,16 +113,8 @@ xion-toolkit treasury grant-config list <ADDRESS>
 # Remove grant
 xion-toolkit treasury grant-config remove <ADDRESS> <TYPE_URL>
 
-# Set fee allowance
-xion-toolkit treasury fee-config set <ADDRESS> \
-  --fee-allowance-type basic \
-  --spend-limit "1000000uxion"
-
-# Set periodic fee allowance
-xion-toolkit treasury fee-config set <ADDRESS> \
-  --fee-allowance-type periodic \
-  --period-seconds 86400 \
-  --period-spend-limit "100000uxion"
+# Set fee allowance (requires JSON config file)
+xion-toolkit treasury fee-config set <ADDRESS> --fee-config fee-config.json
 
 # Query fee config
 xion-toolkit treasury fee-config query <ADDRESS>
@@ -205,6 +197,42 @@ xion-toolkit faucet info
 | EFAUCET002 | Query failed | Check network |
 | EFAUCET003 | Not authenticated | `auth login` or use `--address` |
 | EFAUCET004 | Wrong network | Use `--network testnet` |
+
+---
+
+## Account
+
+```bash
+# Show current MetaAccount info
+xion-toolkit account info
+```
+
+---
+
+## Transaction Monitoring
+
+```bash
+# Query transaction status
+xion-toolkit tx status <HASH>
+
+# Wait for transaction confirmation
+xion-toolkit tx wait <HASH>
+xion-toolkit tx wait <HASH> --timeout 120 --interval 5
+```
+
+---
+
+## Batch Operations
+
+```bash
+# Validate batch file
+xion-toolkit batch validate --from-file batch.json
+
+# Execute batch
+xion-toolkit batch execute --from-file batch.json
+xion-toolkit batch execute --from-file batch.json --simulate
+xion-toolkit batch execute --from-file batch.json --memo "notes"
+```
 
 ---
 
@@ -313,6 +341,7 @@ xion-toolkit treasury create --output github-actions
 | `json` | Human reading (default) |
 | `json-compact` | CI/CD, pipe to jq |
 | `github-actions` | GitHub Actions pipelines |
+| `human` | Simplified human-readable output |
 
 See [EXIT-CODES.md](./EXIT-CODES.md) for standardized exit codes.
 
@@ -321,12 +350,18 @@ See [EXIT-CODES.md](./EXIT-CODES.md) for standardized exit codes.
 ## Configuration
 
 ```bash
+# Show config
+xion-toolkit config show
+
 # Set network
 xion-toolkit config set-network testnet
 xion-toolkit config set-network mainnet
 
-# Show config
-xion-toolkit config show
+# Get config value
+xion-toolkit config get <KEY>
+
+# Reset to defaults
+xion-toolkit config reset
 ```
 
 ### Networks
@@ -397,7 +432,7 @@ xion-toolkit auth login
 xion-toolkit treasury create --redirect-url "https://..." --name "My Treasury"
 xion-toolkit treasury fund <ADDRESS> --amount 10000000uxion
 xion-toolkit treasury grant-config add <ADDRESS> --type-url "/cosmos.bank.v1beta1.MsgSend" --auth-type send --spend-limit "5000000uxion"
-xion-toolkit treasury fee-config set <ADDRESS> --fee-allowance-type basic --spend-limit "1000000uxion"
+xion-toolkit treasury fee-config set <ADDRESS> --fee-config fee-config.json
 ```
 
 ### Daily Use
