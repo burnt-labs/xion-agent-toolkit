@@ -1014,3 +1014,20 @@ All Critical/Warning items from both QC reviews have been resolved:
 | RF-2 | QC1 | Add unit tests for prompt validators (reject invalid address/amount/hash) | @qa-engineer | Next release |
 | RF-3 | QC2 | Consolidate `determine_prompt_type()` + `format_arg_description()` into single `ArgPromptInfo` struct | — | Skipped (over-engineering) |
 | RF-8 | QC1 | Use `bech32::decode()` for proper address validation instead of prefix+length check | @fullstack-dev | Next release |
+
+### E2E Batch 2+3 Test Results (2026-04-02)
+
+**Diagnosis**: Initial E2E testing appeared to show only 1 prompt instead of 2 for commands with both named flags and positional args (e.g., `treasury admin propose --new-admin <NEW_ADMIN> <ADDRESS>`). Root cause was **test methodology**, not code.
+
+**Root Cause**: Tests were run using `echo "" | xion-toolkit <command>` which pipes stdin — this makes `is_tty()` return `false`, so interactive mode never triggers. The correct approach is `script -q /dev/null` (macOS) or `unbuffer` (Linux) to simulate a TTY.
+
+**Verified Working** (all via `script` pseudo-TTY):
+| # | Command | Missing Args | Prompts Triggered | Result |
+|---|---------|-------------|-------------------|--------|
+| 1 | `treasury admin propose` | `--new-admin`, `<ADDRESS>` | 2/2 ✅ | Both prompted, command reached RPC |
+| 2 | `treasury fee-config set` | `--fee-config`, `<ADDRESS>` | 2/2 ✅ | Both prompted (cancelled on invalid path) |
+| 3 | `oauth2 client managers add` | `--manager-id`, `<CLIENT_ID>` | 2/2 ✅ | Both prompted, command reached API |
+| 4 | `oauth2 client transfer-ownership` | `--new-owner`, `<CLIENT_ID>` | 2/2 ✅ | Both prompted, command reached confirmation check |
+| 5 | `treasury admin propose --new-admin xion1...` | `<ADDRESS>` only | 1/1 ✅ | Correct — only missing arg prompted |
+
+**Conclusion**: Interactive mode correctly handles all multi-arg scenarios. Debug logging added for diagnosis has been removed. 529 tests passing, zero clippy warnings, fmt clean.

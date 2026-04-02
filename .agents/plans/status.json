@@ -14,7 +14,7 @@
       "created_at": "2026-04-01",
       "updated_at": "2026-04-02",
       "done_at": "2026-04-02",
-      "notes": "Batch 1-4 complete. 7 commits on feature/interactive-cli (pushed). 527 tests, 0 warnings. E2E 9/9 passed. QC tri-review: all Critical/Warning fixed. Residual findings RF-1..RF-10 deferred (see plan). Fixed: duplicate arg extraction, prompt_text prefill, prompt_u64 no retry, amount denom auto-append, underscore/hyphen arg mismatch, dead code removed, stdout TTY check, docs accuracy."
+      "notes": "Batch 1-4 complete + E2E Batch 2+3 verified. 11 commits on feature/interactive-cli (pushed). 529 tests, 0 warnings. E2E 9/9 (Batch 1) + 5/5 (Batch 2+3 via script pseudo-TTY) passed. Initial Batch 2+3 failure was test methodology (piped stdin not TTY), not code bug. QC tri-review: all Critical/Warning fixed. Residual findings RF-1..RF-11 applied or deferred (see plan). Fixed: duplicate arg extraction, prompt_text prefill, prompt_u64 no retry, amount denom auto-append, underscore/hyphen arg mismatch, dead code removed, stdout TTY check, docs accuracy, -N short flag conflict."
     },
     {
       "id": "local-scope-validation",

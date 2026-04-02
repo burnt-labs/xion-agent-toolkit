@@ -587,4 +587,62 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_extract_missing_args_named_flag_and_positional() {
+        // Verify that both named flags (--new-admin) and positional (<ADDRESS>) are extracted.
+        use clap::error::ErrorKind;
+        use clap::CommandFactory;
+
+        let mut cmd = crate::cli::Cli::command();
+        let result = cmd.try_get_matches_from_mut(["xion-toolkit", "treasury", "admin", "propose"]);
+        match result {
+            Ok(_) => panic!("expected error"),
+            Err(err) => {
+                assert_eq!(err.kind(), ErrorKind::MissingRequiredArgument);
+                let missing = extract_missing_args(&err);
+                assert_eq!(
+                    missing.len(),
+                    2,
+                    "Expected 2 missing args, got {}: {:?}",
+                    missing.len(),
+                    missing.iter().map(|a| a.name.as_str()).collect::<Vec<_>>()
+                );
+                let names: Vec<&str> = missing.iter().map(|a| a.name.as_str()).collect();
+                assert!(
+                    names.contains(&"address"),
+                    "Expected 'address' in {:?}",
+                    names
+                );
+                assert!(
+                    names.contains(&"new_admin"),
+                    "Expected 'new_admin' in {:?}",
+                    names
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_extract_missing_args_oauth2_client_get() {
+        use clap::CommandFactory;
+
+        let mut cmd = crate::cli::Cli::command();
+        let result = cmd.try_get_matches_from_mut(["xion-toolkit", "oauth2", "client", "get"]);
+        match result {
+            Ok(_) => panic!("expected error"),
+            Err(err) => {
+                let missing = extract_missing_args(&err);
+                assert_eq!(
+                    missing.len(),
+                    1,
+                    "Expected 1 missing arg, got {}: {:?}",
+                    missing.len(),
+                    missing.iter().map(|a| a.name.as_str()).collect::<Vec<_>>()
+                );
+                assert_eq!(missing[0].name, "client_id");
+                assert_eq!(missing[0].prompt_type, PromptType::Text);
+            }
+        }
+    }
 }
