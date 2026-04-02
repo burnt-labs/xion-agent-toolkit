@@ -2640,7 +2640,7 @@ xion-toolkit completions [SHELL] [OPTIONS]
 
 **Arguments:**
 - `SHELL` - Shell type to generate completions for (optional)
-  - Supported shells: `bash`, `zsh`, `fish`, `powershell`, `elvish`
+  - Supported shells: `bash`, `zsh`, `fish`, `powershell`
   - If not specified, auto-detects from `$SHELL` environment variable
 
 **Options:**

@@ -427,7 +427,6 @@ xion-toolkit completions --install
 xion-toolkit completions bash --install
 xion-toolkit completions zsh --install
 xion-toolkit completions fish --install
-xion-toolkit completions elvish --install
 xion-toolkit completions powershell --install
 ```
 
