@@ -169,7 +169,7 @@ if ! command -v xion-toolkit &> /dev/null; then
     # Try to use cargo run instead (for development)
     CLI_CMD=(cargo run --quiet --)
 else
-    CLI_CMD=(xion-toolkit)
+    CLI_CMD=(xion-toolkit --no-interactive)
 fi
 
 # Execute the fund command safely using array expansion

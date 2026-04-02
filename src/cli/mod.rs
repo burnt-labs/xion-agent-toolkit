@@ -5,6 +5,8 @@ pub mod batch;
 pub mod config;
 pub mod contract;
 pub mod faucet;
+pub mod interactive;
+pub mod interactive_fallback;
 pub mod oauth2_client;
 pub mod treasury;
 pub mod tx;
@@ -74,6 +76,10 @@ pub struct Cli {
     /// Path to config file
     #[arg(short, long, global = true)]
     pub config: Option<String>,
+
+    /// Disable interactive prompts (exit on missing required arguments)
+    #[arg(long, global = true)]
+    pub no_interactive: bool,
 
     #[command(subcommand)]
     pub command: Commands,

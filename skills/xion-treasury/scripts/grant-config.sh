@@ -594,7 +594,7 @@ EOF
 log_info "Processing grant config: action=$ACTION for treasury $ADDRESS"
 
 # Build the command as array (safe from injection)
-CMD=(xion-toolkit --network "$NETWORK")
+CMD=(xion-toolkit --no-interactive --network "$NETWORK")
 
 case "$ACTION" in
     add)

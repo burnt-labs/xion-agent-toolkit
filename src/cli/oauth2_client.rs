@@ -61,6 +61,9 @@ pub enum OAuth2ClientCommands {
 
     /// Transfer client ownership to a new user
     TransferOwnership(TransferOwnershipArgs),
+
+    /// Rotate the client secret (confidential clients only)
+    RotateSecret(RotateSecretArgs),
 }
 
 /// Arguments for listing OAuth clients
@@ -102,6 +105,13 @@ pub struct TransferOwnershipArgs {
     /// Skip confirmation prompt and force ownership transfer
     #[arg(long)]
     pub force: bool,
+}
+
+/// Arguments for rotating a client secret
+#[derive(Args, Debug)]
+pub struct RotateSecretArgs {
+    /// Client ID to rotate secret for
+    pub client_id: String,
 }
 
 /// Arguments for creating an OAuth client
@@ -249,6 +259,9 @@ async fn handle_client_command(cmd: OAuth2ClientCommands, ctx: &ExecuteContext) 
         OAuth2ClientCommands::Managers(mgr_cmd) => handle_managers(mgr_cmd, ctx).await,
         OAuth2ClientCommands::TransferOwnership(args) => {
             handle_transfer_ownership(&args.client_id, &args.new_owner, args.force, ctx).await
+        }
+        OAuth2ClientCommands::RotateSecret(args) => {
+            handle_rotate_secret(&args.client_id, ctx).await
         }
     }
 }
@@ -598,9 +611,20 @@ async fn handle_transfer_ownership(
     print_formatted(&result, ctx.output_format())
 }
 
-// ============================================================================
-// Tests
-// ============================================================================
+/// Handle `oauth2 client rotate-secret`
+async fn handle_rotate_secret(client_id: &str, ctx: &ExecuteContext) -> Result<()> {
+    let (access_token, mgr_client) = prepare_api_client(ctx).await?;
+    let result = mgr_client
+        .rotate_secret(&access_token, client_id)
+        .await
+        .map_err(|e| {
+            let resp = CliErrorResponse::from_xion_error(&e);
+            anyhow::anyhow!(serde_json::to_string(&resp).unwrap_or_else(|_| e.to_string()))
+        })?;
+    print_formatted(&result, ctx.output_format())?;
+    print_warning("Save the client secret above immediately — it will NOT be shown again.");
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
@@ -976,5 +1000,31 @@ mod tests {
         };
         let xion_err: crate::shared::error::XionError = err.into();
         assert_eq!(xion_err.code().exit_code(), 178);
+    }
+
+    #[test]
+    fn test_rotate_secret_parsing() {
+        let cmd = parse_oauth2_client(&["rotate-secret", "client_abc123"]);
+        match cmd {
+            OAuth2ClientCommands::RotateSecret(args) => {
+                assert_eq!(args.client_id, "client_abc123");
+            }
+            _ => panic!("Expected RotateSecret command"),
+        }
+    }
+
+    #[test]
+    fn test_rotate_secret_missing_client_id() {
+        // Use clap's try_parse to verify missing positional arg fails
+        #[derive(Parser)]
+        struct TestCli {
+            #[command(subcommand)]
+            command: OAuth2ClientCommands,
+        }
+        let result = TestCli::try_parse_from(["xion-toolkit", "rotate-secret"]);
+        assert!(
+            result.is_err(),
+            "rotate-secret should require a CLIENT_ID argument"
+        );
     }
 }

@@ -40,7 +40,7 @@ if [[ -z "$CONTRACT" ]] || [[ -z "$TOKEN_ID" ]] || [[ -z "$OWNER" ]]; then
 fi
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit asset mint --contract "$CONTRACT" --token-id "$TOKEN_ID" --owner "$OWNER" --asset-type "$ASSET_TYPE" --output json)
+CMD=(xion-toolkit --no-interactive asset mint --contract "$CONTRACT" --token-id "$TOKEN_ID" --owner "$OWNER" --asset-type "$ASSET_TYPE" --output json)
 
 if [[ -n "$TOKEN_URI" ]]; then
     CMD+=(--token-uri "$TOKEN_URI")

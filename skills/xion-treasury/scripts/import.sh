@@ -150,7 +150,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
 fi
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit --network "$NETWORK" treasury import "$ADDRESS" --from-file "$FROM_FILE" --output json)
+CMD=(xion-toolkit --no-interactive --network "$NETWORK" treasury import "$ADDRESS" --from-file "$FROM_FILE" --output json)
 
 if [[ "$DRY_RUN" == "true" ]]; then
     CMD+=(--dry-run)

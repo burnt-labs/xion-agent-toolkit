@@ -83,7 +83,7 @@ fi
 log_info "Running: xion-toolkit ${CMD_ARGS[*]}"
 
 # Execute command safely using array expansion
-RESULT=$(xion-toolkit "${CMD_ARGS[@]}" 2>&1)
+RESULT=$(xion-toolkit --no-interactive "${CMD_ARGS[@]}" 2>&1)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then

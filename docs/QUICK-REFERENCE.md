@@ -2,6 +2,8 @@
 
 > For AI Agents: Essential commands and patterns in one file (~120 lines).
 
+> **Interactive Mode**: Omit required args and get prompted in your terminal. Use `--no-interactive` to disable (for scripts/CI).
+
 ## Authentication
 
 ```bash
@@ -274,6 +276,9 @@ xion-toolkit oauth2 client managers remove <CLIENT_ID> --manager-id <USER_ID>
 
 # Transfer ownership
 xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID> --force
+
+# Rotate client secret (confidential clients only, owner-only)
+xion-toolkit oauth2 client rotate-secret <CLIENT_ID>
 ```
 
 ### OAuth2 Client Error Codes
@@ -286,6 +291,7 @@ xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID> 
 | EOAUTHCLIENT011 | Not owner | Only owner can perform action |
 | EOAUTHCLIENT010 | Insufficient scope | Re-authorize with xion:mgr:write scope |
 | EOAUTHCLIENT019 | Confirmation required | Re-run with `--force` to confirm |
+| CLIENT_NOT_CONFIDENTIAL | Cannot rotate secret for public client | Only confidential clients support secrets |
 
 ---
 

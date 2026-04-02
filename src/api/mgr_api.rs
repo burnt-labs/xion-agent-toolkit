@@ -226,6 +226,18 @@ pub struct MessageResponse {
     pub message: String,
 }
 
+/// Response for rotating a client secret
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RotateSecretResponse {
+    /// Whether the request was successful
+    pub success: bool,
+    /// Client information
+    pub client: ClientInfo,
+    /// New client secret (only returned once)
+    pub client_secret: String,
+}
+
 /// User info from /mgr-api/me
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -572,6 +584,18 @@ impl MgrApiClient {
 
         let path = format!("/mgr-api/clients/{}/transfer-ownership", client_id);
         self.request("POST", &path, access_token, Some(&body)).await
+    }
+
+    /// Rotate the client secret (confidential clients only)
+    #[instrument(skip(self, access_token))]
+    pub async fn rotate_secret(
+        &self,
+        access_token: &str,
+        client_id: &str,
+    ) -> XionResult<RotateSecretResponse> {
+        debug!("Rotating secret for client {}", client_id);
+        let path = format!("/mgr-api/clients/{}/rotate-secret", client_id);
+        self.request("POST", &path, access_token, None).await
     }
 
     // ========================================================================

@@ -32,7 +32,7 @@ if [[ -z "$TYPE" ]] || [[ -z "$NAME" ]] || [[ -z "$SYMBOL" ]] || [[ -z "$SALT" ]
 fi
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit asset predict --type "$TYPE" --name "$NAME" --symbol "$SYMBOL" --salt "$SALT" --output json)
+CMD=(xion-toolkit --no-interactive asset predict --type "$TYPE" --name "$NAME" --symbol "$SYMBOL" --salt "$SALT" --output json)
 
 if [[ -n "$MINTER" ]]; then
     CMD+=(--minter "$MINTER")

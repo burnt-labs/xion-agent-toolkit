@@ -170,7 +170,7 @@ check_cli
 log_info "Creating Treasury contract..."
 
 # Build CLI command as array (safe from injection)
-CMD=(xion-toolkit treasury create --output json)
+CMD=(xion-toolkit --no-interactive treasury create --output json)
 
 # Add network if specified
 if [ -n "$NETWORK" ]; then
