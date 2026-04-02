@@ -215,8 +215,8 @@ fn extract_angle_bracket_name(s: &str) -> Option<&str> {
 pub fn determine_prompt_type(arg_name: &str) -> PromptType {
     match arg_name {
         // Blockchain addresses
-        "address" | "contract" | "admin" | "grantee" | "owner" | "manager-id" | "new-owner"
-        | "new-admin" | "receiver" => PromptType::Address,
+        "address" | "contract" | "admin" | "grantee" | "owner" | "new-owner" | "new-admin"
+        | "receiver" => PromptType::Address,
 
         // Amounts
         "amount" | "spend-limit" => PromptType::Amount,
@@ -232,6 +232,9 @@ pub fn determine_prompt_type(arg_name: &str) -> PromptType {
         // Unsigned integers
         "code-id" | "code_id" | "limit" => PromptType::U64,
 
+        // UUID-style identifiers (not blockchain addresses)
+        "client_id" | "client-id" | "manager-id" => PromptType::Text,
+
         // Everything else is free-form text
         _ => PromptType::Text,
     }
@@ -245,10 +248,13 @@ pub fn format_arg_description(arg_name: &str) -> String {
         "admin" => "Admin address (xion1...)".to_string(),
         "grantee" => "Grantee address (xion1...)".to_string(),
         "owner" => "Owner address (xion1...)".to_string(),
-        "manager-id" => "Manager ID address (xion1...)".to_string(),
         "new-owner" => "New owner address (xion1...)".to_string(),
         "new-admin" => "New admin address (xion1...)".to_string(),
         "receiver" => "Receiver address (xion1...)".to_string(),
+
+        // UUID-style identifiers
+        "client_id" | "client-id" => "OAuth2 client ID".to_string(),
+        "manager-id" => "Manager user ID".to_string(),
 
         // Amounts
         "amount" => "Amount (e.g., 1000000uxion)".to_string(),
@@ -268,6 +274,21 @@ pub fn format_arg_description(arg_name: &str) -> String {
         // Integers
         "code-id" | "code_id" => "Code ID (unsigned integer)".to_string(),
         "limit" => "Limit (unsigned integer)".to_string(),
+
+        // Token / contract identifiers
+        "token-id" | "token_id" => "Token ID".to_string(),
+        "label" => "Contract label".to_string(),
+        "salt" => "Salt for predictable address (hex-encoded)".to_string(),
+
+        // OAuth2 URLs
+        "type-url" | "type_url" => "Authorization type URL".to_string(),
+        "redirect-url" | "redirect_url" => "Redirect URL".to_string(),
+        "icon-url" | "icon_url" => "Icon URL".to_string(),
+
+        // Descriptions / config
+        "description" => "Description".to_string(),
+        "key" => "Configuration key (e.g., network, version)".to_string(),
+        "network" => "Network name (testnet or mainnet)".to_string(),
 
         // Fallback
         _ => format!("{} value", arg_name),
@@ -306,10 +327,16 @@ mod tests {
         assert_eq!(determine_prompt_type("admin"), PromptType::Address);
         assert_eq!(determine_prompt_type("grantee"), PromptType::Address);
         assert_eq!(determine_prompt_type("owner"), PromptType::Address);
-        assert_eq!(determine_prompt_type("manager-id"), PromptType::Address);
         assert_eq!(determine_prompt_type("new-owner"), PromptType::Address);
         assert_eq!(determine_prompt_type("new-admin"), PromptType::Address);
         assert_eq!(determine_prompt_type("receiver"), PromptType::Address);
+    }
+
+    #[test]
+    fn test_determine_prompt_type_client_id_is_text() {
+        assert_eq!(determine_prompt_type("client_id"), PromptType::Text);
+        assert_eq!(determine_prompt_type("client-id"), PromptType::Text);
+        assert_eq!(determine_prompt_type("manager-id"), PromptType::Text);
     }
 
     #[test]
@@ -401,6 +428,40 @@ mod tests {
     fn test_format_arg_description_fallback() {
         let desc = format_arg_description("some-unknown-arg");
         assert_eq!(desc, "some-unknown-arg value");
+    }
+
+    #[test]
+    fn test_format_arg_description_client_id() {
+        let desc = format_arg_description("client_id");
+        assert!(desc.contains("client ID") || desc.contains("Client ID"));
+
+        let desc = format_arg_description("manager-id");
+        assert!(desc.contains("Manager"));
+    }
+
+    #[test]
+    fn test_format_arg_description_oauth2_and_treasury() {
+        // OAuth2 client ID (both forms)
+        assert!(format_arg_description("client_id").contains("OAuth2"));
+        assert!(format_arg_description("client-id").contains("OAuth2"));
+
+        // Manager ID
+        assert!(format_arg_description("manager-id").contains("Manager"));
+
+        // URLs
+        assert!(format_arg_description("type-url").contains("Authorization"));
+        assert!(format_arg_description("redirect-url").contains("Redirect"));
+        assert!(format_arg_description("icon-url").contains("Icon"));
+
+        // Token and contract identifiers
+        assert!(format_arg_description("token-id").contains("Token ID"));
+        assert!(format_arg_description("label").contains("Contract label"));
+        assert!(format_arg_description("salt").contains("hex"));
+
+        // Config values
+        assert!(format_arg_description("key").contains("Configuration key"));
+        assert!(format_arg_description("network").contains("testnet"));
+        assert!(format_arg_description("description").contains("Description"));
     }
 
     #[test]
