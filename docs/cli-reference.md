@@ -313,21 +313,19 @@ $ xion-toolkit treasury fund
 ```bash
 # Disable for CI/CD scripts
 xion-toolkit --no-interactive treasury fund xion1abc... --amount 1000000uxion
-
-# Or set environment variable
-export XION_NO_INTERACTIVE=1
-xion-toolkit treasury fund xion1abc... --amount 1000000uxion
 ```
 
 **Prompt validation:**
 | Input Type | Validation |
 |------------|-----------|
 | Address | Must start with `xion1`, min 20 chars |
-| Amount | Number or `Nuxion` format (plain numbers auto-append `uxion`) |
+| Amount | Number or Nuxion format (plain numbers auto-append uxion) |
 | Hash | Valid hex, min 10 chars |
 | File path | Must exist on disk |
 | Number | Must be a valid u64 |
 | Text | Non-empty |
+
+Press Ctrl+C during a prompt to cancel and exit.
 
 **Implementation:** Uses the `dialoguer` crate for interactive prompts. Missing args are collected via prompts, then the command is re-executed with supplemented arguments.
 

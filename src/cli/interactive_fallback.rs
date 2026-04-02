@@ -39,8 +39,6 @@ pub enum PromptType {
     U64,
     /// Hex hash string.
     Hash,
-    /// One of a fixed set of values.
-    Enum(Vec<String>),
 }
 
 /// Try to parse the CLI. On failure with missing args + TTY, prompt and return supplemented args.
@@ -215,17 +213,18 @@ fn extract_angle_bracket_name(s: &str) -> Option<&str> {
 pub fn determine_prompt_type(arg_name: &str) -> PromptType {
     match arg_name {
         // Blockchain addresses
-        "address" | "contract" | "admin" | "grantee" | "owner" | "new-owner" | "new-admin"
-        | "receiver" => PromptType::Address,
+        "address" | "contract" | "admin" | "grantee" | "owner" | "new-owner" | "new_admin"
+        | "new-admin" | "new_owner" | "receiver" => PromptType::Address,
 
         // Amounts
-        "amount" | "spend-limit" => PromptType::Amount,
+        "amount" | "spend-limit" | "spend_limit" => PromptType::Amount,
 
         // Hash strings
         "hash" => PromptType::Hash,
 
         // File paths that must exist
-        "file" | "path" | "from-file" | "config" | "fee-config" | "msg" | "tokens-file" => {
+        "file" | "path" | "from-file" | "from_file" | "config" | "fee-config" | "fee_config"
+        | "grant-config" | "grant_config" | "msg" | "tokens-file" | "tokens_file" | "preset" => {
             PromptType::ExistingPath
         }
 
@@ -233,7 +232,7 @@ pub fn determine_prompt_type(arg_name: &str) -> PromptType {
         "code-id" | "code_id" | "limit" => PromptType::U64,
 
         // UUID-style identifiers (not blockchain addresses)
-        "client_id" | "client-id" | "manager-id" => PromptType::Text,
+        "client_id" | "client-id" | "manager-id" | "manager_id" => PromptType::Text,
 
         // Everything else is free-form text
         _ => PromptType::Text,
@@ -248,28 +247,30 @@ pub fn format_arg_description(arg_name: &str) -> String {
         "admin" => "Admin address (xion1...)".to_string(),
         "grantee" => "Grantee address (xion1...)".to_string(),
         "owner" => "Owner address (xion1...)".to_string(),
-        "new-owner" => "New owner address (xion1...)".to_string(),
-        "new-admin" => "New admin address (xion1...)".to_string(),
+        "new-owner" | "new_owner" => "New owner address (xion1...)".to_string(),
+        "new-admin" | "new_admin" => "New admin address (xion1...)".to_string(),
         "receiver" => "Receiver address (xion1...)".to_string(),
 
         // UUID-style identifiers
         "client_id" | "client-id" => "OAuth2 client ID".to_string(),
-        "manager-id" => "Manager user ID".to_string(),
+        "manager-id" | "manager_id" => "Manager user ID".to_string(),
 
         // Amounts
         "amount" => "Amount (e.g., 1000000uxion)".to_string(),
-        "spend-limit" => "Spend limit (e.g., 1000000uxion)".to_string(),
+        "spend-limit" | "spend_limit" => "Spend limit (e.g., 1000000uxion)".to_string(),
 
         // Hash
         "hash" => "Transaction hash".to_string(),
 
         // Paths
         "file" | "path" => "File path".to_string(),
-        "from-file" => "Input file path".to_string(),
+        "from-file" | "from_file" => "Input file path".to_string(),
         "config" => "Config file path".to_string(),
-        "fee-config" => "Fee config file path".to_string(),
+        "fee-config" | "fee_config" => "Fee config file path".to_string(),
+        "grant-config" | "grant_config" => "Grant config file path".to_string(),
         "msg" => "Message file path".to_string(),
-        "tokens-file" => "Tokens file path".to_string(),
+        "tokens-file" | "tokens_file" => "Tokens file path".to_string(),
+        "preset" => "Preset name".to_string(),
 
         // Integers
         "code-id" | "code_id" => "Code ID (unsigned integer)".to_string(),
@@ -308,11 +309,6 @@ fn prompt_for_arg(arg: &MissingArg) -> Result<String, PromptError> {
         }
         PromptType::U64 => prompt_u64(&label).map(|v| v.to_string()),
         PromptType::Hash => prompt_hash(&label),
-        PromptType::Enum(ref choices) => {
-            use crate::cli::interactive::prompt_select;
-            let idx = prompt_select(&label, choices)?;
-            Ok(choices[idx].clone())
-        }
     }
 }
 
@@ -337,6 +333,7 @@ mod tests {
         assert_eq!(determine_prompt_type("client_id"), PromptType::Text);
         assert_eq!(determine_prompt_type("client-id"), PromptType::Text);
         assert_eq!(determine_prompt_type("manager-id"), PromptType::Text);
+        assert_eq!(determine_prompt_type("manager_id"), PromptType::Text);
     }
 
     #[test]
@@ -379,6 +376,34 @@ mod tests {
         assert_eq!(determine_prompt_type("name"), PromptType::Text);
         assert_eq!(determine_prompt_type("description"), PromptType::Text);
         assert_eq!(determine_prompt_type("unknown-arg"), PromptType::Text);
+    }
+
+    #[test]
+    fn test_determine_prompt_type_underscore_variants() {
+        // Clap uses underscores in error messages
+        assert_eq!(
+            determine_prompt_type("grant_config"),
+            PromptType::ExistingPath
+        );
+        assert_eq!(
+            determine_prompt_type("fee_config"),
+            PromptType::ExistingPath
+        );
+        assert_eq!(determine_prompt_type("from_file"), PromptType::ExistingPath);
+        assert_eq!(
+            determine_prompt_type("tokens_file"),
+            PromptType::ExistingPath
+        );
+        assert_eq!(determine_prompt_type("type_url"), PromptType::Text);
+        assert_eq!(determine_prompt_type("redirect_url"), PromptType::Text);
+        assert_eq!(determine_prompt_type("icon_url"), PromptType::Text);
+        assert_eq!(determine_prompt_type("token_id"), PromptType::Text);
+        assert_eq!(determine_prompt_type("new_admin"), PromptType::Address);
+        assert_eq!(determine_prompt_type("new_owner"), PromptType::Address);
+        assert_eq!(determine_prompt_type("code_id"), PromptType::U64);
+        assert_eq!(determine_prompt_type("spend_limit"), PromptType::Amount);
+        assert_eq!(determine_prompt_type("client_id"), PromptType::Text);
+        assert_eq!(determine_prompt_type("manager_id"), PromptType::Text);
     }
 
     #[test]

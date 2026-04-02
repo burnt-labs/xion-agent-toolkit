@@ -25,23 +25,20 @@ pub struct ExecuteContext {
     pub output_format: OutputFormat,
     /// Network to use (testnet, mainnet)
     pub network: String,
-    /// Whether interactive prompts are allowed
-    pub interactive: bool,
 }
 
 impl ExecuteContext {
     /// Create a new execution context
-    pub fn new(output_format: OutputFormat, network: String, interactive: bool) -> Self {
+    pub fn new(output_format: OutputFormat, network: String) -> Self {
         Self {
             output_format,
             network,
-            interactive,
         }
     }
 
     /// Create a default context (JSON output, testnet)
     pub fn default_context() -> Self {
-        Self::new(OutputFormat::default(), "testnet".to_string(), false)
+        Self::new(OutputFormat::default(), "testnet".to_string())
     }
 
     /// Get the output format
@@ -96,7 +93,7 @@ fn parse_output_format(s: &str) -> Result<OutputFormat, String> {
 impl Cli {
     /// Create an execution context from CLI options
     pub fn to_context(&self) -> ExecuteContext {
-        ExecuteContext::new(self.output, self.network.clone(), !self.no_interactive)
+        ExecuteContext::new(self.output, self.network.clone())
     }
 }
 

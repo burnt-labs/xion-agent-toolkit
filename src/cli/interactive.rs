@@ -6,11 +6,11 @@
 use std::io::{self, IsTerminal};
 use std::path::PathBuf;
 
-use dialoguer::{Input, Select};
+use dialoguer::Input;
 
-/// Check if interactive mode is available (TTY on stdin).
+/// Check if interactive mode is available (TTY on both stdin and stdout).
 pub fn is_tty() -> bool {
-    io::stdin().is_terminal()
+    io::stdin().is_terminal() && io::stdout().is_terminal()
 }
 
 /// Result of interactive prompting.
@@ -57,17 +57,6 @@ pub fn prompt_text(label: &str) -> PromptResult<String> {
         .map_err(|_| PromptError::Cancelled)?;
 
     Ok(input.trim().to_string())
-}
-
-/// Prompt for a text string with a default value.
-pub fn prompt_text_with_default(label: &str, default: &str) -> PromptResult<String> {
-    let input: String = Input::new()
-        .with_prompt(label)
-        .default(default.to_string())
-        .interact_text()
-        .map_err(|_| PromptError::Cancelled)?;
-
-    Ok(input)
 }
 
 /// Prompt for a u64 number. Re-prompts on invalid input.
@@ -171,15 +160,6 @@ pub fn prompt_existing_path(label: &str) -> PromptResult<PathBuf> {
         )));
     }
     Ok(path)
-}
-
-/// Prompt for a selection from a list of choices.
-pub fn prompt_select<T: ToString>(label: &str, items: &[T]) -> PromptResult<usize> {
-    Select::new()
-        .with_prompt(label)
-        .items(items)
-        .interact()
-        .map_err(|_| PromptError::Cancelled)
 }
 
 /// Prompt for a hash string (transaction hash).
