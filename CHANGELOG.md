@@ -5,6 +5,59 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.4...0.10.0) (2026-04-02)
+
+
+### Features
+
+* **auth:** add local scope validation for MGR API calls ([ab5d87f](https://github.com/burnt-labs/xion-agent-toolkit/commit/ab5d87f7508609d68ff56d0843ec5ec3ad2a57fb))
+* **auth:** add OAuth2 scopes and --dev-mode flag to login ([bd0ea92](https://github.com/burnt-labs/xion-agent-toolkit/commit/bd0ea92e8e1ae48e9d33961c4824f742012b3ac1))
+* **cli:** add dialoguer dependency, --no-interactive flag, and interactive prompt module ([3a021a2](https://github.com/burnt-labs/xion-agent-toolkit/commit/3a021a2dd0090265368e47efbfc88608ed56e81f))
+* **cli:** interactive fallback for missing required arguments ([95f5adf](https://github.com/burnt-labs/xion-agent-toolkit/commit/95f5adfce0b5d0afd879967a468025d3e755f36f))
+* **cli:** interactive mode for missing arguments + oauth2 client rotate-secret ([1cb8107](https://github.com/burnt-labs/xion-agent-toolkit/commit/1cb8107adbf423dbd69ae7c9ecdd365fb3edacfe))
+* **oauth2:** add OAuth2 client management CLI commands with safety guardrails ([2a2de4f](https://github.com/burnt-labs/xion-agent-toolkit/commit/2a2de4ff89ba77b27c971b5a3ea4fe68d7d5a2d0))
+* **oauth2:** add rotate-secret command for confidential clients ([63202a1](https://github.com/burnt-labs/xion-agent-toolkit/commit/63202a1bb34463b9aa0639324caec22747f82028))
+
+
+### Bug Fixes
+
+* **build:** reorder parameters in mainnet config generation for consistency ([b82be5d](https://github.com/burnt-labs/xion-agent-toolkit/commit/b82be5d3cfa8bafce17852c5b1aeeea597e0fa39))
+* **cli:** address QC review findings for interactive mode ([dfe928d](https://github.com/burnt-labs/xion-agent-toolkit/commit/dfe928ddd0b0ef1f486e921b3be9d9926ac0ce67))
+* **cli:** correct prompt types for UUID args (client_id, manager-id) ([370301e](https://github.com/burnt-labs/xion-agent-toolkit/commit/370301eeca6043dd20749d178c5045d4cf152255))
+* **cli:** remove -N short flag to avoid conflict with treasury create --name ([f2a497c](https://github.com/burnt-labs/xion-agent-toolkit/commit/f2a497c0e139b6aacb163bf378d1a5fdf8bd07bb))
+
+
+### Refactoring
+
+* **cli:** apply QC residual findings (RF-1/4/5/6/7/9/10) ([865b3c9](https://github.com/burnt-labs/xion-agent-toolkit/commit/865b3c9ef1de106548f48f6ee302f45ec189fb49))
+* **cli:** bech32 address validation + prompt validator unit tests (RF-2, RF-8) ([46eb262](https://github.com/burnt-labs/xion-agent-toolkit/commit/46eb262be75140c3c37fe3ec3eef9bcffbf26f34))
+* **cli:** improve missing argument extraction and prompt functions ([4699332](https://github.com/burnt-labs/xion-agent-toolkit/commit/46993321fd9ecc172ff67ba74d9cb09c21b76dc5))
+
+
+### Documentation
+
+* add --dev-mode flag and OAuth2 scope documentation ([b6898b0](https://github.com/burnt-labs/xion-agent-toolkit/commit/b6898b0f9ebe9a37c1affa9cf57758723993d6b1))
+* **auth:** document local scope validation behavior for MGR API ([3a6831a](https://github.com/burnt-labs/xion-agent-toolkit/commit/3a6831ad9cf32e8062b9085392281bacf61ff624))
+* **cli:** document interactive mode and --no-interactive flag ([fd778d6](https://github.com/burnt-labs/xion-agent-toolkit/commit/fd778d6d674e4b006872dea16e5e49d2d3e6fadb))
+* **cli:** update prompt validation table to reflect bech32 address check ([fb408a2](https://github.com/burnt-labs/xion-agent-toolkit/commit/fb408a2ae3d801f741d44e198762971174ad1d53))
+* **oauth2:** add rotate-secret to CLI reference, skill, and script ([03a3bfb](https://github.com/burnt-labs/xion-agent-toolkit/commit/03a3bfb72bd66b364b497077b457192a65993350))
+* **plans:** add local scope validation plan and status update ([221d2db](https://github.com/burnt-labs/xion-agent-toolkit/commit/221d2dbe458e3ec9f21bf74fa93cf2210274f3ba))
+* **plans:** update feature roadmap and status.json with completed tasks ([856b0ff](https://github.com/burnt-labs/xion-agent-toolkit/commit/856b0ff714fe15b01dc6bf95b991c0f0f410dc98))
+* **plan:** Update interactive-cli checklist for Task 1+2 completion ([5c58286](https://github.com/burnt-labs/xion-agent-toolkit/commit/5c582866552d3d3fd6136837696cddc87ac564d6))
+* **plan:** update interactive-cli plan with QC review results ([c3adc0c](https://github.com/burnt-labs/xion-agent-toolkit/commit/c3adc0c6307f92e8187186319039d1bb4b1458fa))
+* **skill:** add --no-interactive to all skill script invocations ([1c5077a](https://github.com/burnt-labs/xion-agent-toolkit/commit/1c5077a5503e4c54cc561d87e7597ca94f3d4666))
+
+
+### Tests
+
+* **cli:** add unit tests for multi-arg extraction, document E2E Batch 2+3 results ([b92ab9c](https://github.com/burnt-labs/xion-agent-toolkit/commit/b92ab9c09c31f1a1c9bc59cd0cdedc13da4f749b))
+
+
+### Chores
+
+* **plans:** archive all completed plans, clean up status.json ([ca24333](https://github.com/burnt-labs/xion-agent-toolkit/commit/ca24333c884e6fc56fc952cf4b959de95bdb30fb))
+* **plans:** mark RF-2 and RF-8 as resolved in status.json ([ebf431d](https://github.com/burnt-labs/xion-agent-toolkit/commit/ebf431dc9fea178f11644e45a0fc7d547956542e))
+
 ## [0.9.4](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.3...0.9.4) (2026-03-26)
 
 
