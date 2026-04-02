@@ -290,6 +290,49 @@ For standardized exit codes, see [EXIT-CODES.md](./EXIT-CODES.md).
 
 ---
 
+### Interactive Mode
+
+When running in a terminal (TTY), if you omit required arguments, the CLI will prompt you to fill them in interactively instead of showing an error.
+
+**Example:**
+```bash
+$ xion-toolkit treasury fund
+⚠️  Missing required arguments. Let's fill them in:
+
+  Contract address (xion1...): xion1abc...
+  Amount (e.g., 1000000uxion): 1000000
+```
+
+**Behavior:**
+- Automatically activated in TTY environments when required args are missing
+- Disabled in non-TTY contexts (pipes, redirects, CI)
+- Disabled explicitly with `--no-interactive` global flag
+
+**Disable Interactive Mode:**
+
+```bash
+# Disable for CI/CD scripts
+xion-toolkit --no-interactive treasury fund xion1abc... --amount 1000000uxion
+
+# Or set environment variable
+export XION_NO_INTERACTIVE=1
+xion-toolkit treasury fund xion1abc... --amount 1000000uxion
+```
+
+**Prompt validation:**
+| Input Type | Validation |
+|------------|-----------|
+| Address | Must start with `xion1`, min 20 chars |
+| Amount | Number or `Nuxion` format (plain numbers auto-append `uxion`) |
+| Hash | Valid hex, min 10 chars |
+| File path | Must exist on disk |
+| Number | Must be a valid u64 |
+| Text | Non-empty |
+
+**Implementation:** Uses the `dialoguer` crate for interactive prompts. Missing args are collected via prompts, then the command is re-executed with supplemented arguments.
+
+---
+
 ## Authentication Commands
 
 ### `auth login`

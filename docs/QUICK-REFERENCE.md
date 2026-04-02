@@ -2,6 +2,8 @@
 
 > For AI Agents: Essential commands and patterns in one file (~120 lines).
 
+> **Interactive Mode**: Omit required args and get prompted in your terminal. Use `--no-interactive` to disable (for scripts/CI).
+
 ## Authentication
 
 ```bash

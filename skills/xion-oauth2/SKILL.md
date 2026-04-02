@@ -357,6 +357,8 @@ Most OAuth2 commands have minimal or no required parameters:
 > Example for login:
 > "I'll initiate the OAuth2 login flow. A browser will open for authorization. Ready? [y/n]"
 
+**Note on Interactive Mode:** The CLI supports interactive mode when running in a TTY. If you omit required arguments, the CLI will prompt you to fill them in. For agent/scripted usage, use `--no-interactive` flag to disable prompts and get immediate error messages.
+
 ### Step 4: Confirm Before Execution
 
 Present the parameters in a tree format and ask for confirmation:
