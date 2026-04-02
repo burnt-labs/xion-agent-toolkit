@@ -5,6 +5,20 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.10.0...0.10.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* **docs:** full sync — README, cli-reference, quick-reference, skills-guide, error-codes ([ee8678c](https://github.com/burnt-labs/xion-agent-toolkit/commit/ee8678cc785205f97c47fb961aadc6bca274e0ec))
+
+
+### Documentation
+
+* fix wrong flags, add missing commands across all docs ([5ce92bf](https://github.com/burnt-labs/xion-agent-toolkit/commit/5ce92bf66d07053c94eaacc63d807b324f1ae97f))
+* remove elvish from shell completion docs ([abfdd27](https://github.com/burnt-labs/xion-agent-toolkit/commit/abfdd27155cf52b67c6db4a46cac68d2b7819667))
+* sync README with CLI implementation ([ff574ba](https://github.com/burnt-labs/xion-agent-toolkit/commit/ff574ba618e74d57363f5d6abb20aa2fdaa9b65b))
+
 ## [0.10.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.9.4...0.10.0) (2026-04-02)
 
 
