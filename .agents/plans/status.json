@@ -44,6 +44,12 @@
       "title": "Multi-sig Treasury Support",
       "removed_at": "2026-03-15",
       "reason": "Not needed for current roadmap"
+    },
+    {
+      "id": "oauth2-client-revoke-deactivate-flow",
+      "title": "OAuth2 Client Revoke/Deactivate Flow",
+      "removed_at": "2026-04-02",
+      "reason": "Requirement removed from ENG-1576; keep secret rotation scope only"
     }
   ],
   "phase_summary": {
@@ -65,12 +71,6 @@
       "source": "interactive-cli",
       "desc": "Use bech32::decode() for proper address validation instead of prefix+length check",
       "owner": "@fullstack-dev"
-    },
-    {
-      "id": "ENG-1576",
-      "source": "oauth2-client-advanced-lifecycle",
-      "desc": "Secret rotation + revoke/deactivate flow (requires backend API)",
-      "owner": null
     },
     {
       "id": "verify-address",

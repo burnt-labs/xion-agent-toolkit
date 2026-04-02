@@ -216,6 +216,7 @@ These features are acknowledged but deferred to external projects or future cons
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-04-02 | @project-manager | Linear ENG-1576 marked done; revoke/deactivate flow requirement removed from scope | ✅ Done |
 | 2026-04-02 | @project-manager | Interactive CLI Mode completed (dialoguer, --no-interactive, 529 tests) | ✅ Done |
 | 2026-04-01 | @project-manager | OAuth2 Client Management + Scope Validation completed | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 3 completed (Predicted Address ✅, Batch Treasury Ops ✅, IBC/Multi-sig removed) | ✅ Done |
