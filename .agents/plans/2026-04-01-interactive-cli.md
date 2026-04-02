@@ -979,3 +979,38 @@ Same approach. `client_id` is already detected as `PromptType::Address` (which i
 3. **Prompting for optional parameters**: Only required (missing) parameters trigger prompts.
 4. **Multi-step wizards / guided flows**: This is purely "fill in missing args", not a guided walkthrough.
 5. **Persistent history**: No command history or previously-used values.
+
+---
+
+## QC Review: Residual Findings
+
+### Fixed in this PR (QC tri-review + follow-up review)
+
+All Critical/Warning items from both QC reviews have been resolved:
+
+| ID | Description | Resolution |
+|----|-------------|------------|
+| QC1 C-2 | Docs claimed `XION_NO_INTERACTIVE` env var | Removed from docs |
+| QC3 CR-1 | Underscore/hyphen arg name mismatch | Added `_` variants to all match arms |
+| QC2 C1 | `ExecuteContext.interactive` dead code | Removed field |
+| QC2 C2 | `prompt_text_with_default()` dead code | Removed function |
+| QC1 W-1 | TTY should check stdout | Added stdout check |
+| QC2 W-4 | `PromptType::Enum` never constructed | Removed variant |
+| QC3 W-1 | Amount prompt example confusing | Clarified in docs |
+| QC3 W-2 | Ctrl+C exit behavior undocumented | Added to docs |
+| QC2 C-001 (follow-up) | `-N` short flag conflicts with `treasury create --name` | Removed short flag |
+| RF-1 | Short flag for `--no-interactive` | Attempted `-N`, removed due to conflict |
+| RF-4 | Prompt functions `pub` → `pub(crate)` | Applied (10 functions) |
+| RF-5 | Architecture design note in `main.rs` | Applied |
+| RF-6+RF-7 | Enhanced module doc + checklist | Applied |
+| RF-9 | Pin clap version | Skipped (already `"4.5"`) |
+| RF-10 | Label capitalization | Skipped (already consistent) |
+| RF-11 | Skill scripts add `--no-interactive` | Applied (21 scripts) |
+
+### Deferred to future PRs
+
+| ID | Source | Description | Owner | Target |
+|----|--------|-------------|-------|--------|
+| RF-2 | QC1 | Add unit tests for prompt validators (reject invalid address/amount/hash) | @qa-engineer | Next release |
+| RF-3 | QC2 | Consolidate `determine_prompt_type()` + `format_arg_description()` into single `ArgPromptInfo` struct | — | Skipped (over-engineering) |
+| RF-8 | QC1 | Use `bech32::decode()` for proper address validation instead of prefix+length check | @fullstack-dev | Next release |

@@ -9,12 +9,12 @@
       "status": "Done",
       "progress": 100,
       "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qa-engineer"],
+      "agents": ["@fullstack-dev", "@qa-engineer", "@qc-specialist", "@qc-specialist-2", "@qc-specialist-3"],
       "tags": ["cli", "ux", "interactive", "dialoguer", "human-experience"],
       "created_at": "2026-04-01",
       "updated_at": "2026-04-02",
       "done_at": "2026-04-02",
-      "notes": "Batch 1 complete: dialoguer dep, --no-interactive flag, interactive.rs (9 prompt funcs), interactive_fallback.rs (clap error interception + re-exec pattern), main.rs wiring. 4 commits on feature/interactive-cli, pushed. 523 tests, 0 warnings. E2E 9/9 passed. Bugs fixed during E2E: duplicate arg extraction, prompt_text prefill, prompt_u64 no retry, amount denom auto-append. Deferred: Batch 2 (treasury subs), Batch 3 (oauth2 subs), Batch 4 (docs/skills)."
+      "notes": "Batch 1-4 complete. 7 commits on feature/interactive-cli (pushed). 527 tests, 0 warnings. E2E 9/9 passed. QC tri-review: all Critical/Warning fixed. Residual findings RF-1..RF-10 deferred (see plan). Fixed: duplicate arg extraction, prompt_text prefill, prompt_u64 no retry, amount denom auto-append, underscore/hyphen arg mismatch, dead code removed, stdout TTY check, docs accuracy."
     },
     {
       "id": "local-scope-validation",
