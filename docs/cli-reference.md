@@ -41,6 +41,14 @@ Complete reference for the Xion Agent Toolkit CLI commands.
   - [`oauth2 client managers remove`](#oauth2-client-managers-remove)
   - [`oauth2 client transfer-ownership`](#oauth2-client-transfer-ownership)
   - [`oauth2 client rotate-secret`](#oauth2-client-rotate-secret)
+- [Transaction Commands](#transaction-commands)
+  - [`tx status`](#tx-status)
+  - [`tx wait`](#tx-wait)
+- [Batch Commands](#batch-commands)
+  - [`batch execute`](#batch-execute)
+  - [`batch validate`](#batch-validate)
+- [Account Commands](#account-commands)
+  - [`account info`](#account-info)
 - [Configuration Commands](#configuration-commands)
 - [Shell Completion Commands](#shell-completion-commands)
   - [`completions`](#completions)
@@ -262,6 +270,8 @@ xion-toolkit --network <NETWORK> <command>  # Network override (testnet, mainnet
 xion-toolkit --output <FORMAT> <command>    # Output format (json, json-compact, github-actions)
 xion-toolkit --help                          # Show help
 xion-toolkit --version                       # Show version
+xion-toolkit -c, --config <CONFIG> <command>  # Path to config file
+xion-toolkit --no-interactive <command>       # Disable interactive prompts (exit on missing args)
 ```
 
 ### Output Formats
@@ -271,6 +281,7 @@ xion-toolkit --version                       # Show version
 | `json` | Pretty-printed JSON (default) | Human reading, debugging |
 | `json-compact` | Single-line JSON | CI/CD logging, pipe to jq |
 | `github-actions` | GitHub Actions workflow commands | CI/CD pipelines |
+| `human` | Simplified human-readable output | Quick terminal checks |
 
 **Examples:**
 
@@ -3386,6 +3397,213 @@ xion-toolkit asset query --contract xion1... --msg '{"all_tokens": {}}'
 
 ---
 
+## Transaction Commands
+
+### `tx status`
+
+Query the status of a transaction by its hash.
+
+**Usage:**
+```bash
+xion-toolkit tx status <HASH>
+```
+
+**Arguments:**
+- `HASH` - Transaction hash (required)
+
+**Examples:**
+
+```bash
+xion-toolkit tx status ABC123DEF456...
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "hash": "ABC123DEF456...",
+  "height": 12345,
+  "tx": {...}
+}
+```
+
+Output (not found):
+```json
+{
+  "success": false,
+  "error": "Transaction not found",
+  "code": "TX_QUERY_FAILED"
+}
+```
+
+---
+
+### `tx wait`
+
+Wait for a transaction to be confirmed on-chain.
+
+**Usage:**
+```bash
+xion-toolkit tx wait <HASH> [options]
+```
+
+**Arguments:**
+- `HASH` - Transaction hash (required)
+
+**Options:**
+- `--timeout <SECONDS>` - Maximum wait time (default: 60)
+- `--interval <SECONDS>` - Poll interval (default: 2)
+
+**Examples:**
+
+Wait with defaults:
+```bash
+xion-toolkit tx wait ABC123DEF456...
+```
+
+Wait with custom timeout:
+```bash
+xion-toolkit tx wait ABC123DEF456... --timeout 120 --interval 5
+```
+
+Output (confirmed):
+```json
+{
+  "success": true,
+  "hash": "ABC123DEF456...",
+  "height": 12346,
+  "gas_used": "150000"
+}
+```
+
+Output (timeout):
+```json
+{
+  "success": false,
+  "error": "Transaction not confirmed within 120s",
+  "code": "TX_TIMEOUT"
+}
+```
+
+**Notes:**
+- Polls the RPC at the specified interval until the transaction is found
+- Useful in CI/CD pipelines to wait for on-chain confirmation
+
+---
+
+## Batch Commands
+
+### `batch execute`
+
+Execute multiple transactions from a JSON batch file.
+
+**Usage:**
+```bash
+xion-toolkit batch execute --from-file <FILE> [options]
+```
+
+**Options:**
+- `--from-file <FILE>` - JSON file with batch operations (required)
+- `--simulate` - Dry-run mode, validate without executing
+- `--memo <MEMO>` - Transaction memo
+
+**Examples:**
+
+Execute batch:
+```bash
+xion-toolkit batch execute --from-file batch.json
+```
+
+Simulate (dry-run):
+```bash
+xion-toolkit batch execute --from-file batch.json --simulate
+```
+
+With memo:
+```bash
+xion-toolkit batch execute --from-file batch.json --memo "batch funding round 1"
+```
+
+**Notes:**
+- Maximum 50 messages per batch
+- Partial failures are reported but don't stop execution
+- Use `--simulate` to validate before actual execution
+
+---
+
+### `batch validate`
+
+Validate a batch file without executing transactions.
+
+**Usage:**
+```bash
+xion-toolkit batch validate --from-file <FILE>
+```
+
+**Options:**
+- `--from-file <FILE>` - JSON file to validate (required)
+
+**Examples:**
+
+```bash
+xion-toolkit batch validate --from-file batch.json
+```
+
+Output (valid):
+```json
+{
+  "success": true,
+  "valid": true,
+  "message_count": 5
+}
+```
+
+Output (invalid):
+```json
+{
+  "success": false,
+  "valid": false,
+  "errors": ["Invalid message format at index 2"]
+}
+```
+
+---
+
+## Account Commands
+
+### `account info`
+
+Shows the current authenticated user's MetaAccount information.
+
+**Usage:**
+```bash
+xion-toolkit account info
+```
+
+**Examples:**
+
+Basic usage:
+```bash
+xion-toolkit account info
+```
+
+Output (success):
+```json
+{
+  "success": true,
+  "address": "xion1abc123def456...",
+  "balances": [
+    {"denom": "uxion", "amount": "1000000"}
+  ]
+}
+```
+
+**Notes:**
+- Requires authentication
+- Shows address and token balances for the authenticated MetaAccount
+
+---
+
 ## Configuration Commands
 
 ### `config show`
@@ -3435,6 +3653,60 @@ xion-toolkit config set-network <NETWORK>
 ```bash
 xion-toolkit config set-network testnet
 xion-toolkit config set-network mainnet
+```
+
+---
+
+### `config get`
+
+Gets a specific configuration value.
+
+**Usage:**
+```bash
+xion-toolkit config get <KEY>
+```
+
+**Arguments:**
+- `KEY` - Configuration key to get (required)
+
+**Examples:**
+
+```bash
+xion-toolkit config get network
+```
+
+Output:
+```json
+{
+  "success": true,
+  "key": "network",
+  "value": "testnet"
+}
+```
+
+---
+
+### `config reset`
+
+Resets configuration to default values.
+
+**Usage:**
+```bash
+xion-toolkit config reset
+```
+
+**Examples:**
+
+```bash
+xion-toolkit config reset
+```
+
+Output:
+```json
+{
+  "success": true,
+  "message": "Configuration reset to defaults"
+}
 ```
 
 ---

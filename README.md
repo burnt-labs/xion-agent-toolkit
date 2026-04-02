@@ -141,9 +141,9 @@ Allow your treasury to perform specific actions:
 ```bash
 # Allow sending funds (up to 1 XION)
 xion-toolkit treasury grant-config add xion1... \
-  --grant-type-url "/cosmos.bank.v1beta1.MsgSend" \
-  --grant-auth-type send \
-  --grant-spend-limit "1000000uxion"
+  --type-url "/cosmos.bank.v1beta1.MsgSend" \
+  --auth-type send \
+  --spend-limit "1000000uxion"
 
 # Or use preset shortcuts
 xion-toolkit treasury grant-config add xion1... --preset send
@@ -156,10 +156,10 @@ xion-toolkit treasury grant-config add xion1... --preset instantiate
 Set up fee allowance for gasless transactions:
 
 ```bash
-xion-toolkit treasury fee-config set xion1... \
-  --fee-allowance-type basic \
-  --fee-spend-limit "5000000uxion"
+xion-toolkit treasury fee-config set xion1... --fee-config fee-config.json
 ```
+
+**Note:** `fee-config set` requires a JSON config file. See [CLI Reference](./docs/cli-reference.md#treasury-fee-config-set) for the file format.
 
 ### Batch Operations
 
@@ -167,10 +167,10 @@ Manage multiple treasuries at once:
 
 ```bash
 # Validate batch config before execution
-xion-toolkit batch validate --config funds.json
+xion-toolkit batch validate --from-file funds.json
 
 # Execute batch operations
-xion-toolkit batch execute --config funds.json [--simulate] [--memo "notes"]
+xion-toolkit batch execute --from-file funds.json [--simulate] [--memo "notes"]
 
 # Or use treasury batch commands (legacy)
 xion-toolkit treasury batch fund --config funds.json
@@ -301,6 +301,12 @@ treasury batch grant-config --config <file>   # Configure multiple
 xion-toolkit tx wait ABC123... --timeout 120 --interval 5
 ```
 
+### Account
+
+| Command | Description |
+|---------|-------------|
+| `account info` | Show current MetaAccount info (address, balances) |
+
 ### Configuration
 
 | Command | Description |
@@ -319,6 +325,8 @@ xion-toolkit tx wait ABC123... --timeout 120 --interval 5
 ```bash
 xion-toolkit --network <testnet|mainnet>  # Network override
 xion-toolkit --output <format>             # Output format
+xion-toolkit --config <CONFIG>             # Path to config file
+xion-toolkit --no-interactive              # Disable prompts
 xion-toolkit --help                        # Show help
 xion-toolkit --version                     # Show version
 ```
@@ -330,6 +338,7 @@ xion-toolkit --version                     # Show version
 | `json` (default) | Human reading, debugging |
 | `json-compact` | CI/CD pipelines, parsing |
 | `github-actions` | GitHub Actions workflow commands |
+| `human` | Simplified human-readable output |
 
 ```bash
 xion-toolkit treasury list --output json-compact

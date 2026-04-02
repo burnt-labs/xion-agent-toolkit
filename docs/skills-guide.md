@@ -40,6 +40,7 @@ Unified entry point for Xion development. Routes to correct skill based on user 
 | Get testnet tokens | `xion-faucet` | Testnet development |
 | Query chain data | `xiond-usage` | More powerful queries |
 | Deploy CosmWasm | `xiond-wasm` | Contract developer tool |
+| OAuth2 client management | `xion-oauth2-client` | Manager API operations |
 
 ### xion-toolkit-init
 
@@ -106,6 +107,24 @@ Claim testnet XION tokens from the faucet.
 - Cooldown: 24 hours
 - Balance gate: Receiver must have < 1 XION
 - Network: Testnet only
+
+### xion-oauth2-client
+
+OAuth2 client lifecycle management via the Manager API.
+
+| Script | Command |
+|--------|---------|
+| list | `xion-toolkit oauth2 client list` |
+| create | `xion-toolkit oauth2 client create --redirect-uris "..." --treasury "..."` |
+| get | `xion-toolkit oauth2 client get <CLIENT_ID>` |
+| update | `xion-toolkit oauth2 client update <CLIENT_ID>` |
+| delete | `xion-toolkit oauth2 client delete <CLIENT_ID> --force` |
+| extension | `xion-toolkit oauth2 client extension get/update <CLIENT_ID>` |
+| managers | `xion-toolkit oauth2 client managers add/remove <CLIENT_ID>` |
+| transfer-ownership | `xion-toolkit oauth2 client transfer-ownership <CLIENT_ID>` |
+| rotate-secret | `xion-toolkit oauth2 client rotate-secret <CLIENT_ID>` |
+
+**Note:** Requires `--dev-mode` authentication for Manager API scopes.
 
 ## Output Format
 

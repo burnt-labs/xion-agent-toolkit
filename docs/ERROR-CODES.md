@@ -202,8 +202,11 @@ cat batch.json | jq .
 # Check batch size
 jq '.messages | length' batch.json
 
-# Run with debug output
-xion-toolkit batch execute batch.json --debug
+# Validate before execution
+xion-toolkit batch validate --from-file batch.json
+
+# Execute batch
+xion-toolkit batch execute --from-file batch.json
 ```
 
 ---
