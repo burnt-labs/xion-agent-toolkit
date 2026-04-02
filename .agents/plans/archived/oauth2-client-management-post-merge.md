@@ -436,7 +436,7 @@ The toolkit's `auth login` flow obtains an OAuth access token from the `@cloudfl
 The composite `mgrAuthMiddleware` (line 124 of `mgr-auth.ts`) has this flow:
 
 1. Check `executionCtx.props.xionAddress` test bypass → skip if set
-2. If `MGR_DUAL_BEARER_ENABLED=false` → session-only auth
+2. If `MGR_DUAL_BEARER_DISABLED=true` → session-only auth
 3. Try Session JWT validation via `validateSessionAuth()`
 4. Try OAuth access token validation via `validateOAuthAccessToken()`
 5. For OAuth mode: **enforce scopes** — check if `grantedScopes` contains `xion:mgr:read` or `xion:mgr:write`
