@@ -1,312 +1,82 @@
 {
-  "version": 1,
-  "updated_at": "2026-04-01",
-  "plans": [
+  "version": 2,
+  "updated_at": "2026-04-02",
+  "plans": [],
+  "archived": {
+    "total_count": 44,
+    "archived_at": "2026-04-02",
+    "index": ".agents/plans/archived/README.md"
+  },
+  "active_roadmap": ".agents/plans/feature-roadmap.md",
+  "knowledge": [
     {
-      "id": "interactive-cli",
-      "title": "Interactive CLI Mode (missing arg prompts)",
-      "file": ".agents/plans/2026-04-01-interactive-cli.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qa-engineer", "@qc-specialist", "@qc-specialist-2", "@qc-specialist-3"],
-      "tags": ["cli", "ux", "interactive", "dialoguer", "human-experience"],
-      "created_at": "2026-04-01",
-      "updated_at": "2026-04-02",
-      "done_at": "2026-04-02",
-      "notes": "Batch 1-4 complete + E2E Batch 2+3 verified. 11 commits on feature/interactive-cli (pushed). 529 tests, 0 warnings. E2E 9/9 (Batch 1) + 5/5 (Batch 2+3 via script pseudo-TTY) passed. Initial Batch 2+3 failure was test methodology (piped stdin not TTY), not code bug. QC tri-review: all Critical/Warning fixed. Residual findings RF-1..RF-11 applied or deferred (see plan). Fixed: duplicate arg extraction, prompt_text prefill, prompt_u64 no retry, amount denom auto-append, underscore/hyphen arg mismatch, dead code removed, stdout TTY check, docs accuracy, -N short flag conflict."
+      "file": ".agents/plans/knowledge/oauth-client-implementation.md",
+      "desc": "OAuthClient implementation decisions."
     },
     {
-      "id": "local-scope-validation",
-      "title": "Local Scope Validation for MGR API",
-      "file": ".agents/plans/2026-04-01-local-scope-validation.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@product-manager"],
-      "tags": ["oauth2", "scope", "validation", "dev-mode", "security"],
-      "created_at": "2026-04-01",
-      "updated_at": "2026-04-01",
-      "done_at": "2026-04-01",
-      "notes": "Implemented local scope validation for MGR API calls. Scope field added to TokenResponse and UserCredentials with backward-compatible serde(default). has_scope()/has_all_scopes() helpers on UserCredentials. get_valid_token() now returns UserCredentials instead of bare String. Pre-flight scope check in prepare_api_client() fails fast with --dev-mode hint. Error hints updated. 4 unit tests for scope helpers. Also includes --dev-mode flag (Task in same session), build.rs format!() parameter order fix, and .env compile-time injection documentation. CI clean: fmt, clippy, 505 tests passing."
+      "file": ".agents/plans/knowledge/treasury-create-design.md",
+      "desc": "Treasury create command design."
     },
     {
-      "id": "oauth2-client-advanced-lifecycle",
-      "title": "OAuth2 Client Advanced Lifecycle",
-      "file": ".agents/plans/oauth2-client-advanced-lifecycle.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@qa-engineer"],
-      "tags": ["oauth2", "client-management", "security", "phase-4", "lifecycle", "safety-guard"],
-      "created_at": "2026-04-01",
-      "updated_at": "2026-04-01",
-      "done_at": "2026-04-01",
-      "notes": "QA PASS: 10/10 criteria, 497 tests, 0 warnings. QC tri-review approved (residuals RF-1/RF-4 fixed). Skills + docs updated with --force. Deferred: secret rotation + revoke/deactivate (backend API not available)."
+      "file": ".agents/plans/knowledge/TYPES_COMPARISON.md",
+      "desc": "Treasury type comparison analysis."
     },
     {
-      "id": "oauth2-client-management-post-merge",
-      "title": "OAuth2 Client Management Post-Merge",
-      "file": ".agents/plans/oauth2-client-management-post-merge.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@architect", "@fullstack-dev", "@fullstack-dev-2", "@prompt-engineer"],
-      "tags": ["oauth2", "client-management", "cli", "skill", "docs", "ci", "api-contract"],
-      "created_at": "2026-03-31",
-      "updated_at": "2026-03-31",
-      "done_at": "2026-03-31",
-      "notes": "All phases complete. QC tri-review approved (W1/W2 fixes applied). QA PASS: 8/8 criteria, 444 tests, 0 warnings. Residual findings RF-1 to RF-5 deferred. Branch: feature/oauth2-client-mgmt."
-    },
-    {
-      "id": "mainnet-disable-switch",
-      "title": "Mainnet Disable Switch",
-      "file": ".agents/plans/mainnet-disable-switch.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev"],
-      "tags": ["cli", "mainnet", "ux", "feature-flag"],
-      "created_at": "2026-03-19",
-      "updated_at": "2026-03-19",
-      "done_at": "2026-03-19",
-      "notes": "QA SIGN-OFF: All acceptance criteria verified. 334 unit tests + 48 integration tests passing. Clippy clean, fmt clean. E2E 6/6 passed with correct exit code 10. Ready for merge."
-    },
-    {
-      "id": "skill-patterns-optimization",
-      "title": "Skill Patterns Optimization",
-      "file": ".agents/plans/skill-patterns-optimization.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@prompt-engineer", "@fullstack-dev"],
-      "tags": ["skill", "ux", "auth", "patterns", "skill-creator"],
-      "created_at": "2026-03-19",
-      "updated_at": "2026-03-19",
-      "done_at": "2026-03-19",
-      "notes": "QA SIGN-OFF: All acceptance criteria verified. Skill update guidance added to xion-dev, xion-toolkit-init. Refresh-first authentication in xion-oauth2 v1.2.1. CLI --force flag implemented. Skill-creator iteration on xion-treasury (v1.2.1) and xion-asset (v1.1.0). 329 tests passing, clippy clean."
-    },
-    {
-      "id": "rest-api-url-fix",
-      "title": "REST API URL Fix - Separate Chain Query Endpoint",
-      "file": ".agents/plans/rest-api-url-fix.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@qa-engineer"],
-      "tags": ["bug-fix", "network", "api", "critical"],
-      "created_at": "2026-03-18",
-      "updated_at": "2026-03-18",
-      "done_at": "2026-03-18",
-      "notes": "QA SIGN-OFF: 404 error resolved. Added rest_url field to NetworkConfig (api.xion-*.burnt.com). All chain queries now use REST endpoint. 375 tests passing, E2E verified."
-    },
-    {
-      "id": "faucet-command",
-      "title": "Faucet Command Implementation",
-      "file": ".agents/plans/faucet-command.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@prompt-engineer", "@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@qa-engineer"],
-      "tags": ["faucet", "cli", "testnet", "skill"],
-      "created_at": "2026-03-18",
-      "updated_at": "2026-03-18",
-      "done_at": "2026-03-18",
-      "notes": "QA SIGN-OFF: All criteria verified. CLI (327 tests), Skill v1.2.0 (32 triggers, 5 evals), Docs complete. QC fixes applied. Ready for merge."
-    },
-    {
-      "id": "qc-cross-review",
-      "title": "QC Cross-Review: Source Code & Skills",
-      "file": ".agents/plans/qc-cross-review.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@fullstack-dev", "@fullstack-dev-2", "@qa-engineer"],
-      "tags": ["qc", "review", "security", "bug-fix"],
-      "created_at": "2026-03-17",
-      "updated_at": "2026-03-17",
-      "done_at": "2026-03-17",
-      "notes": "QA SIGN-OFF: All P3 fixes verified. Pre-commit checks passed: cargo test (48 passed), cargo clippy (0 warnings), cargo fmt. P3 fixes: P3-1 (CRIT-003 grace period ✅), P3-2 (WARN-012 already fixed ✅), P3-3 (WARN-010 already fixed ✅), P3-4 (WARN-015 already fixed ✅), P3-5 (WARN-013,017 sanitization ✅)."
-    },
-    {
-      "id": "unified-ci-workflow",
-      "title": "Unified CI Workflow",
-      "file": ".agents/plans/unified-ci-workflow.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@ops-engineer"],
-      "tags": ["ci", "github-actions", "devops"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Merged ci.yml, test-skills.yml, e2e-tests.yml into unified workflow with proper job dependencies. QA SIGN-OFF: All acceptance criteria validated - job dependencies correct, YAML valid, E2E config documented, artifact handling correct. Ready for production use."
-    },
-    {
-      "id": "skills-test-framework",
-      "title": "Skills Test Framework",
-      "file": ".agents/plans/skills-test-framework.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
-      "tags": ["phase2", "p2", "testing"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Completed: 48 tests, 58 mock scenarios, CI integration, skill documentation updates"
-    },
-    {
-      "id": "cicd-integration-output",
-      "title": "CI/CD Integration Output",
-      "file": ".agents/plans/cicd-integration-output.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["phase2", "p2", "cicd", "output"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Completed: OutputFormat enum extended, ExecuteContext propagated to all handlers, exit_codes module added, docs/EXIT-CODES.md created. 298 tests passing."
-    },
-    {
-      "id": "predicted-address-computation",
-      "title": "Predicted Address Computation",
-      "file": ".agents/plans/predicted-address-computation.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["phase3", "p1", "treasury", "instantiate2"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Dev complete: shared instantiate2 module, --predict and --salt flags, 17 new tests. Phase 4 (verify-address) deferred as optional. SIGN-OFF by @qa-engineer."
-    },
-    {
-      "id": "batch-treasury-operations",
-      "title": "Batch Treasury Operations",
-      "file": ".agents/plans/batch-treasury-operations.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev-2", "@qc-specialist", "@qa-engineer"],
-      "tags": ["phase3", "p2", "treasury", "batch"],
-      "created_at": "2026-03-15",
-      "updated_at": "2026-03-15",
-      "done_at": "2026-03-15",
-      "notes": "Dev complete: batch fund, batch grant-config commands, bulk export support. SIGN-OFF by @qa-engineer."
-    },
-    {
-      "id": "shell-completion",
-      "title": "Shell Completion Support",
-      "file": ".agents/plans/shell-completion.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["cli", "ux", "completions"],
-      "created_at": "2026-03-16",
-      "updated_at": "2026-03-16",
-      "done_at": "2026-03-16",
-      "notes": "Completions command added for bash/zsh/fish/powershell. QC passed (0 critical), QA passed (all checks)."
-    },
-    {
-      "id": "shell-completion-install",
-      "title": "Shell Completion --install Flag",
-      "file": ".agents/plans/shell-completion.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["cli", "ux", "completions"],
-      "created_at": "2026-03-16",
-      "updated_at": "2026-03-16",
-      "done_at": "2026-03-16",
-      "notes": "QC issues fixed: proper error handling. All validation passed."
-    },
-    {
-      "id": "skill-param-validation",
-      "title": "Skill Parameter Validation Framework",
-      "file": ".agents/plans/skill-param-validation.md",
-      "status": "Done",
-      "progress": 100,
-      "owner": "@project-manager",
-      "agents": ["@fullstack-dev", "@qc-specialist", "@qa-engineer"],
-      "tags": ["skill", "ux", "validation", "agent-experience"],
-      "created_at": "2026-03-17",
-      "updated_at": "2026-03-17",
-      "done_at": "2026-03-17",
-      "notes": "QA SIGN-OFF: All 5 validation tests passed, 25 schemas verified, all QC issues fixed. Ready for production use."
+      "file": ".agents/plans/knowledge/faucet-contract-research.md",
+      "desc": "Faucet contract research and deployment attempts."
     }
   ],
-  "_notes": {
-    "archived": "See .agents/plans/archived/README.md for archived plans summary.",
-    "removed": [
-      {
-        "id": "treasury-analytics",
-        "title": "Treasury Analytics",
-        "removed_at": "2026-03-15",
-        "reason": "On-chain queries too heavy for this toolkit; should use external indexing services"
-      },
-      {
-        "id": "ibc-transfer-enhancement",
-        "title": "IBC Transfer Enhancement",
-        "removed_at": "2026-03-15",
-        "reason": "Not needed for current roadmap"
-      },
-      {
-        "id": "multi-sig-treasury-support",
-        "title": "Multi-sig Treasury Support",
-        "removed_at": "2026-03-15",
-        "reason": "Not needed for current roadmap"
-      }
-    ],
-    "completed_phase2_p1": [
-      {
-        "id": "error-recovery-enhancement",
-        "title": "Error Recovery Enhancement",
-        "completed_at": "2026-03-15"
-      },
-      {
-        "id": "transaction-monitoring",
-        "title": "Transaction Monitoring",
-        "completed_at": "2026-03-15"
-      }
-    ],
-    "completed_phase2_p2": [
-      {
-        "id": "skills-test-framework",
-        "title": "Skills Test Framework",
-        "completed_at": "2026-03-15"
-      },
-      {
-        "id": "cicd-integration-output",
-        "title": "CI/CD Integration Output",
-        "completed_at": "2026-03-15"
-      }
-    ],
-    "knowledge": [
-      {
-        "file": ".agents/plans/knowledge/oauth-client-implementation.md",
-        "desc": "OAuthClient implementation decisions."
-      },
-      {
-        "file": ".agents/plans/knowledge/treasury-create-design.md",
-        "desc": "Treasury create command design."
-      },
-      {
-        "file": ".agents/plans/knowledge/TYPES_COMPARISON.md",
-        "desc": "Treasury type comparison analysis."
-      },
-      {
-        "file": ".agents/plans/knowledge/faucet-contract-research.md",
-        "desc": "Faucet contract research and deployment attempts."
-      }
-    ],
-    "roadmap": ".agents/plans/feature-roadmap.md",
-    "phase2_summary": "Ecosystem Polish - Error Recovery ✅, Transaction Monitoring ✅, shared/ module ✅, Skills testing ✅, CI/CD integration ✅",
-    "phase3_summary": "Advanced Features - Predicted Address ✅, Batch Treasury Ops ✅"
-  }
+  "removed_features": [
+    {
+      "id": "treasury-analytics",
+      "title": "Treasury Analytics",
+      "removed_at": "2026-03-15",
+      "reason": "On-chain queries too heavy for this toolkit; should use external indexing services"
+    },
+    {
+      "id": "ibc-transfer-enhancement",
+      "title": "IBC Transfer Enhancement",
+      "removed_at": "2026-03-15",
+      "reason": "Not needed for current roadmap"
+    },
+    {
+      "id": "multi-sig-treasury-support",
+      "title": "Multi-sig Treasury Support",
+      "removed_at": "2026-03-15",
+      "reason": "Not needed for current roadmap"
+    }
+  ],
+  "phase_summary": {
+    "phase1": "Done (2026-03-14) — MetaAccount Info, Extended Grants, Batch Ops, Asset Builder",
+    "phase2": "Done (2026-03-15) — Error Recovery, Tx Monitoring, Skills Testing, CI/CD Output",
+    "phase3": "Done (2026-03-15) — Predicted Address, Batch Treasury Ops",
+    "oauth2_client_mgmt": "Done (2026-03-31 ~ 04-01) — Full lifecycle, advanced safety, scope validation",
+    "interactive_cli": "Done (2026-04-02) — dialoguer prompts, --no-interactive, 21 skill scripts updated"
+  },
+  "deferred_items": [
+    {
+      "id": "RF-2",
+      "source": "interactive-cli",
+      "desc": "Unit tests for prompt validators (reject invalid address/amount/hash)",
+      "owner": "@qa-engineer"
+    },
+    {
+      "id": "RF-8",
+      "source": "interactive-cli",
+      "desc": "Use bech32::decode() for proper address validation instead of prefix+length check",
+      "owner": "@fullstack-dev"
+    },
+    {
+      "id": "ENG-1576",
+      "source": "oauth2-client-advanced-lifecycle",
+      "desc": "Secret rotation + revoke/deactivate flow (requires backend API)",
+      "owner": null
+    },
+    {
+      "id": "verify-address",
+      "source": "predicted-address-computation",
+      "desc": "treasury verify-address command (optional Phase 4)",
+      "owner": "@fullstack-dev"
+    }
+  ]
 }

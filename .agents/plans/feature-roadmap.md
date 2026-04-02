@@ -1,7 +1,7 @@
 ---
 status: Active
 created_at: 2026-03-13
-updated_at: 2026-03-15
+updated_at: 2026-04-02
 ---
 
 # Feature Roadmap: xion-agent-toolkit
@@ -10,13 +10,13 @@ This document outlines the feature roadmap for the Xion Agent Toolkit.
 
 ## Current Status
 
+**All phases complete as of 2026-04-02.** See `.agents/plans/status.json` for deferred items and the full archive at `.agents/plans/archived/README.md`.
+
 **Phase 1 Completed: 2026-03-14**
-
-All planned Phase 1 features have been implemented and tested.
-
-**Phase 2 P1 Completed: 2026-03-15**
-
-Error Recovery Enhancement and Transaction Monitoring implemented.
+**Phase 2 Completed: 2026-03-15**
+**Phase 3 Completed: 2026-03-15**
+**OAuth2 Client Management Completed: 2026-03-31 ~ 04-01**
+**Interactive CLI Mode Completed: 2026-04-02**
 
 ---
 
@@ -216,6 +216,8 @@ These features are acknowledged but deferred to external projects or future cons
 
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
+| 2026-04-02 | @project-manager | Interactive CLI Mode completed (dialoguer, --no-interactive, 529 tests) | ✅ Done |
+| 2026-04-01 | @project-manager | OAuth2 Client Management + Scope Validation completed | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 3 completed (Predicted Address ✅, Batch Treasury Ops ✅, IBC/Multi-sig removed) | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 2 P2 completed (Skills Test Framework ✅, CI/CD Integration Output ✅, Treasury Analytics removed) | ✅ Done |
 | 2026-03-15 | @project-manager | Phase 2 P1 features completed (Error Recovery, Transaction Monitoring, shared module) | ✅ Done |
