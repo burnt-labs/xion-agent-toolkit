@@ -9,15 +9,15 @@ use std::path::PathBuf;
 use dialoguer::Input;
 
 /// Check if interactive mode is available (TTY on both stdin and stdout).
-pub fn is_tty() -> bool {
+pub(crate) fn is_tty() -> bool {
     io::stdin().is_terminal() && io::stdout().is_terminal()
 }
 
 /// Result of interactive prompting.
-pub type PromptResult<T> = Result<T, PromptError>;
+pub(crate) type PromptResult<T> = Result<T, PromptError>;
 
 #[derive(Debug)]
-pub enum PromptError {
+pub(crate) enum PromptError {
     /// User cancelled (Ctrl+C)
     Cancelled,
     /// User entered empty input when non-empty was required
@@ -43,7 +43,7 @@ impl std::error::Error for PromptError {}
 // ============================================================================
 
 /// Prompt for a non-empty text string.
-pub fn prompt_text(label: &str) -> PromptResult<String> {
+pub(crate) fn prompt_text(label: &str) -> PromptResult<String> {
     let input: String = Input::<String>::new()
         .with_prompt(label)
         .validate_with(|input: &String| -> Result<(), &str> {
@@ -60,7 +60,7 @@ pub fn prompt_text(label: &str) -> PromptResult<String> {
 }
 
 /// Prompt for a u64 number. Re-prompts on invalid input.
-pub fn prompt_u64(label: &str) -> PromptResult<u64> {
+pub(crate) fn prompt_u64(label: &str) -> PromptResult<u64> {
     let value: u64 = Input::<u64>::new()
         .with_prompt(label)
         .interact_text()
@@ -70,7 +70,7 @@ pub fn prompt_u64(label: &str) -> PromptResult<u64> {
 }
 
 /// Prompt for a blockchain address (xion1... format).
-pub fn prompt_address(label: &str) -> PromptResult<String> {
+pub(crate) fn prompt_address(label: &str) -> PromptResult<String> {
     let input: String = Input::<String>::new()
         .with_prompt(label)
         .validate_with(|input: &String| -> Result<(), &str> {
@@ -94,7 +94,7 @@ pub fn prompt_address(label: &str) -> PromptResult<String> {
 
 /// Prompt for an amount string (e.g., "1000000uxion" or "1000000").
 /// If the user enters a plain number without a denomination, "uxion" is appended automatically.
-pub fn prompt_amount(label: &str) -> PromptResult<String> {
+pub(crate) fn prompt_amount(label: &str) -> PromptResult<String> {
     let input: String = Input::<String>::new()
         .with_prompt(label)
         .validate_with(|input: &String| -> Result<(), &str> {
@@ -136,7 +136,7 @@ pub fn prompt_amount(label: &str) -> PromptResult<String> {
 }
 
 /// Prompt for a file path. Does NOT validate existence (caller decides).
-pub fn prompt_path(label: &str) -> PromptResult<PathBuf> {
+pub(crate) fn prompt_path(label: &str) -> PromptResult<PathBuf> {
     let input: String = Input::new()
         .with_prompt(label)
         .interact_text()
@@ -151,7 +151,7 @@ pub fn prompt_path(label: &str) -> PromptResult<PathBuf> {
 }
 
 /// Prompt for a file path that must exist.
-pub fn prompt_existing_path(label: &str) -> PromptResult<PathBuf> {
+pub(crate) fn prompt_existing_path(label: &str) -> PromptResult<PathBuf> {
     let path = prompt_path(label)?;
     if !path.exists() {
         return Err(PromptError::ValidationFailed(format!(
@@ -163,7 +163,7 @@ pub fn prompt_existing_path(label: &str) -> PromptResult<PathBuf> {
 }
 
 /// Prompt for a hash string (transaction hash).
-pub fn prompt_hash(label: &str) -> PromptResult<String> {
+pub(crate) fn prompt_hash(label: &str) -> PromptResult<String> {
     let input: String = Input::<String>::new()
         .with_prompt(label)
         .validate_with(|input: &String| -> Result<(), &str> {

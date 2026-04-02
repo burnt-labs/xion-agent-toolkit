@@ -3,6 +3,21 @@
 //! When `Cli::try_parse()` fails due to missing required arguments,
 //! this module prompts the user for each missing value and re-parses
 //! using the supplemented argument vector.
+//!
+//! # How it works
+//!
+//! 1. `main.rs` calls `Cli::try_parse()` instead of `Cli::parse()`
+//! 2. On `MissingRequiredArgument` error, we check for TTY + no `--no-interactive`
+//! 3. We parse clap's rendered error to extract which args are missing
+//! 4. For each missing arg, we prompt the user with a type-appropriate dialog
+//! 5. We build a supplemented `Vec<String>` and call `Cli::parse_from()`
+//!
+//! # When adding new CLI arguments
+//!
+//! 1. Add the arg name to `determine_prompt_type()` if it needs a non-text prompt
+//! 2. Add a description to `format_arg_description()` if the default is unclear
+//! 3. Add underscore AND hyphen variants (clap uses underscores in errors)
+//! 4. Add test cases for both `determine_prompt_type` and `format_arg_description`
 
 use clap::error::ErrorKind;
 
@@ -48,8 +63,8 @@ pub enum PromptType {
 pub fn try_interactive_parse(args: &[String]) -> Option<Vec<String>> {
     use clap::CommandFactory;
 
-    // Check if --no-interactive was explicitly passed
-    if args.iter().any(|a| a == "--no-interactive") {
+    // Check if --no-interactive or -N was explicitly passed
+    if args.iter().any(|a| a == "--no-interactive" || a == "-N") {
         return None;
     }
 

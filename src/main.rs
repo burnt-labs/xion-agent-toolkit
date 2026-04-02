@@ -16,7 +16,11 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Try normal parse first; if missing required args and TTY, prompt interactively
+    // Design note: We use the re-exec pattern (try_parse → prompt → parse_from)
+    // instead of making all params Option<String> because:
+    // 1. Preserves clap's validation, help generation, and shell completions
+    // 2. Avoids refactoring 50+ command handler signatures
+    // 3. Makes --no-interactive a simple global flag
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,
         Err(_) => {
