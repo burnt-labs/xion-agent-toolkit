@@ -147,6 +147,48 @@ pub enum XionErrorCode {
     EFAUCET003,
     /// Faucet not available
     EFAUCET004,
+
+    // ========================================================================
+    // OAuth Client Errors (EOAUTHCLIENT001-EOAUTHCLIENT099)
+    // ========================================================================
+    /// Bad request
+    EOAUTHCLIENT001,
+    /// Client ID required
+    EOAUTHCLIENT002,
+    /// Redirect URIs required
+    EOAUTHCLIENT003,
+    /// Binded treasury required
+    EOAUTHCLIENT004,
+    /// Owner required
+    EOAUTHCLIENT005,
+    /// Invalid grant type
+    EOAUTHCLIENT006,
+    /// Manager user ID required
+    EOAUTHCLIENT007,
+    /// Authentication required
+    EOAUTHCLIENT008,
+    /// User not found
+    EOAUTHCLIENT009,
+    /// Insufficient scope
+    EOAUTHCLIENT010,
+    /// Only owner allowed
+    EOAUTHCLIENT011,
+    /// Client not found
+    EOAUTHCLIENT012,
+    /// Client extension not found
+    EOAUTHCLIENT013,
+    /// Treasury not found (MGR API)
+    EOAUTHCLIENT014,
+    /// Internal server error (MGR API)
+    EOAUTHCLIENT015,
+    /// Treasury fetch error
+    EOAUTHCLIENT016,
+    /// Treasury query error
+    EOAUTHCLIENT017,
+    /// Unknown network
+    EOAUTHCLIENT018,
+    /// Re-run the command with --force to confirm
+    EOAUTHCLIENT019,
 }
 
 impl XionErrorCode {
@@ -214,6 +256,27 @@ impl XionErrorCode {
             XionErrorCode::EFAUCET002 => "Faucet query failed",
             XionErrorCode::EFAUCET003 => "Not authenticated for faucet operation",
             XionErrorCode::EFAUCET004 => "Faucet not available on this network",
+
+            // OAuth Client Management
+            XionErrorCode::EOAUTHCLIENT001 => "Bad request",
+            XionErrorCode::EOAUTHCLIENT002 => "Client ID is required",
+            XionErrorCode::EOAUTHCLIENT003 => "Redirect URIs are required",
+            XionErrorCode::EOAUTHCLIENT004 => "Binded treasury is required",
+            XionErrorCode::EOAUTHCLIENT005 => "Owner is required",
+            XionErrorCode::EOAUTHCLIENT006 => "Invalid grant type",
+            XionErrorCode::EOAUTHCLIENT007 => "Manager user ID is required",
+            XionErrorCode::EOAUTHCLIENT008 => "Authentication required",
+            XionErrorCode::EOAUTHCLIENT009 => "User not found",
+            XionErrorCode::EOAUTHCLIENT010 => "Insufficient scope",
+            XionErrorCode::EOAUTHCLIENT011 => "Only owner allowed",
+            XionErrorCode::EOAUTHCLIENT012 => "Client not found",
+            XionErrorCode::EOAUTHCLIENT013 => "Client extension not found",
+            XionErrorCode::EOAUTHCLIENT014 => "Treasury not found",
+            XionErrorCode::EOAUTHCLIENT015 => "Internal server error",
+            XionErrorCode::EOAUTHCLIENT016 => "Treasury fetch error",
+            XionErrorCode::EOAUTHCLIENT017 => "Treasury query error",
+            XionErrorCode::EOAUTHCLIENT018 => "Unknown network",
+            XionErrorCode::EOAUTHCLIENT019 => "Confirmation required",
         }
     }
 
@@ -293,6 +356,31 @@ impl XionErrorCode {
             }
             XionErrorCode::EFAUCET003 => "Run 'xion-toolkit auth login' first",
             XionErrorCode::EFAUCET004 => "Use --network testnet to claim testnet tokens",
+
+            // OAuth Client Management
+            XionErrorCode::EOAUTHCLIENT001 => "Check request parameters and try again",
+            XionErrorCode::EOAUTHCLIENT002 => "Provide a client ID",
+            XionErrorCode::EOAUTHCLIENT003 => "Provide at least one redirect URI",
+            XionErrorCode::EOAUTHCLIENT004 => "Provide a treasury address with --treasury",
+            XionErrorCode::EOAUTHCLIENT005 => "Provide an owner user ID",
+            XionErrorCode::EOAUTHCLIENT006 => "Use a valid grant type (authorization_code, etc.)",
+            XionErrorCode::EOAUTHCLIENT007 => "Provide a manager user ID",
+            XionErrorCode::EOAUTHCLIENT008 => "Run 'xion-toolkit auth login' first",
+            XionErrorCode::EOAUTHCLIENT009 => "Run 'xion-toolkit auth login' first",
+            XionErrorCode::EOAUTHCLIENT010 => {
+                "Re-authorize with --dev-mode: xion-toolkit auth login --dev-mode"
+            }
+            XionErrorCode::EOAUTHCLIENT011 => "Only the client owner can perform this action",
+            XionErrorCode::EOAUTHCLIENT012 => "Check the client ID and try again",
+            XionErrorCode::EOAUTHCLIENT013 => "Check the client ID; extension may not exist",
+            XionErrorCode::EOAUTHCLIENT014 => "Verify the treasury address is correct",
+            XionErrorCode::EOAUTHCLIENT015 => {
+                "The server encountered an error. Please try again later."
+            }
+            XionErrorCode::EOAUTHCLIENT016 => "Failed to fetch treasury data. Try again later.",
+            XionErrorCode::EOAUTHCLIENT017 => "Failed to query treasury data. Try again later.",
+            XionErrorCode::EOAUTHCLIENT018 => "Verify network configuration and try again",
+            XionErrorCode::EOAUTHCLIENT019 => "Re-run the command with --force to confirm",
         }
     }
 
@@ -361,6 +449,25 @@ impl XionErrorCode {
             | XionErrorCode::EFAUCET002
             | XionErrorCode::EFAUCET003
             | XionErrorCode::EFAUCET004 => "FAUCET",
+            XionErrorCode::EOAUTHCLIENT001
+            | XionErrorCode::EOAUTHCLIENT002
+            | XionErrorCode::EOAUTHCLIENT003
+            | XionErrorCode::EOAUTHCLIENT004
+            | XionErrorCode::EOAUTHCLIENT005
+            | XionErrorCode::EOAUTHCLIENT006
+            | XionErrorCode::EOAUTHCLIENT007
+            | XionErrorCode::EOAUTHCLIENT008
+            | XionErrorCode::EOAUTHCLIENT009
+            | XionErrorCode::EOAUTHCLIENT010
+            | XionErrorCode::EOAUTHCLIENT011
+            | XionErrorCode::EOAUTHCLIENT012
+            | XionErrorCode::EOAUTHCLIENT013
+            | XionErrorCode::EOAUTHCLIENT014
+            | XionErrorCode::EOAUTHCLIENT015
+            | XionErrorCode::EOAUTHCLIENT016
+            | XionErrorCode::EOAUTHCLIENT017
+            | XionErrorCode::EOAUTHCLIENT018 => "OAUTH_CLIENT",
+            XionErrorCode::EOAUTHCLIENT019 => "OAUTH_CLIENT",
         }
     }
 }
@@ -512,6 +619,10 @@ pub enum XionError {
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
 
+    /// OAuth client management error
+    #[error("{0}")]
+    OAuthClient(#[source] OAuthClientError),
+
     /// Generic error with code
     #[error("{message}")]
     Generic {
@@ -532,6 +643,7 @@ impl XionError {
             XionError::Config(e) => e.code(),
             XionError::Network(e) => e.code(),
             XionError::Tx(e) => e.code(),
+            XionError::OAuthClient(e) => e.code(),
             XionError::Io(_) => XionErrorCode::ECONFIG002,
             XionError::Serialization(_) => XionErrorCode::ECONFIG002,
             XionError::Generic { code, .. } => *code,
@@ -548,6 +660,7 @@ impl XionError {
             XionError::Config(e) => e.hint(),
             XionError::Network(e) => e.hint(),
             XionError::Tx(e) => e.hint(),
+            XionError::OAuthClient(e) => e.hint(),
             XionError::Io(_) => "Check file permissions and disk space".to_string(),
             XionError::Serialization(_) => "Check JSON format and structure".to_string(),
             XionError::Generic { hint, .. } => hint.clone(),
@@ -847,6 +960,106 @@ impl TxError {
     }
 }
 
+/// OAuth client management errors
+#[derive(Debug, Error)]
+pub enum OAuthClientError {
+    #[error("Bad request: {code} - {message}")]
+    BadRequest { code: String, message: String },
+
+    #[error("Authentication required: {message}")]
+    AuthenticationRequired { message: String },
+
+    #[error("Insufficient scope: {message}")]
+    InsufficientScope { message: String },
+
+    #[error("Only owner allowed: {message}")]
+    OnlyOwnerAllowed { message: String },
+
+    #[error("Client not found: {client_id}")]
+    ClientNotFound { client_id: String },
+
+    #[error("Client extension not found: {client_id}")]
+    ClientExtensionNotFound { client_id: String },
+
+    #[error("Treasury not found: {address}")]
+    TreasuryNotFound { address: String },
+
+    #[error("User not found: {message}")]
+    UserNotFound { message: String },
+
+    #[error("Server error: {code} - {message}")]
+    ServerError { code: String, message: String },
+
+    #[error("Network error: {message}")]
+    NetworkError { message: String },
+
+    #[error("Invalid response: {message}")]
+    InvalidResponse { message: String },
+
+    #[error("Confirmation required: {message}")]
+    ConfirmationRequired { message: String },
+}
+
+impl OAuthClientError {
+    pub fn code(&self) -> XionErrorCode {
+        match self {
+            OAuthClientError::BadRequest { .. } => XionErrorCode::EOAUTHCLIENT001,
+            OAuthClientError::AuthenticationRequired { .. } => XionErrorCode::EOAUTHCLIENT008,
+            OAuthClientError::InsufficientScope { .. } => XionErrorCode::EOAUTHCLIENT010,
+            OAuthClientError::OnlyOwnerAllowed { .. } => XionErrorCode::EOAUTHCLIENT011,
+            OAuthClientError::ClientNotFound { .. } => XionErrorCode::EOAUTHCLIENT012,
+            OAuthClientError::ClientExtensionNotFound { .. } => XionErrorCode::EOAUTHCLIENT013,
+            OAuthClientError::TreasuryNotFound { .. } => XionErrorCode::EOAUTHCLIENT014,
+            OAuthClientError::UserNotFound { .. } => XionErrorCode::EOAUTHCLIENT009,
+            OAuthClientError::ServerError { .. } => XionErrorCode::EOAUTHCLIENT015,
+            OAuthClientError::NetworkError { .. } => XionErrorCode::ENETWORK005,
+            OAuthClientError::InvalidResponse { .. } => XionErrorCode::ENETWORK004,
+            OAuthClientError::ConfirmationRequired { .. } => XionErrorCode::EOAUTHCLIENT019,
+        }
+    }
+
+    pub fn hint(&self) -> String {
+        match self {
+            OAuthClientError::BadRequest { message, .. } => {
+                format!("Check request parameters: {}", message)
+            }
+            OAuthClientError::AuthenticationRequired { .. } => {
+                "Run 'xion-toolkit auth login' first".to_string()
+            }
+            OAuthClientError::InsufficientScope { .. } => {
+                "Re-authorize with --dev-mode: xion-toolkit auth login --dev-mode".to_string()
+            }
+            OAuthClientError::OnlyOwnerAllowed { .. } => {
+                "Only the client owner can perform this action".to_string()
+            }
+            OAuthClientError::ClientNotFound { .. } => {
+                "Check the client ID and try again".to_string()
+            }
+            OAuthClientError::ClientExtensionNotFound { .. } => {
+                "Check the client ID; extension may not exist".to_string()
+            }
+            OAuthClientError::TreasuryNotFound { .. } => {
+                "Verify the treasury address is correct".to_string()
+            }
+            OAuthClientError::UserNotFound { .. } => {
+                "Run 'xion-toolkit auth login' first".to_string()
+            }
+            OAuthClientError::ServerError { .. } => {
+                "The server encountered an error. Please try again later.".to_string()
+            }
+            OAuthClientError::NetworkError { .. } => {
+                "Check network connectivity and try again".to_string()
+            }
+            OAuthClientError::InvalidResponse { .. } => {
+                "Server returned unexpected data. Check API version.".to_string()
+            }
+            OAuthClientError::ConfirmationRequired { .. } => {
+                "Re-run the command with --force to confirm the destructive operation".to_string()
+            }
+        }
+    }
+}
+
 // Implement From traits for easy conversion
 
 impl From<AuthError> for XionError {
@@ -888,6 +1101,12 @@ impl From<NetworkError> for XionError {
 impl From<TxError> for XionError {
     fn from(e: TxError) -> Self {
         XionError::Tx(e)
+    }
+}
+
+impl From<OAuthClientError> for XionError {
+    fn from(e: OAuthClientError) -> Self {
+        XionError::OAuthClient(e)
     }
 }
 

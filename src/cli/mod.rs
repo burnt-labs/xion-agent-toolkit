@@ -5,6 +5,7 @@ pub mod batch;
 pub mod config;
 pub mod contract;
 pub mod faucet;
+pub mod oauth2_client;
 pub mod treasury;
 pub mod tx;
 
@@ -124,6 +125,10 @@ pub enum Commands {
     #[command(subcommand)]
     Tx(tx::TxCommands),
 
+    /// OAuth2 client management commands
+    #[command(subcommand, name = "oauth2")]
+    OAuth2(oauth2_client::OAuth2Commands),
+
     /// Faucet commands for testnet tokens
     #[command(subcommand)]
     Faucet(faucet::FaucetCommands),
@@ -190,6 +195,13 @@ pub async fn handle_faucet_command(
     ctx: &ExecuteContext,
 ) -> Result<()> {
     faucet::handle_command(cmd, ctx).await
+}
+
+pub async fn handle_oauth2_command(
+    cmd: oauth2_client::OAuth2Commands,
+    ctx: &ExecuteContext,
+) -> Result<()> {
+    oauth2_client::handle_command(cmd, ctx).await
 }
 
 pub fn handle_status_command(ctx: &ExecuteContext) -> Result<()> {

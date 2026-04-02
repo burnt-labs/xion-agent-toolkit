@@ -6,10 +6,20 @@
 
 ```bash
 xion-toolkit auth login          # OAuth2 login (opens browser)
+xion-toolkit auth login --dev-mode  # Login with Manager API scopes
 xion-toolkit auth status         # Check auth status
 xion-toolkit auth refresh        # Refresh access token
 xion-toolkit auth logout         # Clear credentials
 ```
+
+### Auth Scopes
+
+| Mode | Scopes | Use Case |
+|------|--------|----------|
+| Default | `xion:identity:read`, `xion:blockchain:read`, `xion:transactions:submit` | Treasury, contracts, queries |
+| `--dev-mode` | Default + `xion:mgr:read`, `xion:mgr:write` | Manager API (OAuth2 client management) |
+
+**Note:** OAuth2 scopes are persisted with credentials and validated locally before HTTP requests. If you attempt to use Manager API commands without the required scopes, the CLI fails fast with: `"Insufficient scope: missing xion:mgr:read, xion:mgr:write. Re-login with --dev-mode: xion-toolkit auth login --dev-mode"`
 
 ### Auth Output Examples
 
@@ -230,6 +240,52 @@ xion-toolkit asset batch-mint --contract xion1... --tokens-file tokens.json
 | cw721-expiration | 523 | Time-limited NFTs |
 | cw721-non-transferable | 526 | Soulbound tokens |
 | cw2981-royalties | 528 | Royalty-bearing NFTs |
+
+---
+
+## OAuth2 Client Management
+
+```bash
+# List OAuth clients
+xion-toolkit oauth2 client list
+
+# Create OAuth client
+xion-toolkit oauth2 client create \
+  --redirect-uris "https://example.com/callback" \
+  --treasury "xion1treasury..."
+
+# Get client details
+xion-toolkit oauth2 client get <CLIENT_ID>
+
+# Update client
+xion-toolkit oauth2 client update <CLIENT_ID> \
+  --client-name "Updated App"
+
+# Delete client
+xion-toolkit oauth2 client delete <CLIENT_ID> --force
+
+# Extension management
+xion-toolkit oauth2 client extension get <CLIENT_ID>
+xion-toolkit oauth2 client extension update <CLIENT_ID> --managers "user_a,user_b"
+
+# Manager management
+xion-toolkit oauth2 client managers add <CLIENT_ID> --manager-id <USER_ID>
+xion-toolkit oauth2 client managers remove <CLIENT_ID> --manager-id <USER_ID>
+
+# Transfer ownership
+xion-toolkit oauth2 client transfer-ownership <CLIENT_ID> --new-owner <USER_ID> --force
+```
+
+### OAuth2 Client Error Codes
+
+| Code | Meaning | Fix |
+|------|---------|-----|
+| EOAUTHCLIENT008 | Not authenticated | `auth login` |
+| EOAUTHCLIENT012 | Client not found | Check client ID |
+| EOAUTHCLIENT014 | Treasury not found | Check treasury address |
+| EOAUTHCLIENT011 | Not owner | Only owner can perform action |
+| EOAUTHCLIENT010 | Insufficient scope | Re-authorize with xion:mgr:write scope |
+| EOAUTHCLIENT019 | Confirmation required | Re-run with `--force` to confirm |
 
 ---
 

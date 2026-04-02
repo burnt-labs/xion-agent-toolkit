@@ -93,6 +93,7 @@ Format: `E{MODULE}{NUMBER}`
 | NETWORK | ENETWORK001-ENETWORK099 | Network/API |
 | TX | ETX001-ETX099 | Transaction monitoring |
 | FAUCET | EFAUCET001-EFAUCET099 | Faucet operations |
+| OAUTH_CLIENT | EOAUTHCLIENT001-EOAUTHCLIENT099 | OAuth2 client management |
 
 ---
 
@@ -318,6 +319,44 @@ xion-toolkit faucet claim
 xion-toolkit auth status
 
 # Ensure you're on testnet
+xion-toolkit config show
+```
+
+---
+
+## OAuth2 Client Errors (EOAUTHCLIENT001-EOAUTHCLIENT099)
+
+| Code | Message | Hint | Retryable |
+|------|---------|------|-----------|
+| EOAUTHCLIENT001 | Bad request | Check request parameters and try again | No |
+| EOAUTHCLIENT002 | Client ID is required | Provide a client ID | No |
+| EOAUTHCLIENT003 | Redirect URIs are required | Provide at least one redirect URI | No |
+| EOAUTHCLIENT004 | Binded treasury is required | Provide a treasury address with --treasury | No |
+| EOAUTHCLIENT005 | Owner is required | Provide an owner user ID | No |
+| EOAUTHCLIENT006 | Invalid grant type | Use a valid grant type (authorization_code, etc.) | No |
+| EOAUTHCLIENT007 | Manager user ID is required | Provide a manager user ID | No |
+| EOAUTHCLIENT008 | Authentication required | Run 'xion-toolkit auth login' first | No |
+| EOAUTHCLIENT009 | User not found | Run 'xion-toolkit auth login' first | No |
+| EOAUTHCLIENT010 | Insufficient scope | Re-authorize with xion:mgr:write scope | No |
+| EOAUTHCLIENT011 | Only owner allowed | Only the client owner can perform this action | No |
+| EOAUTHCLIENT012 | Client not found | Check the client ID and try again | No |
+| EOAUTHCLIENT013 | Client extension not found | Check the client ID; extension may not exist | No |
+| EOAUTHCLIENT014 | Treasury not found | Verify the treasury address is correct | No |
+| EOAUTHCLIENT015 | Internal server error | Retry later or contact support | Yes |
+| EOAUTHCLIENT016 | Treasury fetch error | Failed to fetch treasury data. Try again later. | Yes |
+| EOAUTHCLIENT017 | Treasury query error | Failed to query treasury data. Try again later. | Yes |
+| EOAUTHCLIENT018 | Unknown network | Verify network configuration and try again | No |
+
+### OAuth2 Client Troubleshooting
+
+```bash
+# Check authentication status
+xion-toolkit auth status
+
+# List OAuth2 clients
+xion-toolkit oauth2 client list
+
+# Check network configuration
 xion-toolkit config show
 ```
 

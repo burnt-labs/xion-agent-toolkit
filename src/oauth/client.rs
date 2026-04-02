@@ -10,6 +10,16 @@ use crate::api::oauth2_api::OAuth2ApiClient;
 use crate::config::{CredentialsManager, NetworkConfig, UserCredentials};
 use crate::oauth::{CallbackServer, PKCEChallenge, TokenManager};
 
+/// Default OAuth2 scopes requested during authorization.
+const DEFAULT_SCOPES: &[&str] = &[
+    "xion:identity:read",
+    "xion:blockchain:read",
+    "xion:transactions:submit",
+];
+
+/// Additional OAuth2 scopes requested in dev mode.
+const DEV_MODE_SCOPES: &[&str] = &["xion:mgr:read", "xion:mgr:write"];
+
 /// OAuth2 Client
 ///
 /// High-level client that manages the complete OAuth2 authentication lifecycle:
@@ -48,8 +58,8 @@ use crate::oauth::{CallbackServer, PKCEChallenge, TokenManager};
 /// println!("Logged in as: {:?}", credentials.xion_address);
 ///
 /// // Get valid token (auto-refresh if needed)
-/// let token = client.get_valid_token().await?;
-/// println!("Access token: {}", token);
+/// let credentials = client.get_valid_token().await?;
+/// println!("Access token: {}", credentials.access_token);
 ///
 /// # Ok(())
 /// # }
@@ -64,6 +74,8 @@ pub struct OAuthClient {
     token_manager: TokenManager,
     /// Credentials manager for persistence
     credentials_manager: CredentialsManager,
+    /// OAuth2 scopes requested during authorization
+    scopes: Vec<String>,
 }
 
 impl OAuthClient {
@@ -129,6 +141,7 @@ impl OAuthClient {
             api_client,
             token_manager,
             credentials_manager,
+            scopes: DEFAULT_SCOPES.iter().map(|s| s.to_string()).collect(),
         })
     }
 
@@ -160,7 +173,21 @@ impl OAuthClient {
             api_client,
             token_manager,
             credentials_manager,
+            scopes: DEFAULT_SCOPES.iter().map(|s| s.to_string()).collect(),
         })
+    }
+
+    /// Enable dev mode, adding manager read/write scopes to authorization requests.
+    ///
+    /// This is a builder-style method that appends `xion:mgr:read` and `xion:mgr:write`
+    /// scopes to the existing default scopes.
+    ///
+    /// # Returns
+    /// A mutable reference to self for chaining
+    pub fn with_dev_mode(&mut self) -> &mut Self {
+        self.scopes
+            .extend(DEV_MODE_SCOPES.iter().map(|s| s.to_string()));
+        self
     }
 
     /// Execute full OAuth2 login flow
@@ -319,6 +346,7 @@ impl OAuthClient {
             expires_at,
             refresh_token_expires_at,
             xion_address: Some(user_info.id),
+            scope: token_response.scope,
         };
 
         self.credentials_manager
@@ -474,13 +502,13 @@ impl OAuthClient {
         }
     }
 
-    /// Get valid access token (auto-refresh if needed)
+    /// Get valid credentials (auto-refresh if needed)
     ///
-    /// Returns a valid access token, automatically refreshing it if expired.
-    /// This is the primary method for obtaining tokens for API calls.
+    /// Returns valid credentials, automatically refreshing the access token if expired.
+    /// This is the primary method for obtaining credentials for API calls.
     ///
     /// # Returns
-    /// Valid access token ready for use
+    /// Valid credentials ready for use
     ///
     /// # Errors
     /// Returns an error if:
@@ -511,13 +539,13 @@ impl OAuthClient {
     /// #     cw2981_royalties_code_id: 528,
     /// # };
     /// let client = OAuthClient::new(config)?;
-    /// let token = client.get_valid_token().await?;
-    /// println!("Access token: {}", token);
+    /// let credentials = client.get_valid_token().await?;
+    /// println!("Access token: {}", credentials.access_token);
     /// # Ok(())
     /// # }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_valid_token(&self) -> Result<String> {
+    pub async fn get_valid_token(&self) -> Result<UserCredentials> {
         debug!("Getting valid access token");
         self.token_manager
             .get_valid_token()
@@ -578,7 +606,7 @@ impl OAuthClient {
 
     /// Build authorization URL
     ///
-    /// Constructs the OAuth2 authorization URL with PKCE parameters.
+    /// Constructs the OAuth2 authorization URL with PKCE parameters and OAuth2 scopes.
     ///
     /// # Arguments
     /// * `pkce` - PKCE challenge containing verifier, challenge, and state
@@ -593,17 +621,21 @@ impl OAuthClient {
         redirect_uri: &str,
         authorization_endpoint: &str,
     ) -> String {
+        let scopes_str = self.scopes.join(" ");
+        let scope_param = urlencoding::encode(&scopes_str);
         format!(
             "{}?\
              response_type=code&\
              client_id={}&\
              redirect_uri={}&\
+             scope={}&\
              code_challenge={}&\
              code_challenge_method=S256&\
              state={}",
             authorization_endpoint,
             urlencoding::encode(&self.network_config.oauth_client_id),
             urlencoding::encode(redirect_uri),
+            scope_param,
             pkce.challenge,
             pkce.state
         )
@@ -768,6 +800,10 @@ mod tests {
         assert!(auth_url.contains("response_type=code"));
         assert!(auth_url.contains("client_id=test-client-id"));
         assert!(auth_url.contains("redirect_uri=http%3A%2F%2F127.0.0.1%3A54321%2Fcallback"));
+        assert!(auth_url.contains("scope="));
+        assert!(auth_url.contains("xion%3Aidentity%3Aread"));
+        assert!(auth_url.contains("xion%3Ablockchain%3Aread"));
+        assert!(auth_url.contains("xion%3Atransactions%3Asubmit"));
         assert!(auth_url.contains(&format!("code_challenge={}", pkce.challenge)));
         assert!(auth_url.contains("code_challenge_method=S256"));
         assert!(auth_url.contains(&format!("state={}", pkce.state)));
@@ -785,5 +821,46 @@ mod tests {
 
         // Verify URL encoding
         assert!(auth_url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A54321%2Fcallback"));
+    }
+
+    #[test]
+    fn test_authorization_url_contains_default_scopes() {
+        let config = create_test_config();
+        let client = OAuthClient::new(config).unwrap();
+
+        let pkce = PKCEChallenge::generate().unwrap();
+        let redirect_uri = "http://127.0.0.1:54321/callback";
+        let auth_endpoint = "https://oauth2.testnet.burnt.com/oauth/authorize";
+        let auth_url = client.build_authorization_url(&pkce, redirect_uri, auth_endpoint);
+
+        // Verify default scopes are present (space-separated, URL-encoded)
+        assert!(auth_url.contains("xion%3Aidentity%3Aread"));
+        assert!(auth_url.contains("xion%3Ablockchain%3Aread"));
+        assert!(auth_url.contains("xion%3Atransactions%3Asubmit"));
+
+        // Dev-mode scopes should NOT be present by default
+        assert!(!auth_url.contains("xion%3Amgr%3Aread"));
+        assert!(!auth_url.contains("xion%3Amgr%3Awrite"));
+    }
+
+    #[test]
+    fn test_authorization_url_with_dev_mode_scopes() {
+        let config = create_test_config();
+        let mut client = OAuthClient::new(config).unwrap();
+        client.with_dev_mode();
+
+        let pkce = PKCEChallenge::generate().unwrap();
+        let redirect_uri = "http://127.0.0.1:54321/callback";
+        let auth_endpoint = "https://oauth2.testnet.burnt.com/oauth/authorize";
+        let auth_url = client.build_authorization_url(&pkce, redirect_uri, auth_endpoint);
+
+        // Verify default scopes are still present
+        assert!(auth_url.contains("xion%3Aidentity%3Aread"));
+        assert!(auth_url.contains("xion%3Ablockchain%3Aread"));
+        assert!(auth_url.contains("xion%3Atransactions%3Asubmit"));
+
+        // Verify dev-mode scopes are now present
+        assert!(auth_url.contains("xion%3Amgr%3Aread"));
+        assert!(auth_url.contains("xion%3Amgr%3Awrite"));
     }
 }

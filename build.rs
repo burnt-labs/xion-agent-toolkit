@@ -13,6 +13,10 @@ fn main() {
     let mainnet_client_id = env::var("XION_MAINNET_OAUTH_CLIENT_ID")
         .unwrap_or_else(|_| "PLACEHOLDER_MAINNET_CLIENT_ID".to_string());
 
+    // Optional: override OAuth API URL for local development
+    let testnet_oauth_api_url = env::var("XION_TESTNET_OAUTH_API_URL")
+        .unwrap_or_else(|_| "https://oauth2.testnet.burnt.com".to_string());
+
     // Generate network_config.rs
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("network_config.rs");
@@ -49,7 +53,7 @@ pub struct NetworkConfig {{
 pub fn get_testnet_config() -> NetworkConfig {{
     NetworkConfig {{
         network_name: "testnet".to_string(),
-        oauth_api_url: "https://oauth2.testnet.burnt.com".to_string(),
+        oauth_api_url: "{}".to_string(),
         rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
         rest_url: "https://api.xion-testnet-2.burnt.com".to_string(),
         chain_id: "xion-testnet-2".to_string(),
@@ -88,12 +92,13 @@ pub fn get_mainnet_config() -> NetworkConfig {{
     }}
 }}
 "#,
-        testnet_client_id, mainnet_client_id
+        testnet_oauth_api_url, testnet_client_id, mainnet_client_id
     );
 
     fs::write(&dest_path, config_content).unwrap();
 
     println!("cargo:rerun-if-env-changed=XION_TESTNET_OAUTH_CLIENT_ID");
+    println!("cargo:rerun-if-env-changed=XION_TESTNET_OAUTH_API_URL");
     println!("cargo:rerun-if-env-changed=XION_MAINNET_OAUTH_CLIENT_ID");
     println!("cargo:rerun-if-changed=.env");
     println!("cargo:rerun-if-changed=build.rs");

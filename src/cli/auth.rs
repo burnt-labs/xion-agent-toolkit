@@ -14,6 +14,10 @@ pub enum AuthCommands {
         /// Force new browser authentication (skip refresh check)
         #[arg(short, long)]
         force: bool,
+
+        /// Enable dev mode (adds manager read/write scopes)
+        #[arg(long)]
+        dev_mode: bool,
     },
 
     /// Logout and clear stored credentials
@@ -28,7 +32,11 @@ pub enum AuthCommands {
 
 pub async fn handle_command(cmd: AuthCommands, ctx: &ExecuteContext) -> Result<()> {
     match cmd {
-        AuthCommands::Login { port, force } => handle_login(port, force, ctx).await?,
+        AuthCommands::Login {
+            port,
+            force,
+            dev_mode,
+        } => handle_login(port, force, dev_mode, ctx).await?,
         AuthCommands::Logout => handle_logout(ctx)?,
         AuthCommands::Status => handle_status(ctx)?,
         AuthCommands::Refresh => handle_refresh(ctx).await?,
@@ -36,7 +44,12 @@ pub async fn handle_command(cmd: AuthCommands, ctx: &ExecuteContext) -> Result<(
     Ok(())
 }
 
-async fn handle_login(port: Option<u16>, force: bool, ctx: &ExecuteContext) -> Result<()> {
+async fn handle_login(
+    port: Option<u16>,
+    force: bool,
+    dev_mode: bool,
+    ctx: &ExecuteContext,
+) -> Result<()> {
     use crate::config::ConfigManager;
     use crate::oauth::OAuthClient;
     use crate::utils::output::{print_formatted, print_info};
@@ -51,7 +64,13 @@ async fn handle_login(port: Option<u16>, force: bool, ctx: &ExecuteContext) -> R
         network_config.callback_port = p;
     }
 
-    let oauth_client = OAuthClient::new(network_config.clone())?;
+    let mut oauth_client = OAuthClient::new(network_config.clone())?;
+
+    // Enable dev-mode scopes if requested
+    if dev_mode {
+        oauth_client.with_dev_mode();
+        info!("Dev mode enabled: adding manager read/write scopes");
+    }
 
     // Step 1: Check if refresh-first is possible (unless --force)
     // Handle is_authenticated errors gracefully - fallback to browser auth

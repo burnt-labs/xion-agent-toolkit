@@ -1,0 +1,102 @@
+{
+  "command": "oauth2 client update",
+  "description": "Update an existing OAuth2 client",
+  "parameters": [
+    {
+      "name": "client-id",
+      "type": "string",
+      "required": true,
+      "description": "OAuth2 client ID to update"
+    },
+    {
+      "name": "redirect-uris",
+      "type": "array",
+      "required": false,
+      "description": "OAuth redirect URIs (comma-separated or JSON array in --json-input)",
+      "notes": "Set to empty string to clear a URI"
+    },
+    {
+      "name": "client-name",
+      "type": "string",
+      "required": false,
+      "description": "Human-readable client name"
+    },
+    {
+      "name": "contacts",
+      "type": "array",
+      "required": false,
+      "description": "Contact email addresses"
+    },
+    {
+      "name": "client-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Client homepage URL"
+    },
+    {
+      "name": "logo-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Client logo URL"
+    },
+    {
+      "name": "policy-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Privacy policy URL"
+    },
+    {
+      "name": "tos-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Terms of service URL"
+    },
+    {
+      "name": "jwks-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "JWKS endpoint URL"
+    },
+    {
+      "name": "json-input",
+      "type": "file",
+      "required": false,
+      "description": "JSON file with full request body",
+      "conflicts_with": ["redirect-uris", "client-name", "contacts", "client-uri", "logo-uri", "policy-uri", "tos-uri", "jwks-uri"]
+    }
+  ],
+  "validation_rules": [
+    "Only the client owner can update",
+    "bindedTreasury cannot be modified after creation",
+    "If --json-input is provided, all other flags are ignored"
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:write scope" },
+    { "code": "EOAUTHCLIENT011", "description": "Not the client owner", "remediation": "Only the client owner can update" },
+    { "code": "EOAUTHCLIENT012", "description": "Client not found", "remediation": "Check the client ID and try again" }
+  ],
+  "examples": [
+    {
+      "description": "Update client name",
+      "params": {
+        "client-id": "client_abc123",
+        "client-name": "Updated DApp Name"
+      }
+    },
+    {
+      "description": "Update multiple fields",
+      "params": {
+        "client-id": "client_abc123",
+        "client-name": "Updated DApp",
+        "policy-uri": "https://example.com/privacy",
+        "tos-uri": "https://example.com/terms"
+      }
+    }
+  ]
+}

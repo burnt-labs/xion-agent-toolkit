@@ -69,6 +69,9 @@ pub struct TokenResponse {
     /// Xion blockchain address associated with the account
     #[serde(default)]
     pub xion_address: Option<String>,
+    /// Space-separated OAuth2 scopes granted by the authorization server.
+    #[serde(default)]
+    pub scope: Option<String>,
 }
 
 impl TokenResponse {
@@ -614,6 +617,7 @@ mod tests {
             refresh_token_expires_at: None,
             token_type: "Bearer".to_string(),
             xion_address: Some("xion1test".to_string()),
+            scope: None,
         };
 
         let expires_at = token.calculate_expires_at();
@@ -632,6 +636,7 @@ mod tests {
             refresh_token_expires_at: None,
             token_type: "Bearer".to_string(),
             xion_address: Some("xion1test".to_string()),
+            scope: None,
         };
         token.expires_at = Some(token.calculate_expires_at());
         assert!(!token.is_expired());

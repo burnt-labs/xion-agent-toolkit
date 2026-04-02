@@ -1,0 +1,135 @@
+{
+  "command": "oauth2 client create",
+  "description": "Create a new OAuth2 client bound to a treasury",
+  "parameters": [
+    {
+      "name": "redirect-uris",
+      "type": "array",
+      "required": true,
+      "description": "OAuth redirect URIs (comma-separated or JSON array in --json-input)",
+      "notes": "Must be valid HTTPS URLs"
+    },
+    {
+      "name": "treasury",
+      "type": "string",
+      "required": true,
+      "format": "xion-address",
+      "description": "Treasury contract address to bind this client to"
+    },
+    {
+      "name": "client-name",
+      "type": "string",
+      "required": false,
+      "description": "Human-readable client name"
+    },
+    {
+      "name": "owner",
+      "type": "string",
+      "required": false,
+      "description": "Client owner user ID (defaults to authenticated user)"
+    },
+    {
+      "name": "managers",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Manager user IDs"
+    },
+    {
+      "name": "auth-method",
+      "type": "enum",
+      "required": false,
+      "enum": ["none", "client_secret_basic", "client_secret_post"],
+      "default": "none",
+      "description": "Token endpoint authentication method"
+    },
+    {
+      "name": "contacts",
+      "type": "array",
+      "required": false,
+      "description": "Contact email addresses"
+    },
+    {
+      "name": "client-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Client homepage URL"
+    },
+    {
+      "name": "logo-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Client logo URL"
+    },
+    {
+      "name": "policy-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Privacy policy URL"
+    },
+    {
+      "name": "tos-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "Terms of service URL"
+    },
+    {
+      "name": "jwks-uri",
+      "type": "string",
+      "required": false,
+      "format": "url",
+      "description": "JWKS endpoint URL"
+    },
+    {
+      "name": "json-input",
+      "type": "file",
+      "required": false,
+      "description": "JSON file with full request body",
+      "conflicts_with": ["redirect-uris", "treasury", "client-name", "owner", "managers", "auth-method", "contacts", "client-uri", "logo-uri", "policy-uri", "tos-uri", "jwks-uri"]
+    },
+    {
+      "name": "show-secret",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Show client secret in output (default: redacted)"
+    }
+  ],
+  "validation_rules": [
+    "redirect-uris must contain at least one valid HTTPS URL",
+    "treasury must be a valid Xion address",
+    "contacts must be valid email addresses",
+    "If --json-input is provided, all other flags are ignored",
+    "IMPORTANT: Schema validation cannot enforce array minimum length - AI agents must ensure redirect-uris has at least 1 entry"
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:write scope" },
+    { "code": "EOAUTHCLIENT004", "description": "Treasury address required", "remediation": "Provide --treasury with a valid Xion address" },
+    { "code": "EOAUTHCLIENT011", "description": "Not the treasury admin", "remediation": "Only the treasury admin can create clients" }
+  ],
+  "examples": [
+    {
+      "description": "Create client with minimum params",
+      "params": {
+        "redirect-uris": "https://example.com/callback",
+        "treasury": "xion1abc123..."
+      }
+    },
+    {
+      "description": "Create client with all options",
+      "params": {
+        "redirect-uris": "https://example.com/callback",
+        "treasury": "xion1abc123...",
+        "client-name": "My DApp",
+        "auth-method": "none",
+        "managers": "user_456,user_789",
+        "show-secret": true
+      }
+    }
+  ]
+}

@@ -250,6 +250,7 @@ mod tests {
             expires_at: "2024-12-31T23:59:59Z".to_string(),
             refresh_token_expires_at: Some("2025-01-31T23:59:59Z".to_string()),
             xion_address: Some("xion1test".to_string()),
+            scope: None,
         };
 
         // Save
@@ -288,6 +289,7 @@ mod tests {
             expires_at: "2024-12-31T23:59:59Z".to_string(),
             refresh_token_expires_at: None,
             xion_address: None,
+            scope: None,
         };
         manager
             .save_credentials(&credentials)
@@ -316,6 +318,7 @@ mod tests {
             expires_at: "2024-12-31T23:59:59Z".to_string(),
             refresh_token_expires_at: None,
             xion_address: None,
+            scope: None,
         };
         manager
             .save_credentials(&credentials)
@@ -346,6 +349,7 @@ mod tests {
             expires_at: "2024-01-01T00:00:00Z".to_string(),
             refresh_token_expires_at: Some("2025-01-01T00:00:00Z".to_string()),
             xion_address: Some("xion1test".to_string()),
+            scope: None,
         };
         manager
             .save_credentials(&credentials)
@@ -386,6 +390,7 @@ mod tests {
             expires_at: "2024-01-01T00:00:00Z".to_string(),
             refresh_token_expires_at: Some("2025-01-01T00:00:00Z".to_string()),
             xion_address: Some("xion1testnet".to_string()),
+            scope: None,
         };
 
         let mainnet_creds = UserCredentials {
@@ -394,6 +399,7 @@ mod tests {
             expires_at: "2024-01-01T00:00:00Z".to_string(),
             refresh_token_expires_at: Some("2025-01-01T00:00:00Z".to_string()),
             xion_address: Some("xion1mainnet".to_string()),
+            scope: None,
         };
 
         manager_testnet
@@ -453,6 +459,7 @@ mod tests {
             expires_at: "2024-12-31T23:59:59Z".to_string(),
             refresh_token_expires_at: Some("2025-01-31T23:59:59Z".to_string()),
             xion_address: Some("xion1secret".to_string()),
+            scope: None,
         };
 
         manager

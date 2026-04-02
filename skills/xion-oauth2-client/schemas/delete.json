@@ -1,0 +1,38 @@
+{
+  "command": "oauth2 client delete",
+  "description": "Delete an OAuth2 client",
+  "parameters": [
+    {
+      "name": "client-id",
+      "type": "string",
+      "required": true,
+      "description": "OAuth2 client ID to delete"
+    },
+    {
+      "name": "force",
+      "type": "boolean",
+      "required": true,
+      "description": "Required flag to confirm the destructive operation"
+    }
+  ],
+  "validation_rules": [
+    "Only the client owner can delete the client",
+    "--force flag is required to confirm deletion"
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:write scope" },
+    { "code": "EOAUTHCLIENT011", "description": "Not the client owner", "remediation": "Only the client owner can delete" },
+    { "code": "EOAUTHCLIENT012", "description": "Client not found", "remediation": "Check the client ID and try again" },
+    { "code": "EOAUTHCLIENT019", "description": "Confirmation required", "remediation": "Re-run the command with --force to confirm" }
+  ],
+  "examples": [
+    {
+      "description": "Delete a client",
+      "params": {
+        "client-id": "client_abc123",
+        "force": true
+      }
+    }
+  ]
+}

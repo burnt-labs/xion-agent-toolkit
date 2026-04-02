@@ -178,6 +178,48 @@ pub mod exit_code {
     pub const FAUCET_AUTH_REQUIRED: i32 = 142;
     /// Faucet not available on this network
     pub const FAUCET_NOT_AVAILABLE: i32 = 143;
+
+    // ========================================================================
+    // OAuth Client Errors (160-179)
+    // ========================================================================
+    /// Bad request (MGR API)
+    pub const OAUTH_CLIENT_BAD_REQUEST: i32 = 160;
+    /// Client ID required
+    pub const OAUTH_CLIENT_ID_REQUIRED: i32 = 161;
+    /// Redirect URIs required
+    pub const OAUTH_CLIENT_REDIRECT_URIS_REQUIRED: i32 = 162;
+    /// Binded treasury required
+    pub const OAUTH_CLIENT_TREASURY_REQUIRED: i32 = 163;
+    /// Owner required
+    pub const OAUTH_CLIENT_OWNER_REQUIRED: i32 = 164;
+    /// Invalid grant type
+    pub const OAUTH_CLIENT_INVALID_GRANT_TYPE: i32 = 165;
+    /// Manager user ID required
+    pub const OAUTH_CLIENT_MANAGER_ID_REQUIRED: i32 = 166;
+    /// Authentication required (MGR API)
+    pub const OAUTH_CLIENT_AUTH_REQUIRED: i32 = 167;
+    /// User not found (MGR API)
+    pub const OAUTH_CLIENT_USER_NOT_FOUND: i32 = 168;
+    /// Insufficient scope
+    pub const OAUTH_CLIENT_INSUFFICIENT_SCOPE: i32 = 169;
+    /// Only owner allowed
+    pub const OAUTH_CLIENT_ONLY_OWNER: i32 = 170;
+    /// Client not found
+    pub const OAUTH_CLIENT_NOT_FOUND: i32 = 171;
+    /// Client extension not found
+    pub const OAUTH_CLIENT_EXTENSION_NOT_FOUND: i32 = 172;
+    /// Treasury not found (MGR API)
+    pub const OAUTH_CLIENT_TREASURY_NOT_FOUND: i32 = 173;
+    /// Internal server error (MGR API)
+    pub const OAUTH_CLIENT_SERVER_ERROR: i32 = 174;
+    /// Treasury fetch error
+    pub const OAUTH_CLIENT_TREASURY_FETCH_ERROR: i32 = 175;
+    /// Treasury query error
+    pub const OAUTH_CLIENT_TREASURY_QUERY_ERROR: i32 = 176;
+    /// Unknown network
+    pub const OAUTH_CLIENT_UNKNOWN_NETWORK: i32 = 177;
+    /// Confirmation required (--force)
+    pub const OAUTH_CLIENT_CONFIRMATION_REQUIRED: i32 = 178;
 }
 
 impl XionErrorCode {
@@ -247,6 +289,27 @@ impl XionErrorCode {
             XionErrorCode::EFAUCET002 => FAUCET_QUERY_FAILED,
             XionErrorCode::EFAUCET003 => FAUCET_AUTH_REQUIRED,
             XionErrorCode::EFAUCET004 => FAUCET_NOT_AVAILABLE,
+
+            // OAuth Client errors
+            XionErrorCode::EOAUTHCLIENT001 => OAUTH_CLIENT_BAD_REQUEST,
+            XionErrorCode::EOAUTHCLIENT002 => OAUTH_CLIENT_ID_REQUIRED,
+            XionErrorCode::EOAUTHCLIENT003 => OAUTH_CLIENT_REDIRECT_URIS_REQUIRED,
+            XionErrorCode::EOAUTHCLIENT004 => OAUTH_CLIENT_TREASURY_REQUIRED,
+            XionErrorCode::EOAUTHCLIENT005 => OAUTH_CLIENT_OWNER_REQUIRED,
+            XionErrorCode::EOAUTHCLIENT006 => OAUTH_CLIENT_INVALID_GRANT_TYPE,
+            XionErrorCode::EOAUTHCLIENT007 => OAUTH_CLIENT_MANAGER_ID_REQUIRED,
+            XionErrorCode::EOAUTHCLIENT008 => OAUTH_CLIENT_AUTH_REQUIRED,
+            XionErrorCode::EOAUTHCLIENT009 => OAUTH_CLIENT_USER_NOT_FOUND,
+            XionErrorCode::EOAUTHCLIENT010 => OAUTH_CLIENT_INSUFFICIENT_SCOPE,
+            XionErrorCode::EOAUTHCLIENT011 => OAUTH_CLIENT_ONLY_OWNER,
+            XionErrorCode::EOAUTHCLIENT012 => OAUTH_CLIENT_NOT_FOUND,
+            XionErrorCode::EOAUTHCLIENT013 => OAUTH_CLIENT_EXTENSION_NOT_FOUND,
+            XionErrorCode::EOAUTHCLIENT014 => OAUTH_CLIENT_TREASURY_NOT_FOUND,
+            XionErrorCode::EOAUTHCLIENT015 => OAUTH_CLIENT_SERVER_ERROR,
+            XionErrorCode::EOAUTHCLIENT016 => OAUTH_CLIENT_TREASURY_FETCH_ERROR,
+            XionErrorCode::EOAUTHCLIENT017 => OAUTH_CLIENT_TREASURY_QUERY_ERROR,
+            XionErrorCode::EOAUTHCLIENT018 => OAUTH_CLIENT_UNKNOWN_NETWORK,
+            XionErrorCode::EOAUTHCLIENT019 => OAUTH_CLIENT_CONFIRMATION_REQUIRED,
         }
     }
 }
@@ -321,6 +384,27 @@ pub fn exit_code_name(code: i32) -> &'static str {
         FAUCET_QUERY_FAILED => "FAUCET_QUERY_FAILED",
         FAUCET_AUTH_REQUIRED => "FAUCET_AUTH_REQUIRED",
         FAUCET_NOT_AVAILABLE => "FAUCET_NOT_AVAILABLE",
+
+        // OAuth Client
+        OAUTH_CLIENT_BAD_REQUEST => "OAUTH_CLIENT_BAD_REQUEST",
+        OAUTH_CLIENT_ID_REQUIRED => "OAUTH_CLIENT_ID_REQUIRED",
+        OAUTH_CLIENT_REDIRECT_URIS_REQUIRED => "OAUTH_CLIENT_REDIRECT_URIS_REQUIRED",
+        OAUTH_CLIENT_TREASURY_REQUIRED => "OAUTH_CLIENT_TREASURY_REQUIRED",
+        OAUTH_CLIENT_OWNER_REQUIRED => "OAUTH_CLIENT_OWNER_REQUIRED",
+        OAUTH_CLIENT_INVALID_GRANT_TYPE => "OAUTH_CLIENT_INVALID_GRANT_TYPE",
+        OAUTH_CLIENT_MANAGER_ID_REQUIRED => "OAUTH_CLIENT_MANAGER_ID_REQUIRED",
+        OAUTH_CLIENT_AUTH_REQUIRED => "OAUTH_CLIENT_AUTH_REQUIRED",
+        OAUTH_CLIENT_USER_NOT_FOUND => "OAUTH_CLIENT_USER_NOT_FOUND",
+        OAUTH_CLIENT_INSUFFICIENT_SCOPE => "OAUTH_CLIENT_INSUFFICIENT_SCOPE",
+        OAUTH_CLIENT_ONLY_OWNER => "OAUTH_CLIENT_ONLY_OWNER",
+        OAUTH_CLIENT_NOT_FOUND => "OAUTH_CLIENT_NOT_FOUND",
+        OAUTH_CLIENT_EXTENSION_NOT_FOUND => "OAUTH_CLIENT_EXTENSION_NOT_FOUND",
+        OAUTH_CLIENT_TREASURY_NOT_FOUND => "OAUTH_CLIENT_TREASURY_NOT_FOUND",
+        OAUTH_CLIENT_SERVER_ERROR => "OAUTH_CLIENT_SERVER_ERROR",
+        OAUTH_CLIENT_TREASURY_FETCH_ERROR => "OAUTH_CLIENT_TREASURY_FETCH_ERROR",
+        OAUTH_CLIENT_TREASURY_QUERY_ERROR => "OAUTH_CLIENT_TREASURY_QUERY_ERROR",
+        OAUTH_CLIENT_UNKNOWN_NETWORK => "OAUTH_CLIENT_UNKNOWN_NETWORK",
+        OAUTH_CLIENT_CONFIRMATION_REQUIRED => "OAUTH_CLIENT_CONFIRMATION_REQUIRED",
 
         _ => "UNKNOWN",
     }
@@ -438,5 +522,17 @@ mod tests {
             exit_code_name(exit_code::MAINNET_DISABLED),
             "MAINNET_DISABLED"
         );
+    }
+
+    #[test]
+    fn test_oauth_client_exit_code_names() {
+        // Boundary: first OAuth Client code
+        assert_eq!(exit_code_name(160), "OAUTH_CLIENT_BAD_REQUEST");
+        // Boundary: second-to-last OAuth Client code
+        assert_eq!(exit_code_name(177), "OAUTH_CLIENT_UNKNOWN_NETWORK");
+        // Boundary: last OAuth Client code
+        assert_eq!(exit_code_name(178), "OAUTH_CLIENT_CONFIRMATION_REQUIRED");
+        // Spot-check a middle code
+        assert_eq!(exit_code_name(167), "OAUTH_CLIENT_AUTH_REQUIRED");
     }
 }

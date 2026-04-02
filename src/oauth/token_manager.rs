@@ -70,14 +70,14 @@ impl TokenManager {
         }
     }
 
-    /// Get a valid access token (refresh if needed)
+    /// Get valid credentials (refresh access token if needed)
     ///
-    /// This is the primary method to obtain an access token for API calls.
+    /// This is the primary method to obtain credentials for API calls.
     /// It automatically handles token refresh if the current token is expired
     /// or will expire soon.
     ///
     /// # Returns
-    /// Valid access token ready for use in API calls
+    /// Valid credentials ready for use in API calls
     ///
     /// # Errors
     /// Returns an error if:
@@ -97,13 +97,13 @@ impl TokenManager {
     ///     OAuth2ApiClient::new("https://oauth2.testnet.burnt.com".to_string()),
     ///     "client_id".to_string()
     /// );
-    /// let token = token_mgr.get_valid_token().await?;
-    /// println!("Access token: {}", token);
+    /// let credentials = token_mgr.get_valid_token().await?;
+    /// println!("Access token: {}", credentials.access_token);
     /// # Ok(())
     /// # }
     /// ```
     #[instrument(skip(self))]
-    pub async fn get_valid_token(&self) -> Result<String> {
+    pub async fn get_valid_token(&self) -> Result<UserCredentials> {
         debug!("Getting valid access token");
 
         // Load current credentials
@@ -140,7 +140,7 @@ impl TokenManager {
                     .credentials_manager
                     .load_credentials()
                     .context("Failed to load fresh credentials")?;
-                return Ok(fresh_credentials.access_token);
+                return Ok(fresh_credentials);
             }
 
             // Refresh token
@@ -154,11 +154,11 @@ impl TokenManager {
                 sanitize_for_log(&new_credentials.access_token, 8)
             );
 
-            return Ok(new_credentials.access_token);
+            return Ok(new_credentials);
         }
 
         debug!("Current token is still valid");
-        Ok(credentials.access_token)
+        Ok(credentials)
     }
 
     /// Check if the current token is expired
@@ -330,6 +330,7 @@ impl TokenManager {
             expires_at,
             refresh_token_expires_at,
             xion_address: token_response.xion_address.or(credentials.xion_address),
+            scope: token_response.scope.or(credentials.scope),
         };
 
         // Save updated credentials

@@ -142,7 +142,7 @@ async fn handle_claim(receiver: Option<&str>, ctx: &ExecuteContext) -> Result<()
         .xion_address
         .context("No Xion address found in credentials")?;
 
-    let access_token = oauth_client.get_valid_token().await?;
+    let access_token = oauth_client.get_valid_token().await?.access_token;
 
     // Create API client
     let api_client = TreasuryApiClient::new(

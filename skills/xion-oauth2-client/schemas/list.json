@@ -1,0 +1,37 @@
+{
+  "command": "oauth2 client list",
+  "description": "List OAuth2 clients for the authenticated user",
+  "parameters": [
+    {
+      "name": "limit",
+      "type": "integer",
+      "required": false,
+      "description": "Maximum number of clients to return"
+    },
+    {
+      "name": "cursor",
+      "type": "string",
+      "required": false,
+      "description": "Pagination cursor for fetching next page"
+    }
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:read scope" }
+  ],
+  "examples": [
+    {
+      "description": "List first 10 clients",
+      "params": {
+        "limit": 10
+      }
+    },
+    {
+      "description": "List with pagination",
+      "params": {
+        "limit": 10,
+        "cursor": "next_page_cursor"
+      }
+    }
+  ]
+}

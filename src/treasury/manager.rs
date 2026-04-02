@@ -203,7 +203,7 @@ impl TreasuryManager {
         }
 
         // Get valid token (auto-refresh if needed)
-        let token = self.oauth_client.get_valid_token().await?;
+        let token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API
         let treasuries = self.api_client.list_treasuries(&token).await?;
@@ -282,7 +282,7 @@ impl TreasuryManager {
         }
 
         // Get valid token
-        let token = self.oauth_client.get_valid_token().await?;
+        let token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API with full options
         let options = QueryOptions::default();
@@ -528,7 +528,7 @@ impl TreasuryManager {
         };
 
         // Step 5: Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Step 6: Get treasury code ID from config
         let code_id = self.config.treasury_code_id;
@@ -650,7 +650,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to fund treasury
         let broadcast_response = self
@@ -693,7 +693,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to withdraw from treasury
         let broadcast_response = self
@@ -749,7 +749,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to broadcast instantiate
         let tx_hash = self
@@ -822,7 +822,7 @@ impl TreasuryManager {
         });
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to broadcast instantiate2
         let tx_hash = self
@@ -897,7 +897,7 @@ impl TreasuryManager {
         };
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to broadcast execute
         let tx_hash = self
@@ -952,7 +952,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Clone type_url before moving grant_config
         let type_url = grant_config.type_url.clone();
@@ -1000,7 +1000,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to remove grant config
         self.api_client
@@ -1023,7 +1023,7 @@ impl TreasuryManager {
         debug!("Listing grant configs for treasury {}", address);
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to list grant configs
         self.api_client
@@ -1063,7 +1063,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to set fee config
         self.api_client
@@ -1091,7 +1091,7 @@ impl TreasuryManager {
         );
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Extract user address from OAuth2 access token
         let from_address = Self::extract_address_from_token(&access_token)?;
@@ -1127,7 +1127,7 @@ impl TreasuryManager {
         debug!("Querying fee config for treasury {}", address);
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to query fee config
         self.api_client
@@ -1167,7 +1167,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to propose admin
         self.api_client
@@ -1198,7 +1198,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to accept admin
         self.api_client
@@ -1232,7 +1232,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to cancel proposed admin
         self.api_client
@@ -1272,7 +1272,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to update params
         self.api_client
@@ -1317,7 +1317,7 @@ impl TreasuryManager {
         })?;
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to add grant configs in batch
         self.api_client
@@ -1387,7 +1387,7 @@ impl TreasuryManager {
         debug!("Exporting treasury configuration for: {}", address);
 
         // Get valid access token
-        let access_token = self.oauth_client.get_valid_token().await?;
+        let access_token = self.oauth_client.get_valid_token().await?.access_token;
 
         // Call API client to export treasury state
         self.api_client

@@ -1,0 +1,26 @@
+{
+  "command": "oauth2 client extension",
+  "description": "Get extension data (treasury, owner, managers) for an OAuth2 client",
+  "parameters": [
+    {
+      "name": "client-id",
+      "type": "string",
+      "required": true,
+      "description": "OAuth2 client ID"
+    }
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:read scope" },
+    { "code": "EOAUTHCLIENT012", "description": "Client not found", "remediation": "Check the client ID and try again" },
+    { "code": "EOAUTHCLIENT013", "description": "Client extension not found", "remediation": "This client has no extension data" }
+  ],
+  "examples": [
+    {
+      "description": "Get client extension",
+      "params": {
+        "client-id": "client_abc123"
+      }
+    }
+  ]
+}

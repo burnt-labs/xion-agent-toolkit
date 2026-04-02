@@ -1,7 +1,49 @@
 {
   "version": 1,
-  "updated_at": "2026-03-19",
+  "updated_at": "2026-04-01",
   "plans": [
+    {
+      "id": "local-scope-validation",
+      "title": "Local Scope Validation for MGR API",
+      "file": ".agents/plans/2026-04-01-local-scope-validation.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@product-manager"],
+      "tags": ["oauth2", "scope", "validation", "dev-mode", "security"],
+      "created_at": "2026-04-01",
+      "updated_at": "2026-04-01",
+      "done_at": "2026-04-01",
+      "notes": "Implemented local scope validation for MGR API calls. Scope field added to TokenResponse and UserCredentials with backward-compatible serde(default). has_scope()/has_all_scopes() helpers on UserCredentials. get_valid_token() now returns UserCredentials instead of bare String. Pre-flight scope check in prepare_api_client() fails fast with --dev-mode hint. Error hints updated. 4 unit tests for scope helpers. Also includes --dev-mode flag (Task in same session), build.rs format!() parameter order fix, and .env compile-time injection documentation. CI clean: fmt, clippy, 505 tests passing."
+    },
+    {
+      "id": "oauth2-client-advanced-lifecycle",
+      "title": "OAuth2 Client Advanced Lifecycle",
+      "file": ".agents/plans/oauth2-client-advanced-lifecycle.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@fullstack-dev", "@qc-specialist", "@qc-specialist-2", "@qc-specialist-3", "@qa-engineer"],
+      "tags": ["oauth2", "client-management", "security", "phase-4", "lifecycle", "safety-guard"],
+      "created_at": "2026-04-01",
+      "updated_at": "2026-04-01",
+      "done_at": "2026-04-01",
+      "notes": "QA PASS: 10/10 criteria, 497 tests, 0 warnings. QC tri-review approved (residuals RF-1/RF-4 fixed). Skills + docs updated with --force. Deferred: secret rotation + revoke/deactivate (backend API not available)."
+    },
+    {
+      "id": "oauth2-client-management-post-merge",
+      "title": "OAuth2 Client Management Post-Merge",
+      "file": ".agents/plans/oauth2-client-management-post-merge.md",
+      "status": "Done",
+      "progress": 100,
+      "owner": "@project-manager",
+      "agents": ["@architect", "@fullstack-dev", "@fullstack-dev-2", "@prompt-engineer"],
+      "tags": ["oauth2", "client-management", "cli", "skill", "docs", "ci", "api-contract"],
+      "created_at": "2026-03-31",
+      "updated_at": "2026-03-31",
+      "done_at": "2026-03-31",
+      "notes": "All phases complete. QC tri-review approved (W1/W2 fixes applied). QA PASS: 8/8 criteria, 444 tests, 0 warnings. Residual findings RF-1 to RF-5 deferred. Branch: feature/oauth2-client-mgmt."
+    },
     {
       "id": "mainnet-disable-switch",
       "title": "Mainnet Disable Switch",

@@ -1,0 +1,48 @@
+{
+  "command": "oauth2 client transfer-ownership",
+  "description": "Transfer ownership of an OAuth2 client to another user",
+  "parameters": [
+    {
+      "name": "client-id",
+      "type": "string",
+      "required": true,
+      "description": "OAuth2 client ID"
+    },
+    {
+      "name": "new-owner",
+      "type": "string",
+      "required": true,
+      "description": "New owner user ID",
+      "notes": "This is a user ID, not a Xion address"
+    },
+    {
+      "name": "force",
+      "type": "boolean",
+      "required": true,
+      "description": "Required flag to confirm the ownership transfer"
+    }
+  ],
+  "validation_rules": [
+    "Only the current owner can transfer ownership",
+    "The new owner must be a valid user ID",
+    "--force flag is required to confirm the transfer"
+  ],
+  "errors": [
+    { "code": "EOAUTHCLIENT008", "description": "Not authenticated", "remediation": "Run 'xion-toolkit auth login' first" },
+    { "code": "EOAUTHCLIENT010", "description": "Insufficient scope for MGR API", "remediation": "Re-authorize with xion:mgr:write scope" },
+    { "code": "EOAUTHCLIENT011", "description": "Not the client owner", "remediation": "Only the current owner can transfer ownership" },
+    { "code": "EOAUTHCLIENT012", "description": "Client not found", "remediation": "Check the client ID and try again" },
+    { "code": "EOAUTHCLIENT005", "description": "New owner user ID required", "remediation": "Provide --new-owner with a valid user ID" },
+    { "code": "EOAUTHCLIENT019", "description": "Confirmation required", "remediation": "Re-run the command with --force to confirm" }
+  ],
+  "examples": [
+    {
+      "description": "Transfer ownership",
+      "params": {
+        "client-id": "client_abc123",
+        "new-owner": "user_789",
+        "force": true
+      }
+    }
+  ]
+}
