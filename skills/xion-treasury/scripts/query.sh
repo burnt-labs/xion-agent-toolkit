@@ -112,7 +112,7 @@ if ! command -v xion-toolkit &> /dev/null; then
 fi
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit treasury query "$ADDRESS" --output json)
+CMD=(xion-toolkit --no-interactive treasury query "$ADDRESS" --output json)
 
 if [[ -n "$NETWORK" ]]; then
     CMD+=(--network "$NETWORK")

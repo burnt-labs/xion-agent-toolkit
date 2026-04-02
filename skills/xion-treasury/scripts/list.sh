@@ -80,7 +80,7 @@ if ! command -v xion-toolkit &> /dev/null; then
 fi
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit treasury list --output json)
+CMD=(xion-toolkit --no-interactive treasury list --output json)
 
 if [[ -n "$NETWORK" ]]; then
     CMD+=(--network "$NETWORK")

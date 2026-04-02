@@ -119,7 +119,7 @@ fi
 log_info "Exporting configuration from Treasury: $ADDRESS"
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit treasury export "$ADDRESS" --network "$NETWORK" --output json)
+CMD=(xion-toolkit --no-interactive treasury export "$ADDRESS" --network "$NETWORK" --output json)
 
 # Execute command safely using array expansion
 if [[ -n "$OUTPUT_FILE" ]]; then

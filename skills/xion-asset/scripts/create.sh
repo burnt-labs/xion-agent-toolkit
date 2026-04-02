@@ -34,7 +34,7 @@ if [[ -z "$TYPE" ]] || [[ -z "$NAME" ]] || [[ -z "$SYMBOL" ]]; then
 fi
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit asset create --type "$TYPE" --name "$NAME" --symbol "$SYMBOL" --output json)
+CMD=(xion-toolkit --no-interactive asset create --type "$TYPE" --name "$NAME" --symbol "$SYMBOL" --output json)
 
 if [[ -n "$MINTER" ]]; then
     CMD+=(--minter "$MINTER")

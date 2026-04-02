@@ -22,4 +22,4 @@ if [[ -z "$CONTRACT" ]] || [[ -z "$MSG" ]]; then
     exit 1
 fi
 
-xion-toolkit asset query --contract "$CONTRACT" --msg "$MSG" --output json
+xion-toolkit --no-interactive asset query --contract "$CONTRACT" --msg "$MSG" --output json

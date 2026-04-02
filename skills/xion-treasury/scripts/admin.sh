@@ -163,7 +163,7 @@ fi
 if ! command -v xion-toolkit &> /dev/null; then
     CLI_CMD=(cargo run --quiet --)
 else
-    CLI_CMD=(xion-toolkit)
+    CLI_CMD=(xion-toolkit --no-interactive)
 fi
 
 # ==============================================================================

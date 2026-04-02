@@ -31,7 +31,7 @@ if [[ ! -f "$TOKENS_FILE" ]]; then
 fi
 
 # Execute command and capture output
-OUTPUT=$(xion-toolkit asset batch-mint --contract "$CONTRACT" --tokens-file "$TOKENS_FILE" --asset-type "$ASSET_TYPE" --output json 2>&1)
+OUTPUT=$(xion-toolkit --no-interactive asset batch-mint --contract "$CONTRACT" --tokens-file "$TOKENS_FILE" --asset-type "$ASSET_TYPE" --output json 2>&1)
 EXIT_CODE=$?
 
 # Output result and propagate exit code

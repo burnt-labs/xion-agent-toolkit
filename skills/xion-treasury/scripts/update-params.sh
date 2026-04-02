@@ -126,7 +126,7 @@ fi
 
 # Build command as array (safe from injection)
 if command -v xion-toolkit &> /dev/null; then
-    CMD=(xion-toolkit treasury params update "$ADDRESS")
+    CMD=(xion-toolkit --no-interactive treasury params update "$ADDRESS")
 else
     CMD=(cargo run --quiet -- treasury params update "$ADDRESS")
 fi

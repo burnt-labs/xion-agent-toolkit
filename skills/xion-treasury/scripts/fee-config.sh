@@ -201,7 +201,7 @@ fi
 log_info "Processing fee config: action=$ACTION for treasury $ADDRESS"
 
 # Build command as array (safe from injection)
-CMD=(xion-toolkit --network "$NETWORK" treasury fee-config)
+CMD=(xion-toolkit --no-interactive --network "$NETWORK" treasury fee-config)
 
 case "$ACTION" in
     set)

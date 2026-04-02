@@ -6,4 +6,4 @@ set -e
 
 NETWORK="${1:-testnet}"
 
-xion-toolkit asset types --network "$NETWORK" --output json
+xion-toolkit --no-interactive asset types --network "$NETWORK" --output json
