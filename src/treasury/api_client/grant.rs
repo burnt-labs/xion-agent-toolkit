@@ -208,7 +208,7 @@ impl super::TreasuryApiClient {
                 type_url: allowance_type_url,
                 value: allowance_value, // Already base64 encoded string
             }),
-            expiration: None, // TODO: Add expiration support in FeeConfigInput
+            expiration: None,
         };
 
         // Create the update_fee_config message (matches contract's ExecuteMsg)

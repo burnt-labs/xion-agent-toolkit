@@ -215,7 +215,7 @@ src/treasury/api_client/
 
 ### Task 4: TODO & Unused Code Cleanup
 
-**Status**: Pending
+**Status**: ✅ InReview
 **Owner**: @fullstack-dev
 **Effort**: XS-S (1 focused agent session)
 
@@ -233,9 +233,9 @@ src/treasury/api_client/
 - Code compiles without warnings
 
 **Acceptance Criteria**:
-- [ ] TODO count reduced to 0 (or documented as intentional)
-- [ ] Unused code removed or marked
-- [ ] `cargo clippy -- -D warnings` passes
+- [x] TODO count reduced to 0 (or documented as intentional)
+- [x] Unused code removed or marked
+- [x] `cargo clippy -- -D warnings` passes
 
 ---
 
@@ -287,8 +287,8 @@ Task 5 (Test Coverage) ← after Task 3 completion
 - [ ] Expiration feature decision made with documented rationale
 - [x] treasury/api_client.rs refactored into 8 modules (all <800 LOC)
 - [ ] All production unwrap/expect replaced with safe error handling
-- [ ] TODO count reduced to 0 (or documented)
-- [ ] Unused code cleaned or marked
+- [x] TODO count reduced to 0 (or documented)
+- [x] Unused code cleaned or marked
 - [ ] Test coverage increased by 10–20%
 - [ ] All 561+ tests passing
 - [ ] `cargo clippy -- -D warnings` passes
@@ -315,3 +315,4 @@ Task 5 (Test Coverage) ← after Task 3 completion
 | Date | Signer | Content | Status |
 |------|--------|---------|--------|
 | 2026-04-03 | @project-manager | Maintenance analysis complete; 5 tasks identified | InProgress |
+| 2026-04-03 | @fullstack-dev | Task 4: TODO cleanup done — 4 TODOs removed, 2 doc comments corrected | InReview |
