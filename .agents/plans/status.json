@@ -1,7 +1,14 @@
 {
   "version": 2,
-  "updated_at": "2026-04-02",
-  "plans": [],
+  "updated_at": "2026-04-03",
+  "plans": [
+    {
+      "file": ".agents/plans/2026-04-03-maintenance-optimization.md",
+      "desc": "Phase 4: Maintenance & Optimization (Expiration research, code refactoring, security audit, TODO cleanup, test coverage)",
+      "status": "InProgress",
+      "created_at": "2026-04-03"
+    }
+  ],
   "archived": {
     "total_count": 44,
     "archived_at": "2026-04-02",
@@ -24,6 +31,10 @@
     {
       "file": ".agents/plans/knowledge/faucet-contract-research.md",
       "desc": "Faucet contract research and deployment attempts."
+    },
+    {
+      "file": ".agents/plans/knowledge/task-dependency-analysis.md",
+      "desc": "Phase 4 task dependency and parallel execution analysis."
     }
   ],
   "removed_features": [
@@ -50,6 +61,12 @@
       "title": "OAuth2 Client Revoke/Deactivate Flow",
       "removed_at": "2026-04-02",
       "reason": "Requirement removed from ENG-1576; keep secret rotation scope only"
+    },
+    {
+      "id": "verify-address",
+      "title": "Treasury Verify-Address Command",
+      "removed_at": "2026-04-03",
+      "reason": "Limited practical value; current info command suffices for verification needs"
     }
   ],
   "phase_summary": {
@@ -57,16 +74,10 @@
     "phase2": "Done (2026-03-15) — Error Recovery, Tx Monitoring, Skills Testing, CI/CD Output",
     "phase3": "Done (2026-03-15) — Predicted Address, Batch Treasury Ops",
     "oauth2_client_mgmt": "Done (2026-03-31 ~ 04-01) — Full lifecycle, advanced safety, scope validation",
-    "interactive_cli": "Done (2026-04-02) — dialoguer prompts, --no-interactive, 21 skill scripts updated"
+    "interactive_cli": "Done (2026-04-02) — dialoguer prompts, --no-interactive, 21 skill scripts updated",
+    "phase4": "InProgress (2026-04-03) — Expiration research, code refactoring, security audit, TODO cleanup, test coverage"
   },
-  "deferred_items": [
-    {
-      "id": "verify-address",
-      "source": "predicted-address-computation",
-      "desc": "treasury verify-address command (optional Phase 4)",
-      "owner": "@fullstack-dev"
-    }
-  ],
+  "deferred_items": [],
   "resolved_items": [
     {
       "id": "RF-2",

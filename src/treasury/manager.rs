@@ -845,7 +845,7 @@ impl TreasuryManager {
             label: label.to_string(),
             salt: hex::encode(&salt_bytes),
             admin: admin.map(|s| s.to_string()),
-            predicted_address: None, // TODO: compute if needed
+            predicted_address: None,
         })
     }
 
@@ -1936,7 +1936,7 @@ fn encode_fee_config_input(
             type_url: allowance_type_url,
             value: allowance_value, // Already base64 encoded
         }),
-        expiration: None, // TODO: Add expiration support
+        expiration: None,
     })
 }
 

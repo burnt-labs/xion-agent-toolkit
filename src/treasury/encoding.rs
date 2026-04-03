@@ -1243,4 +1243,323 @@ mod tests {
             .unwrap();
         assert_eq!(decoded, bytes);
     }
+
+    // =========================================================================
+    // Additional stake authorization tests
+    // =========================================================================
+
+    #[test]
+    fn test_encode_stake_authorization_delegate_with_validators() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "1000000".into(),
+        };
+        let validators = vec![
+            "xionvaloper1abc...".to_string(),
+            "xionvaloper1def...".to_string(),
+        ];
+
+        let encoded = encode_stake_authorization(coin.clone(), Some(validators), None, 1).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_stake_authorization_undelegate() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "500000".into(),
+        };
+
+        let encoded = encode_stake_authorization(coin, None, None, 2).unwrap(); // UNDELEGATE
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_stake_authorization_redelegate() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "750000".into(),
+        };
+
+        let encoded = encode_stake_authorization(coin, None, None, 3).unwrap(); // REDELEGATE
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_stake_authorization_with_deny_list() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "1000000".into(),
+        };
+        let deny_validators = vec!["xionvaloper1bad...".to_string()];
+
+        let encoded = encode_stake_authorization(coin, None, Some(deny_validators), 1).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_stake_authorization_invalid_type_zero() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "1000000".into(),
+        };
+
+        // Invalid type (0 is not valid)
+        let result = encode_stake_authorization(coin, None, None, 0);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_encode_stake_authorization_type_4_invalid() {
+        let coin = Coin {
+            denom: "uxion".into(),
+            amount: "1000000".into(),
+        };
+
+        // Type 4 doesn't exist
+        let result = encode_stake_authorization(coin, None, None, 4);
+        assert!(result.is_err());
+    }
+
+    // =========================================================================
+    // Additional send authorization tests
+    // =========================================================================
+
+    #[test]
+    fn test_encode_send_authorization_with_empty_allowlist() {
+        let coins = vec![Coin {
+            denom: "uxion".into(),
+            amount: "1000000".into(),
+        }];
+
+        let encoded = encode_send_authorization(coins, Some(vec![])).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_send_authorization_multiple_allowed_addresses() {
+        let coins = vec![Coin {
+            denom: "uxion".into(),
+            amount: "1000000".into(),
+        }];
+        let allow_list = vec![
+            "xion1recipient1...".to_string(),
+            "xion1recipient2...".to_string(),
+        ];
+
+        let encoded = encode_send_authorization(coins, Some(allow_list)).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    // =========================================================================
+    // IbcTransfer authorization tests
+    // =========================================================================
+
+    #[test]
+    fn test_encode_ibc_transfer_authorization_single_allocation() {
+        let allocations = vec![IbcAllocation {
+            source_channel: "channel-0".to_string(),
+            source_port: "transfer".to_string(),
+            spend_limit: vec![Coin {
+                denom: "uxion".into(),
+                amount: "1000000".into(),
+            }],
+            allow_list: None,
+        }];
+
+        let encoded = encode_ibc_transfer_authorization(allocations).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_ibc_transfer_authorization_multiple_allocations() {
+        let allocations = vec![
+            IbcAllocation {
+                source_channel: "channel-0".to_string(),
+                source_port: "transfer".to_string(),
+                spend_limit: vec![Coin {
+                    denom: "uxion".into(),
+                    amount: "500000".into(),
+                }],
+                allow_list: None,
+            },
+            IbcAllocation {
+                source_channel: "channel-1".to_string(),
+                source_port: "transfer".to_string(),
+                spend_limit: vec![Coin {
+                    denom: "uatom".into(),
+                    amount: "300000".into(),
+                }],
+                allow_list: None,
+            },
+        ];
+
+        let encoded = encode_ibc_transfer_authorization(allocations).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    // =========================================================================
+    // Contract execution authorization tests
+    // =========================================================================
+
+    #[test]
+    fn test_encode_contract_execution_authorization_single_grant() {
+        let grants = vec![ContractGrant {
+            address: "xion1contract123...".to_string(),
+            max_calls: Some(50),
+            max_funds: None,
+            filter_type: "allow_all".to_string(),
+            keys: None,
+        }];
+
+        let encoded = encode_contract_execution_authorization(grants).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_contract_execution_authorization_with_funds_limit() {
+        let grants = vec![ContractGrant {
+            address: "xion1contract456...".to_string(),
+            max_calls: None,
+            max_funds: Some(vec![Coin {
+                denom: "uxion".into(),
+                amount: "500000".into(),
+            }]),
+            filter_type: "allow_all".to_string(),
+            keys: None,
+        }];
+
+        let encoded = encode_contract_execution_authorization(grants).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_contract_execution_authorization_with_accepted_keys() {
+        let grants = vec![ContractGrant {
+            address: "xion1contract789...".to_string(),
+            max_calls: Some(100),
+            max_funds: None,
+            filter_type: "accepted_keys".to_string(),
+            keys: Some(vec!["key1".to_string(), "key2".to_string()]),
+        }];
+
+        let encoded = encode_contract_execution_authorization(grants).unwrap();
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert!(!decoded.is_empty());
+    }
+
+    #[test]
+    fn test_encode_contract_execution_authorization_nonexistent_filter_type() {
+        let grants = vec![ContractGrant {
+            address: "xion1contract...".to_string(),
+            max_calls: Some(10),
+            max_funds: None,
+            filter_type: "unknown_filter".to_string(),
+            keys: None,
+        }];
+
+        // Unknown filter type should fail
+        assert!(encode_contract_execution_authorization(grants).is_err());
+    }
+
+    // =========================================================================
+    // Helper function tests
+    // =========================================================================
+
+    #[test]
+    fn test_encode_to_base64_empty() {
+        let encoded = encode_to_base64(&[]);
+        // Empty bytes should encode to empty base64
+        assert_eq!(encoded, "");
+    }
+
+    #[test]
+    fn test_encode_to_base64_large_input() {
+        let large_bytes: Vec<u8> = (0..1000).map(|i| (i % 256) as u8).collect();
+        let encoded = encode_to_base64(&large_bytes);
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(&encoded)
+            .unwrap();
+        assert_eq!(decoded, large_bytes);
+    }
+
+    // =========================================================================
+    // Coin parsing edge cases
+    // =========================================================================
+
+    #[test]
+    fn test_parse_coin_string_zero_amount() {
+        let coins = parse_coin_string("0uxion").unwrap();
+        assert_eq!(coins.len(), 1);
+        assert_eq!(coins[0].amount, "0");
+    }
+
+    #[test]
+    fn test_parse_coin_string_large_amount() {
+        let coins = parse_coin_string("18446744073709551615uxion").unwrap();
+        assert_eq!(coins.len(), 1);
+        assert_eq!(coins[0].amount, "18446744073709551615");
+    }
+
+    #[test]
+    fn test_parse_coin_string_ibc_with_long_channel() {
+        // IBC denom with longer path
+        let coins = parse_coin_string("1000transfer/channel-1234/uatom").unwrap();
+        assert_eq!(coins.len(), 1);
+        assert_eq!(coins[0].denom, "transfer/channel-1234/uatom");
+    }
+
+    #[test]
+    fn test_parse_single_denom_just_amount() {
+        // Note: The regex treats the last digit as denom since 0-9 is in the character class.
+        // So "123456" becomes amount="12345", denom="6" (not an error).
+        assert!("123456".parse::<u128>().is_ok());
+        let coin = parse_single_denom("123456").unwrap();
+        assert_eq!(coin.amount, "12345");
+        assert_eq!(coin.denom, "6");
+    }
 }

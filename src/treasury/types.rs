@@ -148,8 +148,9 @@ pub struct FeeConfigMessage {
     pub allowance: TypeUrlValue,
     /// Description of the fee grant
     pub description: String,
-    /// Expiration timestamp as ISO 8601 string (RFC 3339 format)
-    /// Optional field that will be omitted if None
+    /// Expiration is not currently supported; set to `None`.
+    /// Optional field that will be omitted if None.
+    /// Reserved for future implementation (on-chain type is `Option<u32>` relative seconds).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expiration: Option<String>,
 }
@@ -375,8 +376,9 @@ pub struct TreasuryParamsChain {
 pub struct FeeConfigChain {
     pub description: String,
     pub allowance: Option<ProtobufAny>,
-    /// Expiration timestamp as ISO 8601 string (RFC 3339 format)
-    /// The OAuth2 API expects this as a string, not a number
+    /// Expiration is not currently supported; set to `None`.
+    /// On-chain type is `Option<u32>` (relative seconds), but the OAuth2 API
+    /// accepts a string. Reserved for future implementation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expiration: Option<String>,
 }

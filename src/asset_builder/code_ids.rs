@@ -58,7 +58,7 @@ pub fn get_checksum(asset_type: AssetType, _config: &NetworkConfig) -> Option<St
     // Phase 3: Return actual checksums for each code ID
     // For now, return None as this is optional functionality
     match asset_type {
-        AssetType::Cw721Base => None, // TODO: Add actual checksum
+        AssetType::Cw721Base => None,
         AssetType::Cw721MetadataOnchain => None,
         AssetType::Cw721Expiration => None,
         AssetType::Cw721NonTransferable => None,
