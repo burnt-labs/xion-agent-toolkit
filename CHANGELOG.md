@@ -5,6 +5,41 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.10.1...0.11.0) (2026-04-03)
+
+
+### Features
+
+* **auth:** include scope in authentication response ([6877608](https://github.com/burnt-labs/xion-agent-toolkit/commit/68776088ec9e28b1e14ae1af928b74de6f64ac48))
+
+
+### Bug Fixes
+
+* **cli:** add scope field to auth status output ([abb4c75](https://github.com/burnt-labs/xion-agent-toolkit/commit/abb4c75e57778af1074612e2554a923e13df7c93))
+* **cli:** improve EOAUTHCLIENT008 hint for server-rejected tokens ([62be18c](https://github.com/burnt-labs/xion-agent-toolkit/commit/62be18ca6151cab1b163d6b543be15fe01282b3d))
+* **docs:** align with backend ([c52815b](https://github.com/burnt-labs/xion-agent-toolkit/commit/c52815bce2c5e8156591846d02a0d9d6bef05aec))
+
+
+### Refactoring
+
+* **treasury:** split api_client.rs into 8 modules ([76f8ca2](https://github.com/burnt-labs/xion-agent-toolkit/commit/76f8ca2e07b4e8a3251bdadf23a3b3e978ebbc36))
+
+
+### Documentation
+
+* **plans:** add Phase 4 maintenance & optimization plan ([e64515e](https://github.com/burnt-labs/xion-agent-toolkit/commit/e64515e2609012762fca40aad15128897d560c21))
+* **plans:** mark Phase 4 as Done ([10e368e](https://github.com/burnt-labs/xion-agent-toolkit/commit/10e368e23a3875c0aee3f5ff38fd6db8cc3f7bfe))
+* **plans:** mark Task 2 as Done with QC approval ([479cef6](https://github.com/burnt-labs/xion-agent-toolkit/commit/479cef610eab4955445a2aaad679cf0eab10cafe))
+* **plans:** mark Task 3 and Task 4 as Done ([6b78591](https://github.com/burnt-labs/xion-agent-toolkit/commit/6b785914750f646e7beac2b5866718e97718409a))
+* **plans:** update Task 4 status to InReview after TODO cleanup ([daad043](https://github.com/burnt-labs/xion-agent-toolkit/commit/daad043f1a2b34343a55b62584291acba50f906d))
+* **readme:** restructure as human-facing landing page ([29fbbbb](https://github.com/burnt-labs/xion-agent-toolkit/commit/29fbbbbafe9ce9a3cf284f281038ea375433245e))
+* **roadmap:** update Phase 4 status to Done ([de797ae](https://github.com/burnt-labs/xion-agent-toolkit/commit/de797aeba82a44a07e3525fa16e79bc086f8fd17))
+
+
+### Tests
+
+* **treasury:** add 64 tests to reach 612 total ([8e23153](https://github.com/burnt-labs/xion-agent-toolkit/commit/8e23153cd8ab48eb0d5aee557b2b769ccbaee484))
+
 ## [0.10.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.10.0...0.10.1) (2026-04-02)
 
 
