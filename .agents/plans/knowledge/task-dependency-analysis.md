@@ -293,9 +293,56 @@ Session 2: Integration & cleanup
 
 ---
 
+## Current Status (2026-04-03)
+
+### Session-1 Execution
+
+**Architecture**: Combined Task 1 + Task 2 in single session (same branch)
+
+**Branch**: `feature/maintenance-optimization`
+
+**Parallel Strategy**: Same-branch parallel execution (no sub-branch isolation)
+- Task 1 (Expiration Research): Research phase (read-only, no code modification)
+- Task 2 (Code Refactoring): Active refactoring (splitting api_client.rs)
+- PM controls commit ordering to avoid conflicts
+
+**Progress**:
+- [x] Task 1 + Task 2 launched in session-1 (parallel)
+- [x] Task 2 progress: `fund.rs` (160 lines) + `query.rs` (459 lines) created
+- [ ] Task 1 decision locked (pending)
+- [ ] Task 2 all modules split (pending: grant/withdraw/instantiate/mod)
+
+**Monitoring**:
+- PM checks `git status` periodically to monitor Task 2 progress
+- Untracked files visible: `src/treasury/api_client/` directory created
+
+### Task 3 Start Decision
+
+**User Decision**: Wait for Task 2 complete completion (not partial start)
+
+**Rationale**:
+- User preference: Complete audit after all modules split
+- Safer scope definition: Audit 5-6 modules together
+- No incremental audit complexity
+
+**Rejected Alternative**: Partial audit (fund.rs + query.rs early)
+- Would require phased audit (audit new modules, then audit remaining)
+- User chose simpler complete-then-audit approach
+
+### Prepared Actions (Waiting Phase)
+
+PM prepared while waiting for session-1 completion:
+1. [x] Update knowledge document (this file)
+2. [ ] Prepare Assignment templates for Task 3, Task 4, Task 5
+3. [ ] Monitor Task 2 progress (periodic git status checks)
+
+---
+
 ## Notes
 
 - "Session" = one focused agent working session (not calendar time)
 - Task 4 can be split: independent parts (Session 2) + expiration-dependent (Session 3)
 - Task 5 strictly depends on Task 3 (needs fixed locations)
 - Task 2 → Task 3 dependency is **critical** (avoid duplicate audit)
+- Current execution: Same-branch parallel (Task 1 + Task 2 in session-1)
+- Task 3 start: After Task 2 complete completion (user decision 2026-04-03)
