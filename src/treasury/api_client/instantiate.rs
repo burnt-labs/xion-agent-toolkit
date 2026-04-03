@@ -321,3 +321,245 @@ impl super::TreasuryApiClient {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::treasury::types::{
+        CreateTreasuryRequest, FeeConfigMessage, GrantConfigMessage, TreasuryParamsMessage,
+        TypeUrlValue,
+    };
+
+    // =========================================================================
+    // build_treasury_instantiate_msg tests
+    // =========================================================================
+
+    #[test]
+    fn test_build_treasury_instantiate_msg_basic() {
+        let request = CreateTreasuryRequest {
+            admin: "xion1admin123".to_string(),
+            fee_config: FeeConfigMessage {
+                allowance: TypeUrlValue {
+                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                    value: "Cg==".to_string(),
+                },
+                description: "Test fee config".to_string(),
+                expiration: None,
+            },
+            grant_configs: vec![GrantConfigMessage {
+                type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                authorization: TypeUrlValue {
+                    type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                    value: "Cg==".to_string(),
+                },
+                description: Some("Allow token sends".to_string()),
+                optional: false,
+            }],
+            params: TreasuryParamsMessage {
+                redirect_url: "https://example.com/callback".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+                display_url: Some("https://example.com".to_string()),
+                metadata: None,
+            },
+            name: Some("Test Treasury".to_string()),
+            is_oauth2_app: false,
+        };
+
+        let result = build_treasury_instantiate_msg(&request);
+
+        assert!(result.is_ok());
+        let msg = result.unwrap();
+
+        // Verify structure
+        assert!(msg.get("type_urls").is_some());
+        assert!(msg.get("grant_configs").is_some());
+        assert!(msg.get("fee_config").is_some());
+        assert!(msg.get("params").is_some());
+        assert_eq!(msg["admin"], "xion1admin123");
+
+        // Verify type_urls array
+        let type_urls = msg["type_urls"].as_array().unwrap();
+        assert_eq!(type_urls.len(), 1);
+        assert_eq!(type_urls[0], "/cosmos.bank.v1beta1.MsgSend");
+
+        // Verify grant_configs structure
+        let grant_configs = msg["grant_configs"].as_array().unwrap();
+        assert_eq!(grant_configs.len(), 1);
+        assert!(grant_configs[0].get("authorization").is_some());
+        assert_eq!(grant_configs[0]["optional"], serde_json::json!(false));
+
+        // Verify params
+        assert_eq!(
+            msg["params"]["redirect_url"],
+            "https://example.com/callback"
+        );
+        assert_eq!(msg["params"]["icon_url"], "https://example.com/icon.png");
+        assert_eq!(msg["params"]["display_url"], "https://example.com");
+    }
+
+    #[test]
+    fn test_build_treasury_instantiate_msg_with_expiration() {
+        let request = CreateTreasuryRequest {
+            admin: "xion1admin456".to_string(),
+            fee_config: FeeConfigMessage {
+                allowance: TypeUrlValue {
+                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                    value: "Cg==".to_string(),
+                },
+                description: "With expiration".to_string(),
+                expiration: Some("2025-12-31T23:59:59Z".to_string()),
+            },
+            grant_configs: vec![],
+            params: TreasuryParamsMessage {
+                redirect_url: "https://example.com/callback".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+                display_url: None,
+                metadata: None,
+            },
+            name: None,
+            is_oauth2_app: true,
+        };
+
+        let result = build_treasury_instantiate_msg(&request);
+
+        assert!(result.is_ok());
+        let msg = result.unwrap();
+
+        // Verify expiration is included
+        assert!(msg["fee_config"].get("expiration").is_some());
+        assert_eq!(msg["fee_config"]["expiration"], "2025-12-31T23:59:59Z");
+    }
+
+    #[test]
+    fn test_build_treasury_instantiate_msg_multiple_grant_configs() {
+        let request = CreateTreasuryRequest {
+            admin: "xion1admin789".to_string(),
+            fee_config: FeeConfigMessage {
+                allowance: TypeUrlValue {
+                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                    value: "Cg==".to_string(),
+                },
+                description: "Multi-grant".to_string(),
+                expiration: None,
+            },
+            grant_configs: vec![
+                GrantConfigMessage {
+                    type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                    authorization: TypeUrlValue {
+                        type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                        value: "Cg==".to_string(),
+                    },
+                    description: Some("Allow sends".to_string()),
+                    optional: false,
+                },
+                GrantConfigMessage {
+                    type_url: "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
+                    authorization: TypeUrlValue {
+                        type_url: "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
+                        value: "Cg==".to_string(),
+                    },
+                    description: None,
+                    optional: true,
+                },
+            ],
+            params: TreasuryParamsMessage {
+                redirect_url: "https://example.com/callback".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+                display_url: None,
+                metadata: None,
+            },
+            name: Some("Multi-Grant Treasury".to_string()),
+            is_oauth2_app: false,
+        };
+
+        let result = build_treasury_instantiate_msg(&request);
+
+        assert!(result.is_ok());
+        let msg = result.unwrap();
+
+        // Verify type_urls has 2 entries
+        let type_urls = msg["type_urls"].as_array().unwrap();
+        assert_eq!(type_urls.len(), 2);
+        assert_eq!(type_urls[0], "/cosmos.bank.v1beta1.MsgSend");
+        assert_eq!(type_urls[1], "/cosmos.staking.v1beta1.MsgDelegate");
+
+        // Verify grant_configs has 2 entries
+        let grant_configs = msg["grant_configs"].as_array().unwrap();
+        assert_eq!(grant_configs.len(), 2);
+
+        // First has description, second doesn't
+        assert!(grant_configs[0].get("description").is_some());
+        assert!(grant_configs[1].get("description").is_none());
+
+        // Second is optional
+        assert_eq!(grant_configs[1]["optional"], serde_json::json!(true));
+    }
+
+    #[test]
+    fn test_build_treasury_instantiate_msg_oauth2_app_flag() {
+        let request = CreateTreasuryRequest {
+            admin: "xion1admin_oauth".to_string(),
+            fee_config: FeeConfigMessage {
+                allowance: TypeUrlValue {
+                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                    value: "Cg==".to_string(),
+                },
+                description: "OAuth2 app".to_string(),
+                expiration: None,
+            },
+            grant_configs: vec![],
+            params: TreasuryParamsMessage {
+                redirect_url: "https://example.com/callback".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+                display_url: None,
+                metadata: None,
+            },
+            name: Some("OAuth2 Treasury".to_string()),
+            is_oauth2_app: true,
+        };
+
+        let result = build_treasury_instantiate_msg(&request);
+
+        assert!(result.is_ok());
+        let msg = result.unwrap();
+
+        // Verify metadata includes is_oauth2_app flag
+        let metadata_str = msg["params"]["metadata"].as_str().unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(metadata_str).unwrap();
+        assert_eq!(parsed["is_oauth2_app"], true);
+        assert_eq!(parsed["name"], "OAuth2 Treasury");
+        assert_eq!(parsed["archived"], false);
+    }
+
+    #[test]
+    fn test_build_treasury_instantiate_msg_optional_display_url() {
+        let request = CreateTreasuryRequest {
+            admin: "xion1admin_nodisplay".to_string(),
+            fee_config: FeeConfigMessage {
+                allowance: TypeUrlValue {
+                    type_url: "/cosmos.feegrant.v1beta1.BasicAllowance".to_string(),
+                    value: "Cg==".to_string(),
+                },
+                description: "No display URL".to_string(),
+                expiration: None,
+            },
+            grant_configs: vec![],
+            params: TreasuryParamsMessage {
+                redirect_url: "https://example.com/callback".to_string(),
+                icon_url: "https://example.com/icon.png".to_string(),
+                display_url: None,
+                metadata: None,
+            },
+            name: None,
+            is_oauth2_app: false,
+        };
+
+        let result = build_treasury_instantiate_msg(&request);
+
+        assert!(result.is_ok());
+        let msg = result.unwrap();
+
+        // display_url should not be present when None
+        assert!(msg["params"].get("display_url").is_none());
+    }
+}

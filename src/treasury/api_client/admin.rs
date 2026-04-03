@@ -646,3 +646,739 @@ impl super::TreasuryApiClient {
         Ok(export_data)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::*;
+    use crate::treasury::types::{
+        AuthorizationInput, BroadcastResponse, GrantConfigInput, UpdateParamsInput,
+    };
+    use wiremock::matchers::{method, path, path_regex};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // Helper to create a test client
+    fn create_test_client(mock_server_uri: &str) -> TreasuryApiClient {
+        TreasuryApiClient::new(
+            mock_server_uri.to_string(),
+            mock_server_uri.to_string(),
+            mock_server_uri.to_string(),
+        )
+    }
+
+    // Helper to create a valid access token
+    fn create_test_token(address: &str) -> String {
+        format!("{}:grant123:secret456", address)
+    }
+
+    // =========================================================================
+    // propose_admin tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_propose_admin_success() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1currentadmin";
+        let treasury_address = "xion1treasury123";
+        let new_admin = "xion1newadmin456";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_propose_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client
+            .propose_admin(&token, treasury_address, new_admin, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.treasury_address, treasury_address);
+        assert_eq!(result.operation, "propose");
+        assert_eq!(result.new_admin, Some(new_admin.to_string()));
+        assert_eq!(result.tx_hash, "tx_propose_hash");
+    }
+
+    // =========================================================================
+    // accept_admin tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_accept_admin_success() {
+        let mock_server = MockServer::start().await;
+        let pending_admin = "xion1pendingadmin";
+        let treasury_address = "xion1treasury789";
+        let token = create_test_token(pending_admin);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_accept_hash".to_string(),
+                from: pending_admin.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client
+            .accept_admin(&token, treasury_address, pending_admin)
+            .await;
+
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.treasury_address, treasury_address);
+        assert_eq!(result.operation, "accept");
+        assert_eq!(result.new_admin, None);
+        assert_eq!(result.tx_hash, "tx_accept_hash");
+    }
+
+    // =========================================================================
+    // cancel_proposed_admin tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_cancel_proposed_admin_success() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1currentadmin";
+        let treasury_address = "xion1treasuryabc";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_cancel_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client
+            .cancel_proposed_admin(&token, treasury_address, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.treasury_address, treasury_address);
+        assert_eq!(result.operation, "cancel");
+        assert_eq!(result.new_admin, None);
+        assert_eq!(result.tx_hash, "tx_cancel_hash");
+    }
+
+    // =========================================================================
+    // update_params tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_update_params_with_redirect_url() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1admin123";
+        let treasury_address = "xion1treasury456";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_update_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let params = UpdateParamsInput {
+            redirect_url: Some("https://new-callback.com".to_string()),
+            icon_url: None,
+            name: None,
+            is_oauth2_app: None,
+            metadata: None,
+        };
+
+        let result = client
+            .update_params(&token, treasury_address, params, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.treasury_address, treasury_address);
+        assert_eq!(result.tx_hash, "tx_update_hash");
+    }
+
+    #[tokio::test]
+    async fn test_update_params_with_name() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1admin123";
+        let treasury_address = "xion1treasury456";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_update_name_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let params = UpdateParamsInput {
+            redirect_url: None,
+            icon_url: None,
+            name: Some("My Updated Treasury".to_string()),
+            is_oauth2_app: None,
+            metadata: None,
+        };
+
+        let result = client
+            .update_params(&token, treasury_address, params, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_update_params_with_is_oauth2_app() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1admin123";
+        let treasury_address = "xion1treasury456";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_update_oauth_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let params = UpdateParamsInput {
+            redirect_url: None,
+            icon_url: None,
+            name: None,
+            is_oauth2_app: Some(true),
+            metadata: None,
+        };
+
+        let result = client
+            .update_params(&token, treasury_address, params, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_update_params_with_metadata() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1admin123";
+        let treasury_address = "xion1treasury456";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_update_meta_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let params = UpdateParamsInput {
+            redirect_url: None,
+            icon_url: None,
+            name: None,
+            is_oauth2_app: None,
+            metadata: Some(serde_json::json!({"custom_field": "custom_value"})),
+        };
+
+        let result = client
+            .update_params(&token, treasury_address, params, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_update_params_error_no_params() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1admin123";
+        let treasury_address = "xion1treasury456";
+        let token = create_test_token(admin_address);
+
+        // No mock needed since the function should fail before making any request
+
+        let client = create_test_client(&mock_server.uri());
+
+        let params = UpdateParamsInput {
+            redirect_url: None,
+            icon_url: None,
+            name: None,
+            is_oauth2_app: None,
+            metadata: None,
+        };
+
+        let result = client
+            .update_params(&token, treasury_address, params, admin_address)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_update_params_error_invalid_metadata() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1admin123";
+        let treasury_address = "xion1treasury456";
+        let token = create_test_token(admin_address);
+
+        let client = create_test_client(&mock_server.uri());
+
+        // Metadata must be an object, not a string
+        let params = UpdateParamsInput {
+            redirect_url: None,
+            icon_url: None,
+            name: None,
+            is_oauth2_app: None,
+            metadata: Some(serde_json::json!("not an object")),
+        };
+
+        let result = client
+            .update_params(&token, treasury_address, params, admin_address)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    // =========================================================================
+    // grant_config_batch tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_grant_config_batch_success() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1batchadmin";
+        let treasury_address = "xion1batchtreasury";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_batch_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let grant_configs = vec![
+            (
+                "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                GrantConfigInput {
+                    type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                    description: "Allow sends".to_string(),
+                    authorization: AuthorizationInput::Generic,
+                    optional: false,
+                },
+            ),
+            (
+                "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
+                GrantConfigInput {
+                    type_url: "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
+                    description: "Allow staking".to_string(),
+                    authorization: AuthorizationInput::Generic,
+                    optional: true,
+                },
+            ),
+        ];
+
+        let result = client
+            .grant_config_batch(&token, treasury_address, grant_configs, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.treasury_address, treasury_address);
+        assert_eq!(result.count, 2);
+        assert_eq!(result.tx_hash, "tx_batch_hash");
+    }
+
+    #[tokio::test]
+    async fn test_grant_config_batch_single_item() {
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1singleadmin";
+        let treasury_address = "xion1singletreasury";
+        let token = create_test_token(admin_address);
+
+        Mock::given(method("POST"))
+            .and(path("/api/v1/transaction"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(BroadcastResponse {
+                success: true,
+                tx_hash: "tx_single_batch_hash".to_string(),
+                from: admin_address.to_string(),
+                gas_used: None,
+                gas_wanted: None,
+            }))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let grant_configs = vec![(
+            "/cosmos.bank.v1beta1.MsgSend".to_string(),
+            GrantConfigInput {
+                type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                description: "Single grant".to_string(),
+                authorization: AuthorizationInput::Generic,
+                optional: false,
+            },
+        )];
+
+        let result = client
+            .grant_config_batch(&token, treasury_address, grant_configs, admin_address)
+            .await;
+
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.count, 1);
+    }
+
+    // =========================================================================
+    // list_authz_grants tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_list_authz_grants_success() {
+        let mock_server = MockServer::start().await;
+        let treasury_address = "xion1treasurygrants";
+
+        // Use wiremock's query_param matcher for query parameters
+        use wiremock::matchers::query_param;
+
+        Mock::given(method("GET"))
+            .and(path("/cosmos/authz/v1beta1/grants"))
+            .and(query_param("granter", treasury_address))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "grants": [
+                    {
+                        "granter": treasury_address,
+                        "grantee": "xion1grantee1",
+                        "authorization": {"@type": "/cosmos.bank.v1beta1.SendAuthorization"},
+                        "expiration": "2025-12-31T23:59:59Z"
+                    },
+                    {
+                        "granter": treasury_address,
+                        "grantee": "xion1grantee2",
+                        "authorization": {"@type": "/cosmos.staking.v1beta1.StakeAuthorization"},
+                        "expiration": "2025-06-30T23:59:59Z"
+                    }
+                ]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.list_authz_grants(treasury_address).await;
+
+        assert!(result.is_ok());
+        let grants = result.unwrap();
+        assert_eq!(grants.len(), 2);
+        assert_eq!(grants[0].granter, treasury_address);
+        assert_eq!(grants[0].grantee, "xion1grantee1");
+        assert_eq!(
+            grants[0].authorization_type_url,
+            "/cosmos.bank.v1beta1.SendAuthorization"
+        );
+        assert_eq!(grants[1].grantee, "xion1grantee2");
+    }
+
+    #[tokio::test]
+    async fn test_list_authz_grants_empty() {
+        let mock_server = MockServer::start().await;
+        let treasury_address = "xion1emptytreasury";
+
+        use wiremock::matchers::query_param;
+
+        Mock::given(method("GET"))
+            .and(path("/cosmos/authz/v1beta1/grants"))
+            .and(query_param("granter", treasury_address))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "grants": []
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.list_authz_grants(treasury_address).await;
+
+        assert!(result.is_ok());
+        let grants = result.unwrap();
+        assert!(grants.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_list_authz_grants_http_error() {
+        let mock_server = MockServer::start().await;
+        let treasury_address = "xion1errortreasury";
+
+        Mock::given(method("GET"))
+            .and(path_regex(r"/cosmos/authz/v1beta1/grants"))
+            .respond_with(ResponseTemplate::new(500).set_body_string("Internal Server Error"))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.list_authz_grants(treasury_address).await;
+
+        assert!(result.is_err());
+    }
+
+    // =========================================================================
+    // list_fee_allowances tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_list_fee_allowances_success() {
+        let mock_server = MockServer::start().await;
+        let treasury_address = "xion1feeallowance";
+
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/cosmos/feegrant/v1beta1/allowances/xion1feeallowance",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "allowances": [
+                    {
+                        "granter": treasury_address,
+                        "grantee": "xion1feegrantee1",
+                        "allowance": {
+                            "@type": "/cosmos.feegrant.v1beta1.BasicAllowance",
+                            "spend_limit": [{"denom": "uxion", "amount": "1000000"}],
+                            "expiration": "2025-12-31T23:59:59Z"
+                        }
+                    }
+                ]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.list_fee_allowances(treasury_address).await;
+
+        assert!(result.is_ok());
+        let allowances = result.unwrap();
+        assert_eq!(allowances.len(), 1);
+        assert_eq!(allowances[0].granter, treasury_address);
+        assert_eq!(allowances[0].grantee, "xion1feegrantee1");
+        assert_eq!(
+            allowances[0].allowance_type_url,
+            "/cosmos.feegrant.v1beta1.BasicAllowance"
+        );
+        assert_eq!(allowances[0].spend_limit, Some("1000000uxion".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_list_fee_allowances_with_periodic() {
+        let mock_server = MockServer::start().await;
+        let treasury_address = "xion1periodicfee";
+
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/cosmos/feegrant/v1beta1/allowances/xion1periodicfee",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "allowances": [
+                    {
+                        "granter": treasury_address,
+                        "grantee": "xion1periodicgrantee",
+                        "allowance": {
+                            "@type": "/cosmos.feegrant.v1beta1.PeriodicAllowance",
+                            "period": "3600",
+                            "period_spend_limit": [{"denom": "uxion", "amount": "500000"}],
+                            "period_can_spend": [{"denom": "uxion", "amount": "250000"}],
+                            "expiration": "2025-12-31T23:59:59Z"
+                        }
+                    }
+                ]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.list_fee_allowances(treasury_address).await;
+
+        assert!(result.is_ok());
+        let allowances = result.unwrap();
+        assert_eq!(allowances.len(), 1);
+        assert_eq!(allowances[0].period, Some("3600".to_string()));
+        assert_eq!(
+            allowances[0].period_spend_limit,
+            Some("500000uxion".to_string())
+        );
+        assert_eq!(
+            allowances[0].period_can_spend,
+            Some("250000uxion".to_string())
+        );
+    }
+
+    #[tokio::test]
+    async fn test_list_fee_allowances_empty() {
+        let mock_server = MockServer::start().await;
+        let treasury_address = "xion1noallowance";
+
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/cosmos/feegrant/v1beta1/allowances/xion1noallowance",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "allowances": []
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.list_fee_allowances(treasury_address).await;
+
+        assert!(result.is_ok());
+        let allowances = result.unwrap();
+        assert!(allowances.is_empty());
+    }
+
+    // =========================================================================
+    // export_treasury_state tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_export_treasury_state_success() {
+        // Note: export_treasury_state aggregates data from indexer and on-chain queries.
+        // The indexer does not return grant configs, so grant_configs will be empty.
+        let mock_server = MockServer::start().await;
+        let admin_address = "xion1exportadmin";
+        let treasury_address = "xion1exporttreasury";
+        let token = create_test_token(admin_address);
+
+        // Mock the indexer - all indexer calls use the same URL pattern
+        // Wiremock will use sequential matching
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/contract/xion1exportadmin/xion/account/treasuries",
+            ))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([{
+                    "contractAddress": treasury_address,
+                    "balances": {"uxion": "1000000"},
+                    "params": {
+                        "redirect_url": "https://example.com",
+                        "icon_url": "https://example.com/icon.png",
+                        "metadata": "{\"name\": \"Export Treasury\"}"
+                    }
+                }])),
+            )
+            .mount(&mock_server)
+            .await;
+
+        // Second call returns same treasury info
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/contract/xion1exportadmin/xion/account/treasuries",
+            ))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([{
+                    "contractAddress": treasury_address,
+                    "balances": {"uxion": "1000000"},
+                    "params": {
+                        "redirect_url": "https://example.com",
+                        "icon_url": "https://example.com/icon.png",
+                        "metadata": "{}"
+                    }
+                }])),
+            )
+            .mount(&mock_server)
+            .await;
+
+        // Third call returns same treasury info (indexer doesn't return grant configs)
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/contract/xion1exportadmin/xion/account/treasuries",
+            ))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(serde_json::json!([{
+                    "contractAddress": treasury_address,
+                    "balances": {"uxion": "1000000"},
+                    "params": {
+                        "redirect_url": "https://example.com",
+                        "icon_url": "https://example.com/icon.png",
+                        "metadata": "{}"
+                    }
+                }])),
+            )
+            .mount(&mock_server)
+            .await;
+
+        // Mock for list_fee_allowances (on-chain RPC query)
+        Mock::given(method("GET"))
+            .and(path_regex(
+                r"/cosmos/feegrant/v1beta1/allowances/xion1exporttreasury",
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "allowances": []
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let client = create_test_client(&mock_server.uri());
+
+        let result = client.export_treasury_state(&token, treasury_address).await;
+
+        assert!(result.is_ok());
+        let export = result.unwrap();
+        assert_eq!(export.address, treasury_address);
+        assert!(export.params.is_some());
+        // Note: grant_configs are empty because indexer doesn't return them
+        assert!(export.grant_configs.is_empty());
+    }
+}
