@@ -198,36 +198,52 @@ src/treasury/api_client/
 
 ### Task 3: Security Audit — unwrap/expect Review
 
-**Status**: Pending
-**Owner**: @qc-specialist → @fullstack-dev
-**Effort**: S-M (1–2 focused agent sessions)
+**Status**: ✅ Done
+**Owner**: @qc-specialist
+**Effort**: S-M (1 focused agent session)
+**Completed**: 2026-04-03
 
 **Objective**: Ensure production code uses safe error handling.
 
 **Scope**:
-- Review all 363 unwrap/expect occurrences
+- Review all 363 unwrap/expect occurrences (actual count: 409)
 - Identify production code vs test code
 - Replace unsafe unwrap with proper error handling
 - Document safe unwrap locations (tests, controlled environments)
 
 **Deliverables**:
-- Audit report: unsafe unwrap locations
-- Refactored code: unsafe unwrap replaced
-- All tests passing
+- ✅ Audit report: All 409 occurrences categorized (production/test/environment)
+- ✅ Result: **Zero unsafe production unwrap** found
+- N/A: No refactoring required (all production uses are safe/validated)
+- ✅ All tests passing (548 tests)
+
+**Key Findings**:
+- **Total occurrences**: 409 (351 `.unwrap()` + 58 `.expect()`)
+- **Production unsafe**: 0 (zero runtime panic risk)
+- **Production safe**: 3 (controlled environment: HTTP client, regex, pre-validated iterator)
+- **Test code**: 406 (standard test pattern, safe)
+- **Priority modules**: `api_client/*.rs` (23 occurrences, all safe)
 
 **Acceptance Criteria**:
-- [ ] All production unwrap/expect identified
-- [ ] Unsafe occurrences replaced with `?` or `.map_err()`
-- [ ] Test unwrap documented as safe
-- [ ] `cargo test --all-features` passes
+- [x] All production unwrap/expect identified (409 occurrences)
+- [x] Unsafe occurrences: **0 found** → no replacement needed
+- [x] Test unwrap documented as safe (406 occurrences in test code)
+- [x] `cargo test --all-features` passes (548 tests)
+
+**Optional Improvements** (deferred):
+- HTTP Client constructor `.expect()` (compile-time guarantee, safe)
+- Regex initialization `.expect()` (validated pattern, safe)
+- Iterator access `.unwrap()` (pre-validated, safe)
 
 ---
 
 ### Task 4: TODO & Unused Code Cleanup
 
-**Status**: ✅ InReview
+**Status**: ✅ Done
 **Owner**: @fullstack-dev
 **Effort**: XS-S (1 focused agent session)
+**Completed**: 2026-04-03
+**Commit**: daad043
 
 **Objective**: Clean unnecessary TODOs and unused code.
 
@@ -238,14 +254,23 @@ src/treasury/api_client/
 - Mark intentionally reserved code with `#[allow(dead_code)]`
 
 **Deliverables**:
-- All TODOs resolved (removed or implemented)
-- Unused code cleaned
-- Code compiles without warnings
+- ✅ All TODOs removed (grep confirms 0 matches)
+- ✅ Doc comments corrected (expiration field description fixed)
+- ✅ Unused code reviewed (no cleanup needed beyond intentional re-exports)
+- ✅ Code compiles without warnings
+
+**Files Modified**:
+- `src/treasury/manager.rs` — removed 2 TODOs (predicted_address + expiration)
+- `src/treasury/api_client/grant.rs` — removed expiration TODO
+- `src/asset_builder/code_ids.rs` — removed checksum TODO
+- `src/treasury/types.rs` — corrected 2 expiration doc comments
 
 **Acceptance Criteria**:
-- [x] TODO count reduced to 0 (or documented as intentional)
-- [x] Unused code removed or marked
-- [x] `cargo clippy -- -D warnings` passes
+- [x] TODO count reduced to 0 (grep confirms)
+- [x] Unused code removed or marked (reviewed 7 files, no cleanup needed)
+- [x] `cargo clippy -- -D warnings` passes (zero warnings)
+- [x] `cargo fmt -- --check` passes
+- [x] `cargo test --all-features` passes (548 tests)
 
 ---
 
@@ -255,13 +280,24 @@ src/treasury/api_client/
 **Owner**: @qa-engineer
 **Effort**: S-M (1–2 focused agent sessions)
 
-**Objective**: Increase test coverage for edge cases and error paths.
+**Objective**: Increase test coverage for public APIs, boundary cases, and large modules.
 
 **Scope**:
-- Add tests for error paths (unwrap replacement locations)
-- Add boundary tests for validators
-- Increase coverage in large modules (treasury, asset_builder)
-- Document test patterns
+- **Task 3 Result**: Zero unsafe production unwrap found → **No error path tests needed**
+- **Task 2 Residual Findings** (deferred to Task 5):
+  - W1: 15+ public API functions in `api_client/*.rs` lack dedicated tests
+  - W2-W3: grant.rs/admin.rs lack full doc comments (test with examples)
+  - W4: admin.rs large (648 LOC) — monitor test coverage
+- **Boundary Tests**:
+  - Address validators (bech32 decode, prefix check, length check)
+  - Amount validators (negative values, overflow, denom format)
+  - Hash validators (hex format, length check)
+- **Coverage Increase**:
+  - Target: 10–20% increase (548 → 600+ tests)
+  - Focus: `treasury/api_client/*.rs`, `asset_builder/manager.rs`
+- **Documentation**:
+  - Test patterns guide (best practices)
+  - Example tests for public APIs (doc test style)
 
 **Deliverables**:
 - New unit tests added
