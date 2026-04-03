@@ -151,9 +151,11 @@ Files containing unused/deprecated markers:
 
 ### Task 2: Code Refactoring — treasury/api_client.rs
 
-**Status**: ✅ InReview
+**Status**: ✅ Done
 **Owner**: @fullstack-dev
 **Effort**: M (2–3 focused agent sessions)
+**Completed**: 2026-04-03
+**Commit**: 76f8ca2
 
 **Objective**: Split `treasury/api_client.rs` (2,967 lines) into maintainable modules.
 
@@ -183,6 +185,14 @@ src/treasury/api_client/
 - [x] All exports preserved (no breaking changes)
 - [x] `cargo test --all-features` passes
 - [x] `cargo clippy -- -D warnings` passes
+
+**QC Review**: ✅ Approved
+- 3 reviewers (architectural, safety, test/docs focus)
+- PM verified: clippy (0 warnings), fmt (clean), tests (22 passed in api_client)
+- Residual Findings (deferred to Task 5 / future):
+  - W1: 15+ public API functions lack dedicated tests
+  - W2-W3: grant.rs/admin.rs lack full doc comments
+  - W4: admin.rs large (648 LOC), monitor growth
 
 ---
 
