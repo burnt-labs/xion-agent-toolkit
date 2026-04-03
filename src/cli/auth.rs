@@ -219,6 +219,7 @@ fn handle_status(ctx: &ExecuteContext) -> Result<()> {
             Ok(Some(creds)) => {
                 result["xion_address"] = serde_json::json!(creds.xion_address);
                 result["expires_at"] = serde_json::json!(creds.expires_at);
+                result["scope"] = serde_json::json!(creds.scope);
                 info!("User is authenticated: {:?}", creds.xion_address);
             }
             Ok(None) => {
