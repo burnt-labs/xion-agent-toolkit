@@ -2,17 +2,38 @@
 
 **Gasless Xion development toolkit for humans and AI agents.**
 
-A command-line tool for managing Xion MetaAccounts, Treasury contracts, and NFT assets — all without handling private keys or paying gas fees.
+A command-line tool for managing Xion MetaAccounts, Treasury contracts, CosmWasm contracts, and CW721 assets — without handling private keys or paying gas fees.
 
 ---
 
 ## Core Features
 
-- **Auth** — OAuth2/MetaAccount login with Google, Email, or Passkey (no private keys)
-- **Treasury** — Create, fund, withdraw, and configure gasless transaction contracts
-- **NFT / Asset** — Deploy CW721 collections, mint tokens, configure royalties
-- **Faucet** — Claim testnet XION tokens (1 XION per claim, 24-hour cooldown)
-- **Contract** — Instantiate, execute, and query CosmWasm smart contracts
+- **Auth** — OAuth2 / MetaAccount (Google, Email, Passkey); PKCE; credentials encrypted on disk
+- **Account** — MetaAccount address, authenticators, balances
+- **Treasury** — Create, fund, withdraw; gasless grants & fee allowances; admin; backup via export/import
+- **OAuth2 clients** — App registration and lifecycle (`oauth2 client`, needs `auth login --dev-mode`)
+- **Contract** — Instantiate, instantiate2, execute, query (CosmWasm)
+- **Asset** — CW721 collections: mint, batch mint, query, predictable deploy address
+- **Batch** — Run or validate multi-message JSON batches (optional dry-run)
+- **Transactions** — Check status or wait for confirmation
+- **Faucet** — Testnet XION (1 per claim, 24h cooldown)
+- **Config** — Default network and config keys (`testnet` / `mainnet`)
+- **Automation-friendly** — JSON / human / GitHub Actions output, `status`, shell completions, `--no-interactive`
+
+---
+
+## Global CLI Options
+
+```text
+xion-toolkit [OPTIONS] <COMMAND>
+
+  -n, --network <NETWORK>     testnet | mainnet (default: testnet)
+  -o, --output <FORMAT>       json | json-compact | github-actions | human (default: json)
+  -c, --config <PATH>         Config file path
+      --no-interactive        Fail if required args are missing (no prompts)
+```
+
+Run `xion-toolkit --help` and `xion-toolkit <command> --help` for full flags.
 
 ---
 
@@ -21,17 +42,20 @@ A command-line tool for managing Xion MetaAccounts, Treasury contracts, and NFT 
 ### Install CLI
 
 **macOS / Linux:**
+
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.sh | sh
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 powershell -c "irm https://github.com/burnt-labs/xion-agent-toolkit/releases/latest/download/xion-agent-toolkit-installer.ps1 | iex"
 ```
 
 **From Source:**
+
 ```bash
 git clone https://github.com/burnt-labs/xion-agent-toolkit
 cd xion-agent-toolkit
@@ -51,7 +75,7 @@ npx skills add burnt-labs/xion-agent-toolkit -g
 xion-toolkit auth login
 ```
 
-Available skills: `xion-dev`, `xion-toolkit-init`, `xion-oauth2`, `xion-treasury`, `xion-faucet`, `xion-asset`, `xion-oauth2-client`. See [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for full details.
+Bundled skills: `xion-dev`, `xion-toolkit-init`, `xion-oauth2`, `xion-oauth2-client`, `xion-treasury`, `xion-faucet`, `xion-asset`. See [INSTALL-FOR-AGENTS.md](./INSTALL-FOR-AGENTS.md) for full details.
 
 ### Authenticate
 
@@ -59,7 +83,7 @@ Available skills: `xion-dev`, `xion-toolkit-init`, `xion-oauth2`, `xion-treasury
 xion-toolkit auth login
 ```
 
-Opens your browser for OAuth2 authentication. Tokens are stored encrypted locally.
+Opens your browser for OAuth2 authentication. Tokens are stored encrypted locally. If you already have credentials, prefer `xion-toolkit auth refresh` before starting a new `login`.
 
 ---
 
@@ -73,15 +97,22 @@ xion-toolkit auth login
 
 Authenticate with Google, Email, or Passkey — no seed phrases required.
 
-### 2. Claim Testnet Tokens
+### 2. Check environment
+
+```bash
+xion-toolkit status
+xion-toolkit account info
+```
+
+### 3. Claim Testnet Tokens
 
 ```bash
 xion-toolkit faucet claim
 ```
 
-Receive 1 XION (1,000,000 uxion) for testing. Check status with `faucet status`.
+Receive 1 XION (1,000,000 uxion) for testing. Use `faucet status` and `faucet info` for cooldown and contract config.
 
-### 3. Create a Treasury
+### 4. Create a Treasury
 
 ```bash
 xion-toolkit treasury create --name "My Treasury" --redirect-url "https://your-app.com/callback"
@@ -93,14 +124,32 @@ Creates a gasless transaction contract. Fund it with claimed tokens:
 xion-toolkit treasury fund xion1... --amount 1000000uxion
 ```
 
-### 4. (Optional) Create NFT Collection
+Configure **grant-config** and **fee-config** when you need delegated messages and sponsored fees — see [CLI Reference](./docs/cli-reference.md).
+
+### 5. (Optional) Create NFT Collection
 
 ```bash
+xion-toolkit asset types
 xion-toolkit asset create --type cw721-base --name "My Collection" --symbol "NFT"
 xion-toolkit asset mint --contract xion1... --token-id "1" --owner xion1...
 ```
 
-Deploy a CW721 collection and mint your first NFT.
+Use `asset predict` and **instantiate2**-style flows for predictable contract addresses (documented in the CLI reference).
+
+### 6. (Optional) Follow a transaction
+
+```bash
+xion-toolkit tx wait <TX_HASH>
+```
+
+---
+
+## Shell completions
+
+```bash
+xion-toolkit completions --install   # install for your shell
+xion-toolkit completions bash        # print script to stdout
+```
 
 ---
 
