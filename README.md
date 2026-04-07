@@ -22,21 +22,6 @@ A command-line tool for managing Xion MetaAccounts, Treasury contracts, CosmWasm
 
 ---
 
-## Global CLI Options
-
-```text
-xion-toolkit [OPTIONS] <COMMAND>
-
-  -n, --network <NETWORK>     testnet | mainnet (default: testnet)
-  -o, --output <FORMAT>       json | json-compact | github-actions | human (default: json)
-  -c, --config <PATH>         Config file path
-      --no-interactive        Fail if required args are missing (no prompts)
-```
-
-Run `xion-toolkit --help` and `xion-toolkit <command> --help` for full flags.
-
----
-
 ## Installation
 
 ### Install CLI
@@ -141,6 +126,21 @@ Use `asset predict` and **instantiate2**-style flows for predictable contract ad
 ```bash
 xion-toolkit tx wait <TX_HASH>
 ```
+
+---
+
+## Global CLI Options
+
+```text
+xion-toolkit [OPTIONS] <COMMAND>
+
+  -n, --network <NETWORK>     testnet | mainnet (default: testnet)
+  -o, --output <FORMAT>       json | json-compact | github-actions | human (default: json)
+  -c, --config <PATH>         Config file path
+      --no-interactive        Fail if required args are missing (no prompts)
+```
+
+Run `xion-toolkit --help` and `xion-toolkit <command> --help` for full flags.
 
 ---
 
