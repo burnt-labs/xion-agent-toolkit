@@ -5,6 +5,14 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.11.0...0.11.1) (2026-04-07)
+
+
+### Documentation
+
+* **readme:** move Global CLI Options after Quick Start ([#73](https://github.com/burnt-labs/xion-agent-toolkit/issues/73)) ([e82694b](https://github.com/burnt-labs/xion-agent-toolkit/commit/e82694b51e576e07669b736fb9391e939f648668))
+* **readme:** refresh feature overview and quick start ([74ef9c4](https://github.com/burnt-labs/xion-agent-toolkit/commit/74ef9c410f67eddac70941d63587196f250b7353))
+
 ## [0.11.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.10.1...0.11.0) (2026-04-03)
 
 
