@@ -50,7 +50,7 @@ dirs = "5.0"
 # Crypto for PKCE and credential encryption
 sha2 = "0.10"
 base64 = "0.22"
-rand = "0.8"
+rand = "0.9"
 hex = "0.4"
 aes-gcm = { version = "0.10", features = ["aes"] }
 machine-uid = "0.5"
