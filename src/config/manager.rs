@@ -77,6 +77,9 @@ impl ConfigManager {
         if !["testnet", "mainnet"].contains(&network) {
             anyhow::bail!("Invalid network: {}. Must be testnet or mainnet", network);
         }
+        if network == "mainnet" {
+            mainnet_network_config()?;
+        }
         self.config.network = network.to_string();
         self.save_config()
     }
@@ -99,16 +102,12 @@ impl ConfigManager {
     }
 
     pub fn get_network_config(&self) -> Result<super::constants::NetworkConfig> {
-        use super::constants::{get_mainnet_config, get_testnet_config};
+        use super::constants::get_testnet_config;
 
         let current_network = self.get_current_network();
         match current_network {
             "testnet" => Ok(get_testnet_config()),
-            "mainnet" => {
-                let config = get_mainnet_config();
-                validate_mainnet_oauth_client_id(&config.oauth_client_id)?;
-                Ok(config)
-            }
+            "mainnet" => mainnet_network_config(),
             _ => anyhow::bail!("Unknown network: {}", current_network),
         }
     }
@@ -119,8 +118,15 @@ impl ConfigManager {
     }
 }
 
-/// Returns true when the compile-time mainnet OAuth client ID was not configured.
-pub fn is_unconfigured_mainnet_oauth_client_id(client_id: &str) -> bool {
+fn mainnet_network_config() -> Result<super::constants::NetworkConfig> {
+    use super::constants::get_mainnet_config;
+
+    let config = get_mainnet_config();
+    validate_mainnet_oauth_client_id(&config.oauth_client_id)?;
+    Ok(config)
+}
+
+fn is_unconfigured_mainnet_oauth_client_id(client_id: &str) -> bool {
     client_id.is_empty()
         || client_id.contains("PLACEHOLDER")
         || client_id.starts_with("your-mainnet")
@@ -129,9 +135,9 @@ pub fn is_unconfigured_mainnet_oauth_client_id(client_id: &str) -> bool {
 fn validate_mainnet_oauth_client_id(client_id: &str) -> Result<()> {
     if is_unconfigured_mainnet_oauth_client_id(client_id) {
         anyhow::bail!(
-            "Mainnet OAuth client ID is not configured. \
-             Set XION_MAINNET_OAUTH_CLIENT_ID in .env before building, or configure the \
-             XION_MAINNET_OAUTH_CLIENT_ID GitHub Actions variable for release binaries. \
+            "Mainnet OAuth client ID is not configured in this binary. \
+             Rebuild with XION_MAINNET_OAUTH_CLIENT_ID set in the environment or in a .env file \
+             loaded at build time, or use a release binary built with the GitHub Actions variable. \
              See CONTRIBUTING.md and docs/release.md."
         );
     }
@@ -161,7 +167,7 @@ mod tests {
         let err = validate_mainnet_oauth_client_id("your-mainnet-client-id-here").unwrap_err();
         assert!(
             err.to_string()
-                .contains("Mainnet OAuth client ID is not configured"),
+                .contains("Rebuild with XION_MAINNET_OAUTH_CLIENT_ID"),
             "unexpected error: {err}"
         );
     }

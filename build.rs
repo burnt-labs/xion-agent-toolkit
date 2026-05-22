@@ -2,23 +2,41 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
+/// Escape a string for use inside a Rust double-quoted literal in generated code.
+fn escape_rust_string(value: &str) -> String {
+    value
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+        .replace('\t', "\\t")
+}
+
 fn main() {
     // Load .env file if it exists
     dotenvy::dotenv().ok();
 
     // Read OAuth2 client IDs from environment variables
-    let testnet_client_id = env::var("XION_TESTNET_OAUTH_CLIENT_ID")
-        .unwrap_or_else(|_| "PLACEHOLDER_TESTNET_CLIENT_ID".to_string());
+    let testnet_client_id = escape_rust_string(
+        &env::var("XION_TESTNET_OAUTH_CLIENT_ID")
+            .unwrap_or_else(|_| "PLACEHOLDER_TESTNET_CLIENT_ID".to_string()),
+    );
 
-    let mainnet_client_id = env::var("XION_MAINNET_OAUTH_CLIENT_ID")
-        .unwrap_or_else(|_| "PLACEHOLDER_MAINNET_CLIENT_ID".to_string());
+    let mainnet_client_id = escape_rust_string(
+        &env::var("XION_MAINNET_OAUTH_CLIENT_ID")
+            .unwrap_or_else(|_| "PLACEHOLDER_MAINNET_CLIENT_ID".to_string()),
+    );
 
     // Optional: override OAuth API URL for local development
-    let testnet_oauth_api_url = env::var("XION_TESTNET_OAUTH_API_URL")
-        .unwrap_or_else(|_| "https://oauth2.testnet.burnt.com".to_string());
+    let testnet_oauth_api_url = escape_rust_string(
+        &env::var("XION_TESTNET_OAUTH_API_URL")
+            .unwrap_or_else(|_| "https://oauth2.testnet.burnt.com".to_string()),
+    );
 
-    let mainnet_oauth_api_url = env::var("XION_MAINNET_OAUTH_API_URL")
-        .unwrap_or_else(|_| "https://oauth2.burnt.com".to_string());
+    let mainnet_oauth_api_url = escape_rust_string(
+        &env::var("XION_MAINNET_OAUTH_API_URL")
+            .unwrap_or_else(|_| "https://oauth2.burnt.com".to_string()),
+    );
 
     // Generate network_config.rs
     let out_dir = env::var("OUT_DIR").unwrap();
@@ -56,11 +74,11 @@ pub struct NetworkConfig {{
 pub fn get_testnet_config() -> NetworkConfig {{
     NetworkConfig {{
         network_name: "testnet".to_string(),
-        oauth_api_url: "{}".to_string(),
+        oauth_api_url: "{testnet_oauth_api_url}".to_string(),
         rpc_url: "https://rpc.xion-testnet-2.burnt.com:443".to_string(),
         rest_url: "https://api.xion-testnet-2.burnt.com".to_string(),
         chain_id: "xion-testnet-2".to_string(),
-        oauth_client_id: "{}".to_string(),
+        oauth_client_id: "{testnet_client_id}".to_string(),
         treasury_code_id: 1260,
         callback_port: 54321,
         indexer_url: "https://daodaoindexer.burnt.com/xion-testnet-2".to_string(),
@@ -77,11 +95,11 @@ pub fn get_testnet_config() -> NetworkConfig {{
 pub fn get_mainnet_config() -> NetworkConfig {{
     NetworkConfig {{
         network_name: "mainnet".to_string(),
-        oauth_api_url: "{}".to_string(),
+        oauth_api_url: "{mainnet_oauth_api_url}".to_string(),
         rpc_url: "https://rpc.xion-mainnet-1.burnt.com:443".to_string(),
         rest_url: "https://api.xion-mainnet-1.burnt.com".to_string(),
         chain_id: "xion-mainnet-1".to_string(),
-        oauth_client_id: "{}".to_string(),
+        oauth_client_id: "{mainnet_client_id}".to_string(),
         treasury_code_id: 63,
         callback_port: 54321,
         indexer_url: "https://daodaoindexer.burnt.com/xion-mainnet-1".to_string(),
@@ -94,8 +112,7 @@ pub fn get_mainnet_config() -> NetworkConfig {{
         cw2981_royalties_code_id: 0,
     }}
 }}
-"#,
-        testnet_oauth_api_url, testnet_client_id, mainnet_oauth_api_url, mainnet_client_id
+"#
     );
 
     fs::write(&dest_path, config_content).unwrap();
@@ -106,4 +123,17 @@ pub fn get_mainnet_config() -> NetworkConfig {{
     println!("cargo:rerun-if-env-changed=XION_MAINNET_OAUTH_API_URL");
     println!("cargo:rerun-if-changed=.env");
     println!("cargo:rerun-if-changed=build.rs");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::escape_rust_string;
+
+    #[test]
+    fn test_escape_rust_string_quotes_and_backslashes() {
+        assert_eq!(
+            escape_rust_string(r#"say "hi" \ path"#),
+            r#"say \"hi\" \\ path"#
+        );
+    }
 }

@@ -236,10 +236,12 @@ In the GitHub repository, configure the following repository **Variables** (not 
 - `XION_TESTNET_OAUTH_CLIENT_ID` – OAuth client ID for testnet
 - `XION_MAINNET_OAUTH_CLIENT_ID` – OAuth client ID for mainnet
 
-Optional overrides for local development (not required for release builds):
+Optional OAuth API URL overrides (embedded at build time; defaults shown below):
 
 - `XION_TESTNET_OAUTH_API_URL` – defaults to `https://oauth2.testnet.burnt.com`
 - `XION_MAINNET_OAUTH_API_URL` – defaults to `https://oauth2.burnt.com`
+
+For local builds, set these in `.env` or the shell environment before `cargo build`. Release builds read the same variables from GitHub Actions.
 
 These map directly to the environment variables read in `build.rs`:
 
