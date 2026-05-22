@@ -5,6 +5,36 @@ All notable changes to the Xion Agent Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.11.0...0.12.0) (2026-05-22)
+
+
+### Features
+
+* **cli:** enable mainnet and remove XION_MAINNET_DISABLED gate ([56e8f9a](https://github.com/burnt-labs/xion-agent-toolkit/commit/56e8f9a9e58b5495d9505b9257900edb73be4480))
+* **cli:** enable mainnet support ([#75](https://github.com/burnt-labs/xion-agent-toolkit/issues/75)) ([ea1c785](https://github.com/burnt-labs/xion-agent-toolkit/commit/ea1c78508fe1582ba556dfd9976cf87c324a0192))
+
+
+### Bug Fixes
+
+* **cli:** address PR review feedback and rustls-webpki audit ([16fe420](https://github.com/burnt-labs/xion-agent-toolkit/commit/16fe420bc0555b93d7b748f5dc7d1b81f06f84ad))
+
+
+### Documentation
+
+* **readme:** move Global CLI Options after Quick Start ([#73](https://github.com/burnt-labs/xion-agent-toolkit/issues/73)) ([e82694b](https://github.com/burnt-labs/xion-agent-toolkit/commit/e82694b51e576e07669b736fb9391e939f648668))
+* **readme:** refresh feature overview and quick start ([74ef9c4](https://github.com/burnt-labs/xion-agent-toolkit/commit/74ef9c410f67eddac70941d63587196f250b7353))
+
+
+### Tests
+
+* **config:** ensure set-network mainnet validates before persist ([0b8dc29](https://github.com/burnt-labs/xion-agent-toolkit/commit/0b8dc2966651580ded6e6e783e222ed0fdc44c5b))
+
+
+### Chores
+
+* **deps:** resolve Dependabot alerts and upgrade rand to 0.9 ([bfce14b](https://github.com/burnt-labs/xion-agent-toolkit/commit/bfce14bb2dd200586ce9efcb99bc965b144567ed))
+* **deps:** resolve Dependabot alerts and upgrade rand to 0.9 ([9a6d6a7](https://github.com/burnt-labs/xion-agent-toolkit/commit/9a6d6a75982b31eebeac7eed0045131c42006f9e))
+
 ## [0.11.0](https://github.com/burnt-labs/xion-agent-toolkit/compare/0.10.1...0.11.0) (2026-04-03)
 
 
