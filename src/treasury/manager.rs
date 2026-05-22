@@ -536,8 +536,8 @@ impl TreasuryManager {
         // Step 7: Generate random salt for instantiate2
         let salt: [u8; 32] = {
             use rand::Rng;
-            let mut rng = rand::thread_rng();
-            rng.gen()
+            let mut rng = rand::rng();
+            rng.random()
         };
 
         // Step 8: Call API to create treasury
@@ -817,7 +817,7 @@ impl TreasuryManager {
         let salt_bytes = salt.map(|s| s.to_vec()).unwrap_or_else(|| {
             use rand::RngCore;
             let mut buf = vec![0u8; 32];
-            rand::thread_rng().fill_bytes(&mut buf);
+            rand::rng().fill_bytes(&mut buf);
             buf
         });
 

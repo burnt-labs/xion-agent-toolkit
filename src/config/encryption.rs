@@ -110,7 +110,7 @@ pub fn encrypt(plaintext: &[u8]) -> Result<String> {
 
     // Generate random nonce
     let mut nonce_bytes = [0u8; NONCE_LEN];
-    rand::thread_rng().fill_bytes(&mut nonce_bytes);
+    rand::rng().fill_bytes(&mut nonce_bytes);
     let nonce = Nonce::from_slice(&nonce_bytes);
 
     // Encrypt
@@ -160,7 +160,7 @@ pub fn decrypt(ciphertext_b64: &str) -> Result<Vec<u8>> {
 #[allow(dead_code)]
 pub fn generate_test_key() -> String {
     let mut key = [0u8; KEY_LEN];
-    rand::thread_rng().fill_bytes(&mut key);
+    rand::rng().fill_bytes(&mut key);
     hex::encode(key)
 }
 

@@ -123,7 +123,7 @@ impl AssetBuilderManager {
         } else {
             // Generate random 32-byte salt
             let mut buf = vec![0u8; 32];
-            rand::thread_rng().fill_bytes(&mut buf);
+            rand::rng().fill_bytes(&mut buf);
             buf
         };
 

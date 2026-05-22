@@ -87,7 +87,7 @@ pub fn generate_pkce_verifier() -> Result<String, PKCEError> {
     const UNRESERVED_CHARS: &[u8] =
         b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut verifier = String::with_capacity(VERIFIER_LENGTH);
 
     for _ in 0..VERIFIER_LENGTH {
@@ -151,7 +151,7 @@ pub fn generate_pkce_challenge(verifier: &str) -> Result<String, PKCEError> {
 pub fn generate_state() -> Result<String, PKCEError> {
     const STATE_BYTES: usize = 32;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut bytes = [0u8; STATE_BYTES];
     rng.fill_bytes(&mut bytes);
 
