@@ -14,6 +14,8 @@ metadata:
   requires:
     - xion-toolkit-init
     - xion-oauth2
+  recommends:
+    - xion-dev
 compatibility: Requires xion-toolkit CLI and OAuth2 authentication (for claim operations)
 ---
 
@@ -339,5 +341,5 @@ Confirm? [y/n]
 Use the validation script to check parameters before execution:
 
 ```bash
-./skills/scripts/validate-params.sh xion-faucet claim '{"receiver": "xion1abc..."}'
+skills/xion-dev/scripts/validate-params.sh xion-faucet claim '{"receiver": "xion1abc..."}'
 ```

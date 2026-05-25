@@ -7,8 +7,8 @@
 # - Input validation
 # - Audit logging
 #
-# Usage:
-#   source ./scripts/security-utils.sh
+# Usage (from xion-treasury/scripts/*.sh):
+#   source "$SCRIPT_DIR/security-utils.sh"
 #
 # Security best practices:
 # - Always confirm sensitive operations (fund, withdraw, grant config)

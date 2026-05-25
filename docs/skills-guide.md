@@ -11,6 +11,39 @@ Skills are bash scripts that provide AI Agents with structured, JSON-output capa
 - Consistent error codes with remediation hints
 - Follow [Agent Skills](https://agentskills.io/) format
 
+### Frontmatter (Codex / Cursor / Claude)
+
+Loaders reject invalid `SKILL.md` files at startup. Keep frontmatter valid:
+
+| Rule | Requirement |
+|------|-------------|
+| Delimiters | Start and end YAML with `---` on its own line |
+| `description` | Quoted string (single or double quotes); **max 1024 characters** |
+| Long triggers | Put keyword lists in a `## Triggers` section in the body, not in `description` |
+| Extra docs | Command details, refresh-first notes, and examples belong in the body |
+
+Repository layout: `skills/` contains only skill packages (`xion-dev/`, `xion-oauth2/`, `xion-treasury/`, …). Each package has `SKILL.md`, `schemas/`, and optional `scripts/`. There is no `skills/scripts/` directory.
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `validate-skill-frontmatter.sh` | repo `scripts/` (dev/CI only) | Codex-compatible `SKILL.md` checks (runs `cargo run --bin validate-skill-frontmatter`; requires Rust toolchain) |
+| `validate-params.sh` | `skills/xion-dev/scripts/` | Validate parameters against any skill’s JSON schemas (sibling skills under the same install root) |
+| `security-utils.sh` | `skills/xion-treasury/scripts/` | Confirmations and validation for fund/withdraw scripts |
+
+Parameter validation requires **`xion-dev`** installed alongside the target skill (same parent directory as `~/.agents/skills/`). Treasury fund/withdraw scripts source `security-utils.sh` locally.
+
+Validate locally before publishing or reinstalling:
+
+```bash
+./scripts/validate-skill-frontmatter.sh
+```
+
+After changing skills in this repo, reinstall global copies for Codex:
+
+```bash
+npx skills add burnt-labs/xion-agent-toolkit -g -y -a codex
+```
+
 ## Installation
 
 Install to global skills directory for all common agents (Cursor, Claude Code, Codex, OpenClaw):

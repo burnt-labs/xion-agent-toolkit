@@ -1,25 +1,24 @@
 ---
 name: xion-treasury
-description: |
-  Treasury management for Xion MetaAccount gasless transactions. Use this skill whenever the user needs to create, query, or manage Treasury contracts, fund or withdraw from treasuries, configure Authz grants, set up fee allowances, or perform any Treasury-related operations on Xion.
-  
-  Treasury contracts enable GASLESS transactions through MetaAccount - users don't need to hold XION for gas fees.
-  
-  Triggers on: Treasury, MetaAccount Treasury, gasless 交易, gasless transactions, 无 gas 交易, authz grant, fee grant, treasury create, treasury fund, treasury withdraw, treasury 管理, MetaAccount treasury, burnt labs treasury, fee allowance, delegated authorization, set up treasury, manage treasury, give me a treasury, create xion treasury, xion treasury address, my treasury, treasury balance, check treasury, list treasuries, treasury permissions, grant permissions, revoke permissions, add spend limit, remove spend limit, configure fee allowance, treasury admin, update treasury, import treasury, export treasury.
-  
-  Use AFTER xion-oauth2 skill - authentication is required for all Treasury operations. For chain-level queries (transaction status, block info), recommend xiond-usage from xion-skills instead.
+description: "Treasury management for Xion MetaAccount gasless transactions (create, fund, withdraw, authz/fee grants). Use when the user mentions Treasury, fee allowance, authz grant, or treasury operations on Xion. Requires xion-oauth2; use xiond-usage for chain-only queries."
 metadata:
   author: burnt-labs
   version: "1.2.2"
   requires:
     - xion-toolkit-init
     - xion-oauth2
+  recommends:
+    - xion-dev
 compatibility: Requires xion-toolkit CLI and OAuth2 authentication
 ---
 
 # xion-treasury
 
 Treasury management skill for Xion blockchain. Enables **gasless transactions** through Treasury contracts with fee grants and authz grants.
+
+## Triggers
+
+Treasury, MetaAccount Treasury, gasless 交易, gasless transactions, 无 gas 交易, authz grant, fee grant, treasury create, treasury fund, treasury withdraw, treasury 管理, fee allowance, delegated authorization, treasury balance, list treasuries, treasury permissions, treasury admin, import treasury, export treasury.
 
 ## Core Philosophy: Gasless Transactions
 
@@ -394,5 +393,5 @@ See `schemas/` directory for detailed parameter definitions:
 Use the validation script to check parameters before execution:
 
 ```bash
-./skills/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1abc...", "preset": "send"}'
+skills/xion-dev/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1abc...", "preset": "send"}'
 ```

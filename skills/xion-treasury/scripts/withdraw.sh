@@ -36,8 +36,8 @@ set -e
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../../scripts/security-utils.sh
-source "$SCRIPT_DIR/../../scripts/security-utils.sh" 2>/dev/null || {
+# shellcheck source=security-utils.sh
+source "$SCRIPT_DIR/security-utils.sh" 2>/dev/null || {
     # Fallback if security-utils.sh is not available
     log_info() { echo "[INFO] $1" >&2; }
     log_error() { echo "[ERROR] $1" >&2; }

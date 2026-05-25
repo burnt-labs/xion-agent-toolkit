@@ -1,41 +1,23 @@
 ---
 name: xion-oauth2
-description: |
-  OAuth2 authentication for Xion MetaAccount with REFRESH-FIRST approach.
-  
-  **IMPORTANT: Always prefer `auth refresh` over `auth login` when credentials exist.**
-  
-  Use this skill whenever the user mentions:
-  - Xion login, authentication, MetaAccount login, OAuth2 xion
-  - Token expired, refresh token, access token, session key
-  - xion 认证, xion 登录, MetaAccount 登录, OAuth2 登录
-  - "login to xion", "authenticate xion", "gasless auth"
-  - Token issues, authentication problems, credential errors
-  - Before any Treasury/contract operations that require authentication
-  
-  This skill provides GASLESS authentication through MetaAccount - no gas fees required.
-  
-  Does NOT cover OAuth2 client lifecycle management (register, list, update, delete OAuth2 clients) — use `xion-oauth2-client` for that.
-  
-   Key commands:
-   - `auth status` - Check current authentication state
-   - `auth refresh` - Refresh token (PREFERRED when credentials exist)
-   - `auth login` - New browser auth (only if no credentials or refresh failed)
-   - `auth login --force` - Force fresh browser auth (skip refresh check)
-   - `auth login --dev-mode` - Request Manager API scopes for OAuth2 client management
-   
-   Make sure to use this skill whenever authentication is mentioned, even if the user doesn't explicitly say "OAuth2" or "MetaAccount".
+description: "OAuth2 authentication for Xion MetaAccount; prefer auth refresh over auth login when credentials exist. Use for xion login, token refresh, MetaAccount auth, or before Treasury/NFT work. Not for OAuth2 client CRUD (use xion-oauth2-client)."
 metadata:
   author: burnt-labs
   version: "1.2.2"
   requires:
     - xion-toolkit-init
+  recommends:
+    - xion-dev
   compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
 ---
 
 # xion-oauth2
 
 OAuth2 authentication skill for Xion blockchain development. This skill enables AI agents to authenticate with Xion's **MetaAccount** system using browser-based OAuth2 flow with PKCE security.
+
+## Triggers
+
+Xion login, authentication, MetaAccount login, OAuth2 xion, token expired, refresh token, access token, session key, xion 认证, xion 登录, gasless auth, token issues, credential errors. Commands: `auth status`, `auth refresh` (preferred), `auth login`, `auth login --force`, `auth login --dev-mode`.
 
 ## Why MetaAccount?
 
@@ -430,7 +412,7 @@ See `schemas/` directory for detailed parameter definitions:
 Use the validation script to check parameters before execution:
 
 ```bash
-./skills/scripts/validate-params.sh xion-oauth2 login '{}'
+skills/xion-dev/scripts/validate-params.sh xion-oauth2 login '{}'
 ```
 
 ## License

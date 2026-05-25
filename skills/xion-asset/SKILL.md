@@ -15,6 +15,7 @@ metadata:
   author: burnt-labs
   version: "1.2.0"
   recommends:
+    - xion-dev
     - xion-oauth2
     - xion-toolkit-init
 ---
@@ -310,5 +311,5 @@ See `schemas/` directory for detailed parameter definitions:
 Use the validation script to check parameters before execution:
 
 ```bash
-./skills/scripts/validate-params.sh xion-asset mint '{"contract": "xion1abc...", "token-id": "1", "owner": "xion1owner..."}'
+skills/xion-dev/scripts/validate-params.sh xion-asset mint '{"contract": "xion1abc...", "token-id": "1", "owner": "xion1owner..."}'
 ```

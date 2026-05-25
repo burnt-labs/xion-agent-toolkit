@@ -1,13 +1,6 @@
 ---
 name: xion-oauth2-client
-description: |
-  OAuth2 client lifecycle management for Xion MetaAccount. Use this skill whenever the user needs to create, query, update, or delete OAuth2 clients, manage client managers, or transfer client ownership via the Xion MGR API.
-
-  OAuth2 clients are bound to Treasuries and enable dApps to integrate with Xion's MetaAccount authentication system for gasless transactions.
-
-  Triggers on: OAuth2 client, OAuth client, client management, create OAuth app, register client, OAuth client CRUD, client lifecycle, manage OAuth clients, OAuth application, MGR API, client ID, client secret, redirect URIs, binded treasury, OAuth client ownership, manager management, oauth2 client list, oauth2 client create, oauth2 client get, oauth2 client update, oauth2 client delete, oauth2 client extension, oauth2 client managers, oauth2 client transfer-ownership, register my dapp, create OAuth client, manage my OAuth apps, add manager to client, transfer client ownership, OAuth2 客户端, 客户端管理, 创建 OAuth 应用, OAuth 客户端, OAuth 应用, xion-oauth2-client skill.
-
-  Use AFTER xion-oauth2 skill - authentication is required for all client operations. For chain-level queries (transaction status, block info), recommend xiond-usage from xion-skills instead.
+description: "OAuth2 client lifecycle on Xion via Manager API (create, list, update, delete, managers, transfer). Use when registering OAuth apps or managing OAuth2 clients. Requires xion-oauth2 (dev-mode for Manager scopes)."
 metadata:
   author: burnt-labs
   version: "1.0.0"
@@ -20,6 +13,10 @@ compatibility: Requires xion-toolkit CLI >=0.9.0 and OAuth2 authentication
 # xion-oauth2-client
 
 OAuth2 client management skill for Xion blockchain. Enables dApp registration and lifecycle management through the MGR API.
+
+## Triggers
+
+OAuth2 client, OAuth client, client management, create OAuth app, register client, MGR API, client ID, redirect URIs, oauth2 client list/create/get/update/delete, managers, transfer-ownership, OAuth2 客户端, 客户端管理, 创建 OAuth 应用.
 
 ## Overview
 

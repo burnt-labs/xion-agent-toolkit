@@ -1,15 +1,6 @@
 ---
 name: xion-toolkit-init
-description: |
-  Guide installation of xion-toolkit CLI for Xion MetaAccount development. Use this skill as the FIRST step when the user wants to develop on Xion, build Xion applications, use MetaAccount, perform gasless transactions, or manage Treasury contracts.
-  
-  This is the PRIMARY entry point for Xion development - most Xion developers should use xion-toolkit (MetaAccount) instead of xiond (traditional CLI).
-  
-  IMPORTANT: This skill provides GUIDANCE ONLY. It does NOT execute installation commands. The agent should provide installation commands to the user or execute them via terminal tools.
-  
-  Triggers on: MetaAccount, gasless, 无 gas, xion toolkit, xion 开发, xion 开发入门, agent 开发, OAuth2 开发, xion setup, install xion, xion blockchain development, burnt labs, Treasury contracts, session key authentication, xion 安装, xion 入门, xion sdk, burnt-labs xion, xion-toolkit upgrade, update xion-toolkit, upgrade xion, xion 升级, xion 版本更新.
-  
-  Make sure to use this skill whenever the user mentions setting up Xion development, even if they don't explicitly say "toolkit" or "MetaAccount".
+description: "Guides xion-toolkit CLI installation for Xion MetaAccount development (guidance only; agent runs install commands when asked). Use for xion setup, install toolkit, MetaAccount onboarding, or toolkit upgrade."
 metadata:
   author: burnt-labs
   version: "2.0.0"
@@ -23,6 +14,10 @@ metadata:
 # xion-toolkit-init
 
 Guides installation of the `xion-toolkit` CLI for Xion MetaAccount development. This CLI provides OAuth2 authentication and Treasury management for gasless transactions.
+
+## Triggers
+
+MetaAccount, gasless, 无 gas, xion toolkit, xion 开发, xion 开发入门, xion setup, install xion, xion 安装, xion sdk, xion-toolkit upgrade, update xion-toolkit, xion 升级, xion 版本更新.
 
 > **Security Note**: This skill provides installation commands for the user to execute. It does NOT automatically run `curl | sh` patterns to avoid remote code execution risks.
 
