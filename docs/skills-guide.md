@@ -18,7 +18,7 @@ Loaders reject invalid `SKILL.md` files at startup. Keep frontmatter valid:
 | Rule | Requirement |
 |------|-------------|
 | Delimiters | Start and end YAML with `---` on its own line |
-| `description` | Single quoted string (recommended); **max 1024 characters** |
+| `description` | Quoted string (single or double quotes); **max 1024 characters** |
 | Long triggers | Put keyword lists in a `## Triggers` section in the body, not in `description` |
 | Extra docs | Command details, refresh-first notes, and examples belong in the body |
 

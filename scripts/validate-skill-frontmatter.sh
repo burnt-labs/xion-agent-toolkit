@@ -30,9 +30,10 @@ max_len = int(sys.argv[2])
 text = path.read_text(encoding="utf-8")
 if not text.startswith("---\n"):
     print("missing opening ---"); sys.exit(1)
-end = text.find("\n---", 4)
-if end == -1:
+match = re.search(r"\n---\r?\n", text[4:])
+if match is None:
     print("missing closing ---"); sys.exit(1)
+end = 4 + match.start()
 block = text[4:end]
 # Minimal YAML: only fields we need
 lines = block.splitlines()
