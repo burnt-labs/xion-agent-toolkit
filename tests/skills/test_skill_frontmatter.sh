@@ -19,8 +19,8 @@ test_skill_frontmatter_all_packages() {
         chmod +x "$VALIDATE"
     fi
 
-    if ! command -v ruby >/dev/null 2>&1; then
-        log_error "ruby is required for frontmatter validation"
+    if ! command -v cargo >/dev/null 2>&1; then
+        log_error "cargo is required for frontmatter validation"
         return 1
     fi
 
