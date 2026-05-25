@@ -161,6 +161,12 @@ jobs:
           echo "=== Linting test framework ==="
           shellcheck tests/skills/lib.sh tests/skills/run_all.sh
 
+      - name: Validate SKILL.md frontmatter
+        run: |
+          echo "=== Validating skill frontmatter ==="
+          chmod +x scripts/validate-skill-frontmatter.sh
+          ./scripts/validate-skill-frontmatter.sh
+
       - name: Lint skill scripts
         run: |
           echo "=== Linting skill scripts ==="
