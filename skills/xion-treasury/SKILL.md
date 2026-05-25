@@ -7,6 +7,8 @@ metadata:
   requires:
     - xion-toolkit-init
     - xion-oauth2
+  recommends:
+    - xion-dev
 compatibility: Requires xion-toolkit CLI and OAuth2 authentication
 ---
 
@@ -391,5 +393,5 @@ See `schemas/` directory for detailed parameter definitions:
 Use the validation script to check parameters before execution:
 
 ```bash
-./skills/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1abc...", "preset": "send"}'
+skills/xion-dev/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1abc...", "preset": "send"}'
 ```

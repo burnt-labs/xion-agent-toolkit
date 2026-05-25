@@ -206,6 +206,20 @@ npx skills add burnt-labs/xion-skills -g -y -a cursor -a claude-code -a codex -a
 ### User mentions "royalties" or "CW2981"
 → Recommend xion-asset with cw2981-royalties type
 
+## Shared parameter validation
+
+`scripts/validate-params.sh` validates JSON parameters for any Xion skill against its `schemas/<command>.json`. It resolves schemas from **sibling** skill directories under the same install root (for example `~/.agents/skills/`).
+
+```bash
+# From repository root
+skills/xion-dev/scripts/validate-params.sh xion-treasury grant-config-add '{"address": "xion1abc...", "preset": "send"}'
+
+# When skills are installed globally (cwd = skills install root)
+xion-dev/scripts/validate-params.sh xion-oauth2 login '{}'
+```
+
+Other skills document this helper in their parameter-validation examples; install **`xion-dev`** whenever you use those examples.
+
 ## Keeping Skills Updated
 
 Skills are actively developed and improved. If you encounter:

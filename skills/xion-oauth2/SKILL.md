@@ -6,6 +6,8 @@ metadata:
   version: "1.2.2"
   requires:
     - xion-toolkit-init
+  recommends:
+    - xion-dev
   compatibility: Requires xion-toolkit CLI and browser for OAuth2 flow
 ---
 
@@ -410,7 +412,7 @@ See `schemas/` directory for detailed parameter definitions:
 Use the validation script to check parameters before execution:
 
 ```bash
-./skills/scripts/validate-params.sh xion-oauth2 login '{}'
+skills/xion-dev/scripts/validate-params.sh xion-oauth2 login '{}'
 ```
 
 ## License

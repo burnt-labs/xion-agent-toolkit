@@ -22,6 +22,16 @@ Loaders reject invalid `SKILL.md` files at startup. Keep frontmatter valid:
 | Long triggers | Put keyword lists in a `## Triggers` section in the body, not in `description` |
 | Extra docs | Command details, refresh-first notes, and examples belong in the body |
 
+Repository layout: `skills/` contains only skill packages (`xion-dev/`, `xion-oauth2/`, `xion-treasury/`, …). Each package has `SKILL.md`, `schemas/`, and optional `scripts/`. There is no `skills/scripts/` directory.
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `validate-skill-frontmatter.sh` | repo `scripts/` (dev/CI only) | Codex-compatible `SKILL.md` checks |
+| `validate-params.sh` | `skills/xion-dev/scripts/` | Validate parameters against any skill’s JSON schemas (sibling skills under the same install root) |
+| `security-utils.sh` | `skills/xion-treasury/scripts/` | Confirmations and validation for fund/withdraw scripts |
+
+Parameter validation requires **`xion-dev`** installed alongside the target skill (same parent directory as `~/.agents/skills/`). Treasury fund/withdraw scripts source `security-utils.sh` locally.
+
 Validate locally before publishing or reinstalling:
 
 ```bash
