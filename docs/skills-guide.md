@@ -26,7 +26,7 @@ Repository layout: `skills/` contains only skill packages (`xion-dev/`, `xion-oa
 
 | Script | Location | Purpose |
 |--------|----------|---------|
-| `validate-skill-frontmatter.sh` | repo `scripts/` (dev/CI only) | Codex-compatible `SKILL.md` checks |
+| `validate-skill-frontmatter.sh` | repo `scripts/` (dev/CI only) | Codex-compatible `SKILL.md` checks (runs `cargo run --bin validate-skill-frontmatter`; requires Rust toolchain) |
 | `validate-params.sh` | `skills/xion-dev/scripts/` | Validate parameters against any skill’s JSON schemas (sibling skills under the same install root) |
 | `security-utils.sh` | `skills/xion-treasury/scripts/` | Confirmations and validation for fund/withdraw scripts |
 

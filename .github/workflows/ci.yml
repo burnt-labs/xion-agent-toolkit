@@ -151,6 +151,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install shellcheck
         run: |
           sudo apt-get update

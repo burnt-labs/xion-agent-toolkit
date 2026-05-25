@@ -19,6 +19,10 @@ path = "src/lib.rs"
 name = "xion-toolkit"
 path = "src/main.rs"
 
+[[bin]]
+name = "validate-skill-frontmatter"
+path = "src/bin/validate_skill_frontmatter.rs"
+
 [dependencies]
 # CLI framework
 clap = { version = "4.5", features = ["derive", "env", "color", "suggestions"] }
@@ -71,6 +75,9 @@ treasury = { git = "https://github.com/burnt-labs/contracts", branch = "main", f
 
 # Regex for parsing
 regex = "1.10"
+
+# SKILL.md frontmatter validation (validate-skill-frontmatter bin)
+serde_yaml = "0.9"
 
 # Bech32 encoding for address conversion
 bech32 = "0.11"
