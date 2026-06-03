@@ -10,7 +10,7 @@ This document outlines the feature roadmap for the Xion Agent Toolkit.
 
 ## Current Status
 
-**Phase 4 (Maintenance & Optimization) completed on 2026-04-03.** See `.agents/plans/2026-04-03-maintenance-optimization.md` for details.
+**Phase 4 (Maintenance & Optimization) completed on 2026-04-03.** See `.mstar/plans/archived/2026-04-03-maintenance-optimization.md` for details.
 
 **Phase 1 Completed: 2026-03-14**
 **Phase 2 Completed: 2026-03-15**
@@ -33,14 +33,14 @@ Phase 4 focuses on code quality, security, and technical debt resolution after f
 | TODO & Unused Code Cleanup | P2 | Low | ✅ Done |
 | Test Coverage Enhancement | P2 | Medium | ✅ Done |
 
-**Plan Document**: `.agents/plans/2026-04-03-maintenance-optimization.md`
-**Dependency Analysis**: `.agents/plans/knowledge/task-dependency-analysis.md`
+**Plan Document**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
+**Dependency Analysis**: `.mstar/knowledge/task-dependency-analysis.md`
 
 ### 4.1 Expiration Feature Research (P1) ✅
 
 **Status**: ✅ Done
 **Decision**: Remove TODOs, keep `expiration: None`
-**Report**: `.agents/plans/knowledge/expiration-research.md`
+**Report**: `.mstar/knowledge/expiration-research.md`
 
 **Key Findings**:
 - Developer Portal does NOT expose expiration field

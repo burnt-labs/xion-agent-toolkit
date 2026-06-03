@@ -1,10 +1,10 @@
-# Task Assignment Templates — Phase 4 Maintenance
+# Task Assignment Templates — Phase 4 Maintenance (archived)
 
-> Pre-prepared Assignment templates for Task 3, Task 4, Task 5.
-> Ready to dispatch after session-1 (Task 1 + Task 2) completion.
+> Historical pre-dispatch templates for Task 3, Task 4, Task 5. Phase 4 completed 2026-04-03; do not reuse without a new plan.
 
 **Created**: 2026-04-03
-**Plan**: `.agents/plans/2026-04-03-maintenance-optimization.md`
+**Archived**: 2026-06-03
+**Plan**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
 
 ---
 
@@ -39,7 +39,7 @@
   - 不涉及 TODO cleanup（Task 4 负责）
   - 不新增测试（Task 5 负责）
 **Inputs**:
-- Plan document: `.agents/plans/2026-04-03-maintenance-optimization.md`
+- Plan document: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
 - Task 2 result: `src/treasury/api_client/*.rs` (5-6 modules)
 - Project style: `AGENTS.md`（error handling 规范）
 **Deliverables**:
@@ -60,7 +60,7 @@
 - Use `rg` or grep tools to locate occurrences
 - Categorize by context (test code is safe to unwrap)
 - **Effort (agent-oriented)**: S-M (1–2 focused agent sessions)
-**Plan Path**: `.agents/plans/2026-04-03-maintenance-optimization.md` (Task 3 section)
+**Plan Path**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md` (Task 3 section)
 **Report Format**: Completion Report v2 (include Audit report summary)
 **Superpowers**: `systematic-debugging`（系统化审计流程），`verification-before-completion`（报告须有结构化证据）
 ```
@@ -114,7 +114,7 @@
 - Add `.context()` for clarity with `anyhow::Result`
 - Preserve test unwrap (document as safe in comments)
 - **Effort (agent-oriented)**: S-M (1–2 focused agent sessions)
-**Plan Path**: `.agents/plans/2026-04-03-maintenance-optimization.md` (Task 3 implementation)
+**Plan Path**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md` (Task 3 implementation)
 **Report Format**: Completion Report v2
 **Superpowers**: `verification-before-completion`（tests/clippy output required），`systematic-debugging`（fix verification）
 ```
@@ -155,7 +155,7 @@
   - No test changes
 **Inputs**:
 - Task 1 decision: Remove expiration support (rationale documented)
-- Plan: `.agents/plans/2026-04-03-maintenance-optimization.md` (Task 4 section)
+- Plan: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md` (Task 4 section)
 **Deliverables**:
 - All TODOs removed (0 remaining or documented as intentional)
 - Unused code cleaned or marked
@@ -171,7 +171,7 @@
 **Constraints**:
 - Quick cleanup (XS-S effort)
 - **Effort (agent-oriented)**: XS-S (1 focused agent session)
-**Plan Path**: `.agents/plans/2026-04-03-maintenance-optimization.md` (Task 4)
+**Plan Path**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md` (Task 4)
 **Report Format**: Completion Report v2
 **Superpowers**: `verification-before-completion`（grep/clippy evidence）
 ```
@@ -277,7 +277,7 @@
 - Use `#[serial(encryption_key)]` for env var mutation tests
 - Follow existing test patterns in project
 - **Effort (agent-oriented)**: S-M (1–2 focused agent sessions)
-**Plan Path**: `.agents/plans/2026-04-03-maintenance-optimization.md` (Task 5 section)
+**Plan Path**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md` (Task 5 section)
 **Report Format**: Completion Report v2
 **Superpowers**: `test-driven-development`（test-first mindset），`verification-before-completion`（test count evidence）
 ```
@@ -310,7 +310,7 @@
 ### Integration with Plan
 
 All assignments reference:
-- Plan document: `.agents/plans/2026-04-03-maintenance-optimization.md`
+- Plan document: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
 - Status updates should be recorded in plan file
 - Completion should update `status.json`
 
@@ -347,7 +347,7 @@ All assignments reference:
   - No new tests (QA responsibility)
 **Inputs**:
 - All implementation diffs from Task 2, 3, 4, 5
-- Plan: `.agents/plans/2026-04-03-maintenance-optimization.md`
+- Plan: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
 - Review harness: `~/.config/opencode/docs/agents/review-harness.md`
 **Deliverables**:
 - Three independent QC reports (structured findings)
@@ -366,7 +366,7 @@ All assignments reference:
 - Focus on: API preservation, error handling, test adequacy
 - Parallel execution (3 QC agents work independently)
 - **Effort (agent-oriented)**: S (1 focused agent session per QC)
-**Plan Path**: `.agents/plans/2026-04-03-maintenance-optimization.md`
+**Plan Path**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
 **Report Format**: QC Report (per review-harness.md template)
 **Superpowers**: `verification-before-completion`（evidence required for conclusions）
 ```
@@ -423,7 +423,7 @@ All assignments reference:
 - Compare with baseline (pre-Phase 4 behavior)
 - Document any behavior changes (intentional vs regression)
 - **Effort (agent-oriented)**: S (1 focused agent session)
-**Plan Path**: `.agents/plans/2026-04-03-maintenance-optimization.md`
+**Plan Path**: `.mstar/plans/archived/2026-04-03-maintenance-optimization.md`
 **Report Format**: Completion Report v2 (include all evidence)
 **Superpowers**: `verification-before-completion`（all verification evidence required）
 ```
@@ -432,11 +432,4 @@ All assignments reference:
 
 ## Summary
 
-All Assignment templates are pre-prepared and ready for:
-- **Task 3**: QC audit + fullstack-dev fix implementation
-- **Task 4**: Case A (remove) or Case B (implement) based on Task 1 decision
-- **Task 5**: QA test coverage enhancement
-- **QC三审**: Parallel review of all implementations
-- **QA Verification**: Final acceptance testing
-
-Templates minimize dispatch overhead once session-1 completes Task 1 + Task 2.
+Templates were used for Phase 4 dispatch (Tasks 3–5). All tasks completed; see archived plan for outcomes.

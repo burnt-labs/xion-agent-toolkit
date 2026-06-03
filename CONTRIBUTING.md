@@ -225,13 +225,16 @@ xion-agent-toolkit/
 │   ├── *_integration_test.rs
 │   └── archived/        # Archived/legacy test scripts
 ├── scripts/             # Build and utility scripts (not tests)
-├── .agents/plans/       # Development plans & progress (see .agents/plans/status.json)
+├── .mstar/              # Harness (see .mstar/AGENTS.md): status.json, plans/, knowledge/
+├── .agents/             # Codex/Cursor skill context (see .agents/AGENTS.md)
 ├── docs/                # CLI reference, error codes, release process
 └── logs/                # Dev-time logs (git-ignored)
 ```
 
 - **tests/**: E2E scripts should be named `e2e_*.sh`. Do not put test scripts in `scripts/`.
-- **.agents/plans/**: Use `.agents/plans/status.json` as the single source of truth for roadmap and progress.
+- **.mstar/**: `.mstar/status.json` (roadmap/progress), `.mstar/plans/` (plans, archived, reports), `.mstar/knowledge/` (design SSOT); see `.mstar/AGENTS.md`.
+- **.agents/**: Skill install conventions only — `.agents/AGENTS.md`.
+- **skills/**: Source packages copied or linked into `~/.agents/skills/` for global install.
 
 ## Adding New Features
 
@@ -347,7 +350,7 @@ git push origin main --tags
 
 - **GitHub Issues**: Bug reports and feature requests
 - **Code Review**: All PRs reviewed by maintainers
-- **Documentation**: See `.agents/plans/` for architecture details; `docs/` for CLI reference, error codes, and release process
+- **Documentation**: See `.mstar/knowledge/` and `.mstar/plans/` for implementation notes; `docs/` for CLI reference, error codes, and release process
 - **Release Process**: See `docs/release.md`
 - **Agent/Contributor setup**: See `INSTALL-FOR-AGENTS.md` for AI agent installation
 

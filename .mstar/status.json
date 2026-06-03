@@ -1,40 +1,46 @@
 {
   "version": 2,
-  "updated_at": "2026-04-03",
-  "plans": [
-    {
-      "file": ".agents/plans/2026-04-03-maintenance-optimization.md",
-      "desc": "Phase 4: Maintenance & Optimization (Expiration research, code refactoring, security audit, TODO cleanup, test coverage)",
-      "status": "InProgress",
-      "created_at": "2026-04-03"
-    }
-  ],
+  "updated_at": "2026-06-03",
+  "plans": [],
   "archived": {
-    "total_count": 44,
-    "archived_at": "2026-04-02",
-    "index": ".agents/plans/archived/README.md"
+    "total_count": 45,
+    "archived_at": "2026-06-03",
+    "index": ".mstar/plans/archived/README.md",
+    "recent": ".mstar/plans/archived/2026-04-03-maintenance-optimization.md"
   },
-  "active_roadmap": ".agents/plans/feature-roadmap.md",
+  "active_roadmap": ".mstar/knowledge/feature-roadmap.md",
   "knowledge": [
     {
-      "file": ".agents/plans/knowledge/oauth-client-implementation.md",
+      "file": ".mstar/knowledge/feature-roadmap.md",
+      "desc": "Product feature roadmap (active_roadmap)."
+    },
+    {
+      "file": ".mstar/knowledge/oauth-client-implementation.md",
       "desc": "OAuthClient implementation decisions."
     },
     {
-      "file": ".agents/plans/knowledge/treasury-create-design.md",
+      "file": ".mstar/knowledge/treasury-create-design.md",
       "desc": "Treasury create command design."
     },
     {
-      "file": ".agents/plans/knowledge/TYPES_COMPARISON.md",
+      "file": ".mstar/knowledge/TYPES_COMPARISON.md",
       "desc": "Treasury type comparison analysis."
     },
     {
-      "file": ".agents/plans/knowledge/faucet-contract-research.md",
+      "file": ".mstar/knowledge/faucet-contract-research.md",
       "desc": "Faucet contract research and deployment attempts."
     },
     {
-      "file": ".agents/plans/knowledge/task-dependency-analysis.md",
+      "file": ".mstar/knowledge/task-dependency-analysis.md",
       "desc": "Phase 4 task dependency and parallel execution analysis."
+    },
+    {
+      "file": ".mstar/knowledge/expiration-research.md",
+      "desc": "Treasury expiration field research."
+    },
+    {
+      "file": ".mstar/knowledge/xion-skills-update-plan.md",
+      "desc": "Xion skills update planning notes."
     }
   ],
   "removed_features": [
@@ -75,7 +81,7 @@
     "phase3": "Done (2026-03-15) — Predicted Address, Batch Treasury Ops",
     "oauth2_client_mgmt": "Done (2026-03-31 ~ 04-01) — Full lifecycle, advanced safety, scope validation",
     "interactive_cli": "Done (2026-04-02) — dialoguer prompts, --no-interactive, 21 skill scripts updated",
-    "phase4": "InProgress (2026-04-03) — Expiration research, code refactoring, security audit, TODO cleanup, test coverage"
+    "phase4": "Done (2026-04-03) — Expiration research, api_client refactor, security audit, TODO cleanup, test coverage (archived)"
   },
   "deferred_items": [],
   "resolved_items": [

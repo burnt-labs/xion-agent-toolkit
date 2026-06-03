@@ -9,7 +9,17 @@ This directory contains historical planning documents that have been completed.
 | Initial Development | 2026-03-12 | 21 plans |
 | Phase 1 Features | 2026-03-14 | 5 plans |
 | Phase 2–3 + CLI Polish | 2026-03-15 ~ 2026-04-02 | 18 plans |
-| **Total** | | **44 plans** |
+| Phase 4 Maintenance | 2026-04-03 | 1 plan |
+| **Total** | | **45 plans** |
+
+---
+
+## Phase 4: Maintenance & Optimization (2026-04-03)
+
+| Plan | Description |
+|------|-------------|
+| `2026-04-03-maintenance-optimization.md` | Expiration research, `api_client` refactor (8 modules), unwrap audit, TODO cleanup, +64 tests |
+| `2026-04-03-task-assignments-templates.md` | Pre-dispatch Assignment templates for Phase 4 Tasks 3–5 (historical) |
 
 ---
 
@@ -126,8 +136,8 @@ This directory contains historical planning documents that have been completed.
 
 ## Current Status
 
-See `.agents/plans/status.json` for the current project status and active plans.
+See `.mstar/status.json` for the current project status and active plans.
 
 ## Reference Material
 
-Ongoing reference material is maintained in `.agents/plans/knowledge/`.
+Ongoing reference material is maintained in `.mstar/knowledge/`.

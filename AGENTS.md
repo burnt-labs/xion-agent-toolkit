@@ -2,6 +2,16 @@
 
 CLI-first, agent-oriented Rust toolkit for Xion blockchain. Uses OAuth2/MetaAccount for gasless transactions.
 
+## Agent documentation layers
+
+| Layer | File | Scope |
+|-------|------|--------|
+| Project (this file) | `AGENTS.md` | Rust CLI, build/test, coding style, security |
+| Harness | `.mstar/AGENTS.md` | `.mstar/status.json`, plans, knowledge, QC reports |
+| Skills | `.agents/AGENTS.md` | Bundled `skills/`, install paths, skill conventions |
+
+`CLAUDE.md` mirrors this file for Claude Code. Subtree `AGENTS.md` files are self-contained; do not duplicate harness rules here or in `.agents/AGENTS.md`.
+
 ## Build / Lint / Test Commands
 
 ```bash
@@ -64,6 +74,8 @@ src/
 skills/           # Agent skills (bash scripts + JSON schemas) that consume the CLI.
                   # Each skill has its own SKILL.md with conventions.
                   # Read the relevant SKILL.md if modifying a skill.
+.mstar/           # Harness: status.json, plans/, knowledge/ — see .mstar/AGENTS.md
+.agents/          # Codex/Cursor skill context anchor — see .agents/AGENTS.md
 tests/            # E2E bash tests (e2e_*.sh) and skills mock tests.
 scripts/          # Build/utility scripts (NOT test scripts).
 ```

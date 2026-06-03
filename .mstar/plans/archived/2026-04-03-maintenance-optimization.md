@@ -1,5 +1,5 @@
 ---
-status: InProgress
+status: Done
 created_at: 2026-04-03
 updated_at: 2026-04-03
 priority: P1
@@ -121,7 +121,7 @@ Files containing unused/deprecated markers:
 **Status**: ✅ Done
 **Owner**: @architect
 **Effort**: M (1 focused agent session)
-**Decision**: **Remove TODOs, keep `expiration: None`** — see `.agents/plans/knowledge/expiration-research.md`
+**Decision**: **Remove TODOs, keep `expiration: None`** — see `.mstar/knowledge/expiration-research.md`
 
 **Objective**: Determine if FeeConfig expiration support is necessary.
 
@@ -130,7 +130,7 @@ Files containing unused/deprecated markers:
 - `~/workspace/xion/xion-developer-portal` (Developer documentation)
 
 **Deliverables**:
-- ✅ Research report: `.agents/plans/knowledge/expiration-research.md`
+- ✅ Research report: `.mstar/knowledge/expiration-research.md`
 - ✅ Decision: **Remove TODOs** (Option B — see report §4)
 - N/A: Implementation not needed
 
@@ -387,13 +387,3 @@ Task 5 (Test Coverage) ← after Task 3 completion
 | 2026-04-03 | @project-manager | Task 3 & 4 completed (security audit, TODO cleanup) | ✅ Done |
 | 2026-04-03 | @project-manager | Task 2 completed (refactoring, QC approved) | ✅ Done |
 | 2026-04-03 | @project-manager | Task 1 completed (expiration research) | ✅ Done |
-- `implement`: Pending (Task assignments)
-
----
-
-## Sign-off
-
-| Date | Signer | Content | Status |
-|------|--------|---------|--------|
-| 2026-04-03 | @project-manager | Maintenance analysis complete; 5 tasks identified | InProgress |
-| 2026-04-03 | @fullstack-dev | Task 4: TODO cleanup done — 4 TODOs removed, 2 doc comments corrected | InReview |
